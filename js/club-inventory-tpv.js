@@ -1287,6 +1287,64 @@
     return { error, rpcRes };
   }
 
+  async function ensureDispensePersisted(line, shiftId, memberId, rpcRes) {
+    const directId = rpcRes?.data || null;
+    if (directId) {
+      const { data: exists, error: existsErr } = await sb()
+        .from('tpv_dispenses')
+        .select('id')
+        .eq('id', directId)
+        .maybeSingle();
+      if (!existsErr && exists?.id) return { id: exists.id, error: null };
+    }
+
+    const { data: matchRows, error: matchErr } = await sb()
+      .from('tpv_dispenses')
+      .select('id, created_at')
+      .eq('club_id', state.ctx.club.id)
+      .eq('product_id', line.product_id)
+      .eq('shift_id', shiftId)
+      .eq('grams_charged', line.grams_charged)
+      .eq('grams_dispensed', line.grams_dispensed)
+      .eq('price_charged_eur', line.price_charged_eur)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (!matchErr && Array.isArray(matchRows) && matchRows.length) {
+      return { id: matchRows[0].id, error: null };
+    }
+
+    const { data: au } = await sb().auth.getUser();
+    const userId = au?.user?.id || null;
+    if (!userId) {
+      return { id: null, error: { message: 'No se pudo identificar el usuario actual para registrar la dispensación.' } };
+    }
+
+    const baseInsert = {
+      club_id: state.ctx.club.id,
+      product_id: line.product_id,
+      shift_id: shiftId,
+      grams_charged: line.grams_charged,
+      grams_dispensed: line.grams_dispensed,
+      price_charged_eur: line.price_charged_eur,
+      notes: line.notes || '',
+      created_by: userId,
+      member_id: memberId || null,
+    };
+
+    let ins = await sb().from('tpv_dispenses').insert([baseInsert]).select('id').single();
+    if (
+      ins.error &&
+      (ins.error.code === '42703' ||
+        (ins.error.message && ins.error.message.toLowerCase().includes('member_id')))
+    ) {
+      const noMember = { ...baseInsert };
+      delete noMember.member_id;
+      ins = await sb().from('tpv_dispenses').insert([noMember]).select('id').single();
+    }
+    if (ins.error) return { id: null, error: ins.error };
+    return { id: ins.data?.id || null, error: null };
+  }
+
   async function submitTpv() {
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
     let lines = (state.tpvCart || []).slice();
@@ -1319,7 +1377,16 @@
         setMsg('tpv-status', `${line.product_name}: ${out.error.message || 'No se pudo registrar.'}.${partial}`, true);
         return;
       }
-      if (out.rpcRes?.data) registeredIds.push(out.rpcRes.data);
+      const ensured = await ensureDispensePersisted(line, shiftId, memberRaw || null, out.rpcRes);
+      if (ensured.error) {
+        setMsg(
+          'tpv-status',
+          `Stock actualizado pero no se pudo guardar la dispensación (${line.product_name}): ${ensured.error.message || 'error desconocido'}.`,
+          true,
+        );
+        return;
+      }
+      if (ensured.id) registeredIds.push(ensured.id);
     }
 
     const totalPrice = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
@@ -1347,7 +1414,20 @@
     $('tpv-notes').value = '';
     updateTpvMarginHint();
     await loadProducts();
-    await loadRecentDispenses(registeredIds.length ? registeredIds : lastRpcRes?.data || null);
+    const visibleRows = await loadRecentDispenses(
+      registeredIds.length ? registeredIds : lastRpcRes?.data || null,
+    );
+    if (registeredIds.length) {
+      const visibleIds = new Set((visibleRows || []).map((r) => r.id));
+      const missing = registeredIds.filter((id) => !visibleIds.has(id));
+      if (missing.length) {
+        setMsg(
+          'tpv-status',
+          `Venta guardada, pero ${missing.length} dispensación(es) no se pueden leer en el listado (revisa RLS en tpv_dispenses).`,
+          true,
+        );
+      }
+    }
     if (typeof window.scClubRefreshFinance === 'function') {
       await window.scClubRefreshFinance();
     }
@@ -1428,7 +1508,7 @@
 
     if (error) {
       tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
-      return;
+      return [];
     }
     let rows = data || [];
     const forcedIds = Array.isArray(forceDispenseId)
@@ -1449,7 +1529,7 @@
     }
     if (!rows.length) {
       tbody.innerHTML = '<tr><td colspan="8">Aún no hay ventas registradas.</td></tr>';
-      return;
+      return [];
     }
     const ids = [...new Set(rows.map((r) => r.product_id).filter(Boolean))];
     const mids = [...new Set(rows.map((r) => r.member_id).filter(Boolean))];
@@ -1505,6 +1585,7 @@
       });
       tbody.appendChild(tr);
     });
+    return rows;
   }
 
   function bindInventory() {
