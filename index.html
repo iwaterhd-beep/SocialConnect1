@@ -26,11 +26,6 @@
               placeholder="admin"
               required
             />
-            <p class="hint">
-              Sin <code>@</code> se usa el dominio en <code>js/config.js</code>
-              (por defecto <strong>admin@example.com</strong>). Evita
-              <code>.local</code>: Supabase suele rechazarlo al crear usuarios.
-            </p>
           </div>
           <div class="form__row">
             <label for="password">Contraseña</label>
@@ -48,13 +43,6 @@
           <p id="login-message" class="msg" role="status" aria-live="polite"></p>
         </form>
 
-        <p class="footer-note">
-          Superadmin: crea en Auth el email <strong>admin@example.com</strong>
-          (o el mismo dominio que en config) y metadatos
-          <code>{"role":"superadmin"}</code>. Los usuarios de club
-          entran con el email que generaste en el panel superadmin y van al panel
-          del club.
-        </p>
       </main>
     </div>
 
