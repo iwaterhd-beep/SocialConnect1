@@ -1198,7 +1198,7 @@
     }
 
     setMsg('tpv-status', 'Registrando venta…', false);
-    const { error } = await sb().rpc('club_register_tpv_dispense', {
+    const payloadWithMember = {
       p_product_id: pid,
       p_grams_charged: gramsCharged,
       p_grams_dispensed: gramsDispensed,
@@ -1206,7 +1206,27 @@
       p_shift_id: shiftId,
       p_notes: notes,
       p_member_id: memberRaw || null,
-    });
+    };
+
+    let { error } = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
+
+    const maybeLegacyRpc =
+      error &&
+      (error.code === 'PGRST202' ||
+        error.code === '42883' ||
+        /p_member_id|function\s+public\.club_register_tpv_dispense/i.test(error.message || ''));
+    if (maybeLegacyRpc) {
+      const payloadLegacy = {
+        p_product_id: pid,
+        p_grams_charged: gramsCharged,
+        p_grams_dispensed: gramsDispensed,
+        p_price_charged_eur: price,
+        p_shift_id: shiftId,
+        p_notes: notes,
+      };
+      const retry = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
+      error = retry.error;
+    }
 
     if (error) {
       setMsg('tpv-status', error.message || 'No se pudo registrar.', true);
