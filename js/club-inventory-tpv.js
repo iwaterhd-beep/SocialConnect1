@@ -1208,7 +1208,8 @@
       p_member_id: memberRaw || null,
     };
 
-    let { error } = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
+    let rpcRes = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
+    let { error } = rpcRes;
 
     const maybeLegacyRpc =
       error &&
@@ -1224,8 +1225,8 @@
         p_shift_id: shiftId,
         p_notes: notes,
       };
-      const retry = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
-      error = retry.error;
+      rpcRes = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
+      error = rpcRes.error;
     }
 
     if (error) {
@@ -1256,7 +1257,7 @@
     $('tpv-notes').value = '';
     updateTpvMarginHint();
     await loadProducts();
-    await loadRecentDispenses();
+    await loadRecentDispenses(rpcRes?.data || null);
   }
 
   async function deleteRecentDispense(row) {
@@ -1285,7 +1286,7 @@
     await loadRecentDispenses();
   }
 
-  async function loadRecentDispenses() {
+  async function loadRecentDispenses(forceDispenseId) {
     const tbody = $('tpv-recent-tbody');
     if (!tbody) return;
 
@@ -1333,7 +1334,21 @@
       tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
       return;
     }
-    const rows = data || [];
+    let rows = data || [];
+    if (forceDispenseId && !rows.some((r) => r.id === forceDispenseId)) {
+      const { data: forcedRow, error: forceErr } = await sb()
+        .from('tpv_dispenses')
+        .select(sel)
+        .eq('id', forceDispenseId)
+        .maybeSingle();
+      if (!forceErr && forcedRow) {
+        rows = [forcedRow, ...rows].slice(0, 5);
+      }
+    }
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8">Aún no hay ventas registradas.</td></tr>';
+      return;
+    }
     const ids = [...new Set(rows.map((r) => r.product_id).filter(Boolean))];
     const mids = [...new Set(rows.map((r) => r.member_id).filter(Boolean))];
     let prodMap = {};
