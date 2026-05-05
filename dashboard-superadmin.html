@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel superadmin — Social Connect</title>
+    <link rel="stylesheet" href="css/theme.css" />
+  </head>
+  <body>
+    <div class="shell shell--app">
+      <div class="panel panel--wide">
+        <header class="dash-header">
+          <div>
+            <h1>Panel superadmin</h1>
+            <p class="dash-meta">
+              Sesión:
+              <strong id="superadmin-email">—</strong>
+            </p>
+          </div>
+          <button type="button" class="btn btn--ghost" id="logout-btn">
+            Cerrar sesión
+          </button>
+        </header>
+
+        <p id="dash-status" class="msg" role="status" aria-live="polite"></p>
+
+        <div class="grid grid--2">
+          <section class="card-section" aria-labelledby="create-club-title">
+            <h2 id="create-club-title">Crear club</h2>
+            <form id="club-form">
+              <div class="form__row">
+                <label for="club-name">Nombre</label>
+                <input class="input" id="club-name" required />
+              </div>
+              <div class="form__row">
+                <label for="club-cif">CIF</label>
+                <input class="input" id="club-cif" />
+              </div>
+              <div class="form__row">
+                <label for="club-address">Dirección</label>
+                <input class="input" id="club-address" />
+              </div>
+              <div class="form__row">
+                <label for="club-phone">Teléfono</label>
+                <input class="input" id="club-phone" type="tel" />
+              </div>
+              <div class="form__row">
+                <label for="club-email">Email del club</label>
+                <input class="input" id="club-email" type="email" />
+              </div>
+              <button type="submit" class="btn btn--block">Guardar club</button>
+            </form>
+          </section>
+
+          <section class="card-section" aria-labelledby="cred-title">
+            <h2 id="cred-title">Credenciales de acceso (club)</h2>
+            <p class="hint" style="margin-top: 0">
+              Crea un usuario en Supabase Auth con rol de club. Se cerrará tu
+              sesión de superadmin; vuelve a entrar después.
+            </p>
+            <div class="form__row">
+              <label for="cred-club">Club</label>
+              <select class="select" id="cred-club"></select>
+            </div>
+            <div class="form__row">
+              <label for="cred-email">Email del usuario</label>
+              <input
+                class="input"
+                id="cred-email"
+                type="email"
+                placeholder="encargado@mi-club.com"
+              />
+            </div>
+            <div class="form__row">
+              <label for="cred-role">Rol</label>
+              <select class="select" id="cred-role">
+                <option value="admin_club">admin_club</option>
+                <option value="empleado">empleado</option>
+              </select>
+            </div>
+            <div class="form__row">
+              <label for="cred-password">Contraseña generada</label>
+              <input class="input" id="cred-password" readonly placeholder="Pulsa generar" />
+            </div>
+            <button type="button" class="btn btn--block" id="cred-generate">
+              Generar credenciales
+            </button>
+          </section>
+        </div>
+
+        <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="list-title">
+          <h2 id="list-title">Clubes</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>CIF</th>
+                  <th>Email</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="clubs-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="access-title">
+          <div class="dash-header" style="margin-bottom: 1rem">
+            <h2 id="access-title" style="margin: 0">Accesos por club</h2>
+            <div class="row-actions">
+              <label for="filter-club" class="hint" style="margin: 0">Filtrar</label>
+              <select class="select" id="filter-club" style="min-width: 12rem">
+                <option value="">Todos los clubes</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Auth user id</th>
+                </tr>
+              </thead>
+              <tbody id="access-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="password-settings-title">
+          <h2 id="password-settings-title">Ajustes: contraseña</h2>
+          <p class="hint" style="margin-top: 0">
+            Cambia tu contraseña de superadmin. Necesitas la contraseña actual.
+          </p>
+          <form id="password-settings-form" novalidate>
+            <div class="form__row">
+              <label for="password-current">Contraseña actual</label>
+              <input
+                class="input"
+                id="password-current"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            <div class="form__row">
+              <label for="password-new">Nueva contraseña</label>
+              <input
+                class="input"
+                id="password-new"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="form__row">
+              <label for="password-confirm">Repetir nueva contraseña</label>
+              <input
+                class="input"
+                id="password-confirm"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              />
+            </div>
+            <button type="submit" class="btn">Guardar nueva contraseña</button>
+            <p id="password-settings-msg" class="msg" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <p class="footer-note">
+          En Supabase, desactiva “Confirm email” en desarrollo para que los
+          nuevos usuarios puedan entrar al instante.
+        </p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth-helpers.js"></script>
+    <script src="js/dashboard-superadmin.js"></script>
+    <script src="js/account-password.js"></script>
+  </body>
+</html>

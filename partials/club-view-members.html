@@ -1,0 +1,279 @@
+<section class="card-section member-form-sc" aria-labelledby="members-form-title">
+  <div class="member-form-sc__top">
+    <h2 id="members-form-title">Nuevo socio</h2>
+    <p class="hint member-form-sc__hint">
+      Alta manual para vincular ventas en TPV. Los campos opcionales pueden completarse después.
+    </p>
+  </div>
+
+  <input type="hidden" id="member-edit-id" value="" />
+
+  <div class="member-form-sc__hero">
+    <div class="member-form-sc__avatar" id="member-avatar-wrap">
+      <img
+        class="member-form-sc__avatar-img is-hidden"
+        id="member-avatar-img"
+        src=""
+        alt="Foto del socio"
+      />
+      <span class="member-form-sc__avatar-initials" id="member-avatar-initials" aria-hidden="true">?</span>
+    </div>
+    <div class="member-form-sc__photo-actions">
+      <input
+        type="file"
+        id="member-file-avatar"
+        class="visually-hidden"
+        accept="image/jpeg,image/png,image/webp"
+      />
+      <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="avatar">
+        📁 Subir foto
+      </button>
+      <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="avatar">
+        📷 Cámara
+      </button>
+      <button type="button" class="btn btn--ghost btn--small" data-member-clear="avatar">🗑 Quitar foto</button>
+    </div>
+  </div>
+
+  <div class="member-form-sc__grid">
+    <div class="form__row">
+      <label for="member-first-name">Nombre</label>
+      <input class="input" id="member-first-name" type="text" autocomplete="given-name" placeholder="Nombre" />
+    </div>
+    <div class="form__row">
+      <label for="member-last-name">Apellidos</label>
+      <input class="input" id="member-last-name" type="text" autocomplete="family-name" placeholder="Apellidos" />
+    </div>
+    <div class="form__row">
+      <label for="member-dni">DNI / NIE</label>
+      <input class="input" id="member-dni" type="text" inputmode="text" autocomplete="off" placeholder="Opcional" />
+    </div>
+    <div class="form__row">
+      <label for="member-birth">Fecha nacimiento</label>
+      <input class="input" id="member-birth" type="date" />
+    </div>
+    <div class="form__row">
+      <label for="member-phone">Teléfono</label>
+      <input class="input" id="member-phone" type="tel" autocomplete="tel" placeholder="Opcional" />
+    </div>
+    <div class="form__row">
+      <label for="member-email">Email</label>
+      <input class="input" id="member-email" type="email" autocomplete="email" placeholder="Opcional" />
+    </div>
+    <div class="form__row">
+      <label for="member-code">Nº socio / código</label>
+      <input class="input" id="member-code" type="text" autocomplete="off" placeholder="Ej. 0421 (opcional)" />
+    </div>
+    <div class="form__row">
+      <label for="member-enrollment-fee">Cuota de inscripción (€)</label>
+      <input
+        class="input"
+        id="member-enrollment-fee"
+        type="number"
+        inputmode="decimal"
+        min="0"
+        step="0.01"
+        placeholder="0"
+      />
+    </div>
+  </div>
+
+  <div class="form__row member-form-sc__type">
+    <span class="member-form-sc__type-label" id="member-type-label">Tipo de socio</span>
+    <div class="member-type-seg" role="group" aria-labelledby="member-type-label">
+      <button type="button" class="member-type-seg__btn is-active" data-member-type="standard" aria-pressed="true">
+        Estándar
+      </button>
+      <button type="button" class="member-type-seg__btn" data-member-type="premium" aria-pressed="false">
+        Premium
+      </button>
+      <button type="button" class="member-type-seg__btn" data-member-type="vip" aria-pressed="false">VIP</button>
+    </div>
+    <input type="hidden" id="member-type-value" value="standard" />
+  </div>
+
+  <fieldset class="member-form-sc__docs">
+    <legend>Documentación <span class="member-form-sc__optional">(opcional)</span></legend>
+    <p class="hint member-form-sc__docs-note">Imágenes o PDF, máx. 5 MB por archivo. Se guardan al pulsar «Guardar socio».</p>
+    <input
+      type="file"
+      id="member-file-dni-front"
+      class="visually-hidden"
+      accept="image/jpeg,image/png,image/webp,application/pdf"
+    />
+    <input
+      type="file"
+      id="member-file-dni-back"
+      class="visually-hidden"
+      accept="image/jpeg,image/png,image/webp,application/pdf"
+    />
+    <input
+      type="file"
+      id="member-file-passport"
+      class="visually-hidden"
+      accept="image/jpeg,image/png,image/webp,application/pdf"
+    />
+    <div class="member-doc-row">
+      <span class="member-doc-row__title">DNI delante</span>
+      <span class="member-doc-row__state" id="member-doc-front-label">Sin archivo</span>
+      <div class="member-doc-row__actions">
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_front">
+          📄 Subir
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="dni_front">
+          📷 Cámara
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_front">🗑 Quitar</button>
+      </div>
+    </div>
+    <div class="member-doc-row">
+      <span class="member-doc-row__title">DNI detrás</span>
+      <span class="member-doc-row__state" id="member-doc-back-label">Sin archivo</span>
+      <div class="member-doc-row__actions">
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_back">
+          📄 Subir
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="dni_back">
+          📷 Cámara
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_back">🗑 Quitar</button>
+      </div>
+    </div>
+    <div class="member-doc-row">
+      <span class="member-doc-row__title">Pasaporte</span>
+      <span class="member-doc-row__state" id="member-doc-pass-label">Sin archivo</span>
+      <div class="member-doc-row__actions">
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="passport">
+          📄 Subir
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="passport">
+          📷 Cámara
+        </button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-clear="passport">🗑 Quitar</button>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="member-form-sc__grid member-form-sc__grid--1">
+    <div class="form__row">
+      <label for="member-notes">Notas internas</label>
+      <input class="input" id="member-notes" type="text" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="member-form-sc__status-row">
+    <label class="tpv-link-toggle member-form-sc__active">
+      <input type="checkbox" id="member-active" checked />
+      Socio activo
+    </label>
+  </div>
+
+  <div class="member-form-sc__actions">
+    <button type="button" class="btn btn--ghost" id="member-cancel">Cancelar</button>
+    <button type="button" class="btn" id="member-save">Guardar socio</button>
+  </div>
+
+  <p id="member-status" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="members-list-title">
+  <div class="member-csv-toolbar">
+    <h2 id="members-list-title">Listado</h2>
+    <div class="member-csv-toolbar__actions">
+      <a
+        class="btn btn--ghost btn--small member-csv-template-link"
+        href="assets/plantilla_socios.csv"
+        download="plantilla_socios.csv"
+        title="CSV de ejemplo con todas las columnas (incluida uuid vacía al reexportar se rellena)"
+      >
+        Descargar plantilla
+      </a>
+      <button type="button" class="btn btn--ghost btn--small" id="members-export-csv" title="Descargar todos los socios del club">
+        Exportar CSV
+      </button>
+      <button type="button" class="btn btn--ghost btn--small" id="members-import-csv" title="Subir CSV (plantilla o exportación previa)">
+        Importar CSV
+      </button>
+      <button type="button" class="btn btn--ghost btn--small btn--danger" id="members-delete-all" title="Eliminar todos los socios de este club para volver a importar">
+        Borrar todos
+      </button>
+      <input type="file" id="members-import-file" class="visually-hidden" accept=".csv,text/csv,text/plain" />
+    </div>
+  </div>
+  <p class="hint member-csv-hint">
+    <strong>Excel (España)</strong> suele guardar CSV separado por <strong>punto y coma (;)</strong>: también lo admitimos. Columnas: nombre, email, teléfono, tipo, estado, alta, consumo, dni,
+    <strong>fecha_nacimiento</strong> (ISO <code>1990-05-15</code> o <code>15/05/1990</code>), monedero, cuota y <strong>uuid</strong>. Opcional: <strong>id</strong> (#socio). Reimportar con
+    <strong>uuid</strong> actualiza la fila.
+  </p>
+  <div class="form__row" style="margin-top: 0.75rem">
+    <label for="members-search">Buscar socio</label>
+    <input
+      type="search"
+      id="members-search"
+      class="input"
+      placeholder="Nombre, DNI, teléfono o código…"
+      autocomplete="off"
+    />
+  </div>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>DNI</th>
+          <th>Tipo</th>
+          <th>Teléfono</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="members-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<div id="member-profile-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-member-profile-close="1"></div>
+  <section class="card-section shift-modal__panel shift-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="member-profile-title">
+    <h2 id="member-profile-title" class="shift-modal__title">Perfil del socio</h2>
+    <div class="shift-modal__body shift-modal__body--scroll">
+      <div class="member-profile-hero">
+        <div class="member-profile-hero__avatar">
+          <img id="member-profile-avatar-img" class="member-profile-hero__avatar-img is-hidden" src="" alt="Avatar del socio" />
+          <span id="member-profile-avatar-initials" class="member-profile-hero__avatar-initials">?</span>
+        </div>
+        <div class="member-profile-hero__kpis">
+          <article class="member-profile-kpi">
+            <span class="member-profile-kpi__label">Dispensaciones</span>
+            <strong id="member-profile-kpi-count" class="member-profile-kpi__value">0</strong>
+          </article>
+          <article class="member-profile-kpi">
+            <span class="member-profile-kpi__label">Total gastado</span>
+            <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
+          </article>
+        </div>
+      </div>
+      <p id="member-profile-summary" class="hint" style="margin-top: 0">Selecciona un socio para ver su detalle.</p>
+      <div id="member-profile-meta" class="hint" style="margin-top: 0.5rem"></div>
+      <div class="table-wrap" style="margin-top: 0.75rem">
+        <table class="table-compact">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>G ticket / G real</th>
+              <th>Precio</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody id="member-dispenses-tbody">
+            <tr><td colspan="5">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn--ghost" data-member-profile-close="1">Cerrar</button>
+    </div>
+  </section>
+</div>

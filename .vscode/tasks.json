@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start static server (port 5500)",
+      "type": "shell",
+      "command": "python3 -m http.server 5500",
+      "windows": {
+        "command": "powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}\\static-server.ps1"
+        ]
+      },
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "local-http",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 1,
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Serving HTTP"
+        }
+      }
+    },
+    {
+      "label": "Start static server (Node / npx)",
+      "type": "shell",
+      "command": "npx --yes http-server@14 . -p 5500 -c-1",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "http-server",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 1,
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "127\\.0\\.0\\.1:5500"
+        }
+      }
+    }
+  ]
+}

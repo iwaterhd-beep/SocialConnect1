@@ -1,0 +1,164 @@
+<div class="card-section tpv-shell">
+  <p id="tpv-shift-banner" class="hint tpv-shift-banner" role="status">
+    Comprobando turno…
+  </p>
+  <div class="tpv-shell__hdr">
+    <div>
+      <h2 id="tpv-title">TPV</h2>
+      <p class="hint" style="margin-top: 0">
+        Toca un producto, ajusta gramos y precio. El <strong>stock</strong> baja solo por los gramos
+        <strong>reales</strong>; el precio en € es el del ticket.
+      </p>
+    </div>
+    <label class="tpv-link-toggle">
+      <input type="checkbox" id="tpv-link-grams" checked />
+      Copiar gramos ticket → reales
+    </label>
+  </div>
+
+  <div class="tpv-layout">
+    <div class="tpv-col tpv-col--main">
+      <div class="tpv-toolbar">
+        <input
+          type="search"
+          id="tpv-search"
+          class="input"
+          placeholder="Buscar producto…"
+          autocomplete="off"
+        />
+        <div id="tpv-cat-chips" class="chip-row" aria-label="Filtrar por categoría"></div>
+      </div>
+      <div id="tpv-product-grid" class="tpv-prod-grid" role="list"></div>
+    </div>
+
+    <aside class="tpv-col tpv-col--ticket" aria-label="Ticket de venta">
+      <div class="tpv-ticket-paper">
+        <div class="tpv-ticket-inner">
+          <header class="tpv-ticket-head">
+            <p class="tpv-ticket-kicker">Ticket de venta</p>
+            <div id="tpv-selected-label" class="tpv-ticket-product-name">
+              Toca un producto a la izquierda
+            </div>
+          </header>
+          <input type="hidden" id="tpv-selected-product" value="" />
+
+          <section class="tpv-ticket-block" aria-labelledby="tpv-lbl-socio">
+            <h3 class="tpv-ticket-block__title" id="tpv-lbl-socio">Socio</h3>
+            <div class="form__row tpv-member-field tpv-ticket-field">
+              <label class="tpv-ticket-sr-label" for="tpv-member-search">Buscar socio</label>
+              <div class="tpv-member-wrap">
+                <input
+                  type="search"
+                  id="tpv-member-search"
+                  class="input input--ticket"
+                  placeholder="Nombre o código…"
+                  autocomplete="off"
+                />
+                <button type="button" class="btn btn--ghost btn--small" id="tpv-member-clear">Quitar</button>
+              </div>
+              <input type="hidden" id="tpv-selected-member" value="" />
+              <div id="tpv-member-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
+              <p id="tpv-member-chip" class="tpv-ticket-chip tpv-member-chip"></p>
+            </div>
+          </section>
+
+          <section class="tpv-ticket-block" aria-labelledby="tpv-lbl-grams">
+            <h3 class="tpv-ticket-block__title" id="tpv-lbl-grams">Cantidad</h3>
+            <div class="tpv-ticket-dual">
+              <div class="tpv-ticket-field">
+                <label for="tpv-grams-charged" id="tpv-label-charged">En ticket</label>
+                <input
+                  class="input input--ticket"
+                  id="tpv-grams-charged"
+                  inputmode="decimal"
+                  placeholder="0,5"
+                />
+              </div>
+              <div class="tpv-ticket-field">
+                <label for="tpv-grams-dispensed" id="tpv-label-real">Reales</label>
+                <input
+                  class="input input--ticket"
+                  id="tpv-grams-dispensed"
+                  inputmode="decimal"
+                  placeholder="0,52"
+                />
+              </div>
+            </div>
+            <p id="tpv-margin-hint" class="tpv-ticket-hint"></p>
+            <div class="tpv-stepper" id="tpv-stepper" aria-label="Ajuste rápido de cantidad (ticket)">
+              <button type="button" class="btn btn--ghost btn--small tpv-step" data-tpv-step="-0.1">
+                −0,1
+              </button>
+              <button type="button" class="btn btn--ghost btn--small tpv-step" data-tpv-step="-0.05">
+                −0,05
+              </button>
+              <button type="button" class="btn btn--ghost btn--small tpv-step" data-tpv-step="0.05">
+                +0,05
+              </button>
+              <button type="button" class="btn btn--ghost btn--small tpv-step" data-tpv-step="0.1">
+                +0,1
+              </button>
+            </div>
+          </section>
+
+          <section class="tpv-ticket-block" aria-labelledby="tpv-lbl-money">
+            <h3 class="tpv-ticket-block__title" id="tpv-lbl-money">Cobro</h3>
+            <div class="tpv-ticket-field">
+              <label for="tpv-price">Precio (€)</label>
+              <input class="input input--ticket" id="tpv-price" inputmode="decimal" placeholder="0,50" />
+            </div>
+          </section>
+
+          <section class="tpv-ticket-block">
+            <h3 class="tpv-ticket-block__title">Nota</h3>
+            <div class="tpv-ticket-field">
+              <label class="tpv-ticket-sr-label" for="tpv-notes">Nota opcional</label>
+              <input
+                class="input input--ticket"
+                id="tpv-notes"
+                placeholder="Ej. mesa, mostrador…"
+                autocomplete="off"
+              />
+            </div>
+          </section>
+
+          <div class="tpv-ticket-stock-wrap">
+            <p id="tpv-stock-hint" class="tpv-ticket-stock"></p>
+          </div>
+
+          <footer class="tpv-ticket-actions">
+            <button type="button" class="btn tpv-cobrar btn--block" id="tpv-submit">Cobrar</button>
+            <p id="tpv-status" class="msg tpv-ticket-status" role="status" aria-live="polite"></p>
+          </footer>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="tpv-success-overlay" class="tpv-overlay is-hidden" aria-hidden="true">
+    <div class="tpv-overlay__icon" aria-hidden="true">✓</div>
+    <p class="tpv-overlay__title">Venta registrada</p>
+    <p id="tpv-overlay-detail" class="tpv-overlay__sub"></p>
+  </div>
+</div>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="tpv-recent-title">
+  <h2 id="tpv-recent-title">Últimas ventas</h2>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Dispensador</th>
+          <th>Producto</th>
+          <th>Socio</th>
+          <th>Cant. ticket / Cant. real</th>
+          <th>Precio</th>
+          <th>Nota</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tpv-recent-tbody"></tbody>
+    </table>
+  </div>
+</section>

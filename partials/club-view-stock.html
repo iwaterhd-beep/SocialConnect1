@@ -1,0 +1,50 @@
+<section class="card-section stock-shell" aria-labelledby="stock-title">
+  <h2 id="stock-title">Stock del turno</h2>
+  <p id="stock-shift-banner" class="hint stock-shift-banner" role="status">
+    Comprobando turno…
+  </p>
+  <p class="hint" style="margin-top: 0">
+    El stock físico se registra en el <strong>turno abierto</strong>. Abre o cierra turnos desde <strong>Inicio</strong>.
+  </p>
+</section>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="stock-manual-title">
+  <h2 id="stock-manual-title">Contaje manual</h2>
+  <p class="hint" style="margin-top: 0">
+    Si el producto tiene <strong>bote</strong> configurado, escribe el <strong>peso total en báscula</strong> (bote + contenido); se resta la tara y se guarda el <strong>stock neto</strong>. Si no hay bote, el valor es el stock neto directamente.
+  </p>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Stock actual</th>
+          <th>Nuevo peso / stock (g)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="stock-manual-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="stock-events-title">
+  <h2 id="stock-events-title">Registros de este turno</h2>
+  <p id="stock-events-empty" class="hint" style="margin-top: 0">—</p>
+  <div class="table-wrap" style="margin-top: 0.5rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Turno (apertura)</th>
+          <th>Producto</th>
+          <th>Stock (g)</th>
+          <th>Diferencia (g)</th>
+          <th>Origen</th>
+        </tr>
+      </thead>
+      <tbody id="stock-events-tbody"></tbody>
+    </table>
+  </div>
+  <p id="stock-status" class="msg" role="status" aria-live="polite"></p>
+</section>

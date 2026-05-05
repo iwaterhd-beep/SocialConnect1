@@ -1,0 +1,64 @@
+<section class="card-section" aria-labelledby="finance-title">
+  <h2 id="finance-title">Finanzas</h2>
+  <p class="hint" style="margin-top: 0">
+    Resumen de <strong>ingresos registrados en TPV</strong> (precio cobrado por venta). Sin importar datos externos;
+    solo lo que genera esta app.
+  </p>
+  <div class="finance-kpis" id="finance-kpis">
+    <div class="finance-kpi">
+      <span class="finance-kpi__label">Hoy</span>
+      <span class="finance-kpi__value" id="finance-kpi-today">—</span>
+    </div>
+    <div class="finance-kpi">
+      <span class="finance-kpi__label">Últimos 7 días</span>
+      <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
+    </div>
+    <div class="finance-kpi">
+      <span class="finance-kpi__label">Últimos 30 días</span>
+      <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
+    </div>
+  </div>
+  <div class="row-actions" style="margin-top: 1rem">
+    <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
+  </div>
+  <p id="finance-status" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-shifts-title">
+  <h2 id="finance-shifts-title">Cierres de turno</h2>
+  <p class="hint" style="margin-top: 0">
+    Turnos ya cerrados: quién abrió y cerró caja, y el <strong>detalle completo del cierre</strong> (ventas, stock, arqueo) al pulsar <strong>Ver cierre</strong>.
+  </p>
+  <p id="finance-shifts-empty" class="hint" style="margin-top: 0">No hay cierres registrados todavía.</p>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Cierre</th>
+          <th>Apertura</th>
+          <th>Abierto por</th>
+          <th>Cerrado por</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="finance-shifts-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-ventas-title">
+  <h2 id="finance-ventas-title">Ventas recientes (TPV)</h2>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Socio</th>
+          <th>Importe</th>
+        </tr>
+      </thead>
+      <tbody id="finance-ventas-tbody"></tbody>
+    </table>
+  </div>
+</section>

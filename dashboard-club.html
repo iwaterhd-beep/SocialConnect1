@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel del club — Social Connect</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/dashboard-club.css" />
+  </head>
+  <body class="has-club-topnav">
+    <header class="club-topnav" role="banner">
+      <div class="club-topnav__inner">
+        <div class="club-topnav__brand">
+          <span class="club-topnav__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+              <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+              <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+              <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+            </svg>
+          </span>
+          <div class="club-topnav__brand-text">
+            <div class="club-topnav__wordmark">
+              Social <span class="club-topnav__accent">Connect</span>
+            </div>
+            <div class="club-topnav__clubline" id="club-topnav-club">—</div>
+          </div>
+        </div>
+        <div class="club-topnav__actions">
+          <label class="club-dark-toggle club-dark-toggle--nav">
+            <input type="checkbox" id="club-dark-toggle" />
+            Oscuro
+          </label>
+          <button type="button" class="btn btn--nav-logout" id="logout-btn">
+            Salir
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="shell shell--app">
+      <div class="panel panel--wide">
+        <header class="dash-header">
+          <div>
+            <h1 id="club-name-display">Club</h1>
+            <p class="dash-meta">
+              Rol: <strong id="club-role-display">—</strong> ·
+              <span id="club-user-email">—</span>
+            </p>
+          </div>
+        </header>
+
+        <p id="club-status" class="msg" role="status" aria-live="polite"></p>
+
+        <nav class="club-tabs" role="tablist" aria-label="Secciones del panel">
+          <button type="button" class="club-tab is-active" data-view="home" role="tab" aria-selected="true">
+            Inicio
+          </button>
+          <button type="button" class="club-tab" data-view="tpv" role="tab" aria-selected="false">TPV</button>
+          <button type="button" class="club-tab" data-view="inventory" role="tab" aria-selected="false">
+            Inventario
+          </button>
+          <button type="button" class="club-tab" data-view="stock" role="tab" aria-selected="false">
+            Stock
+          </button>
+          <button type="button" class="club-tab" data-view="members" role="tab" aria-selected="false">
+            Socios
+          </button>
+          <button type="button" class="club-tab" data-view="finance" role="tab" aria-selected="false">
+            Finanzas
+          </button>
+        </nav>
+
+        <!-- Contenido por vista: partials/club-view-*.html (ver js/dashboard-club-partials.js) -->
+        <div id="club-view-home" class="club-view" data-view="home" role="tabpanel">
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+
+        <div id="club-view-tpv" class="club-view is-hidden" data-view="tpv" role="tabpanel" hidden>
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+
+        <div id="club-view-inventory" class="club-view is-hidden" data-view="inventory" role="tabpanel" hidden>
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+
+        <div id="club-view-stock" class="club-view is-hidden" data-view="stock" role="tabpanel" hidden>
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+
+        <div id="club-view-members" class="club-view is-hidden" data-view="members" role="tabpanel" hidden>
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+
+        <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
+          <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="club-toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth-helpers.js"></script>
+    <script src="js/dashboard-club-partials.js"></script>
+    <script src="js/club-inventory-tpv.js"></script>
+    <script src="js/club-stock.js"></script>
+    <script src="js/club-socios-finance.js"></script>
+    <script src="js/dashboard-club.js"></script>
+    <script src="js/account-password.js"></script>
+  </body>
+</html>
