@@ -1463,4 +1463,13 @@
       setFinanceMsg(msg, true);
     }
   };
+
+  window.scClubRefreshFinance = async function () {
+    if (!ctx) return;
+    try {
+      await refreshFinance();
+    } catch (e) {
+      /* ignore refresh errors from external triggers */
+    }
+  };
 })();

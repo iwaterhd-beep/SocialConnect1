@@ -26,6 +26,8 @@
     tpvCatFilter: '',
     tpvSelectedId: '',
     tpvMembers: [],
+    tpvCart: [],
+    tpvCartSeq: 0,
     uiBound: false,
     hasProductExtras: true,
     /** Turno abierto actual (TPV); null si no hay. */
@@ -347,6 +349,8 @@
   function toggleTpvShiftControls(on) {
     const ids = [
       'tpv-submit',
+      'tpv-add-line',
+      'tpv-clear-cart',
       'tpv-price',
       'tpv-grams-charged',
       'tpv-grams-dispensed',
@@ -368,6 +372,9 @@
     });
     const grid = $('tpv-product-grid');
     if (grid) grid.classList.toggle('tpv-grid--disabled', !on);
+    document.querySelectorAll('#tpv-cart-list [data-tpv-cart-del]').forEach((b) => {
+      b.disabled = !on;
+    });
   }
 
   /** Precio €/g: explícito, o precio ÷ gramos sugeridos; si no hay gramos de referencia, el precio sugerido cuenta como €/g (TPV por peso). */
@@ -1155,40 +1162,141 @@
     }
   }
 
-  async function submitTpv() {
+  function makeTpvCartRowId() {
+    state.tpvCartSeq += 1;
+    return `line-${Date.now()}-${state.tpvCartSeq}`;
+  }
+
+  function buildCurrentTpvLine() {
     const pid = ($('tpv-selected-product')?.value || '').trim() || state.tpvSelectedId;
-    const memberRaw = ($('tpv-selected-member')?.value || '').trim();
     const gramsCharged = parseDecimal($('tpv-grams-charged')?.value);
     const gramsDispensed = parseDecimal($('tpv-grams-dispensed')?.value);
     const price = parseDecimal($('tpv-price')?.value);
     const notes = ($('tpv-notes')?.value || '').trim();
+    const selected = state.products.find((x) => x.id === pid);
 
-    if (!pid) {
-      setMsg('tpv-status', 'Elige un producto en la rejilla.', true);
-      return;
-    }
+    if (!pid || !selected) return { error: 'Elige un producto en la rejilla.' };
     if (Number.isNaN(gramsCharged) || gramsCharged < 0) {
-      setMsg('tpv-status', 'Gramos en ticket no válidos.', true);
-      return;
+      return { error: 'Cantidad en ticket no válida.' };
     }
     if (Number.isNaN(gramsDispensed) || gramsDispensed < 0) {
-      setMsg('tpv-status', 'Gramos dispensados reales no válidos.', true);
-      return;
+      return { error: 'Cantidad real no válida.' };
     }
-    const selected = state.products.find((x) => x.id === pid);
     if (unitKey(selected) === 'unit') {
       if (Math.abs(gramsCharged - Math.round(gramsCharged)) > 0.0001) {
-        setMsg('tpv-status', 'En productos por unidad, la cantidad en ticket debe ser 1, 2, 3…', true);
-        return;
+        return { error: 'En productos por unidad, la cantidad en ticket debe ser entera.' };
       }
       if (Math.abs(gramsDispensed - Math.round(gramsDispensed)) > 0.0001) {
-        setMsg('tpv-status', 'En productos por unidad, la cantidad real debe ser 1, 2, 3…', true);
-        return;
+        return { error: 'En productos por unidad, la cantidad real debe ser entera.' };
       }
     }
     if (Number.isNaN(price) || price < 0) {
-      setMsg('tpv-status', 'Precio al cliente no válido.', true);
+      return { error: 'Precio al cliente no válido.' };
+    }
+
+    return {
+      line: {
+        cart_row_id: makeTpvCartRowId(),
+        product_id: pid,
+        product_name: selected.name || '—',
+        product_emoji: (selected.emoji || '').trim(),
+        sale_unit: unitKey(selected),
+        grams_charged: gramsCharged,
+        grams_dispensed: gramsDispensed,
+        price_charged_eur: price,
+        notes,
+      },
+    };
+  }
+
+  function renderTpvCart() {
+    const wrap = $('tpv-cart-list');
+    const totalEl = $('tpv-cart-total');
+    if (!wrap || !totalEl) return;
+    const lines = state.tpvCart || [];
+    const total = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
+    totalEl.textContent = `Total: ${formatMoney(total)}`;
+    wrap.innerHTML = '';
+    if (!lines.length) {
+      wrap.innerHTML = '<p class="hint">Ticket vacío. Añade líneas para cobrar varias de una vez.</p>';
       return;
+    }
+    lines.forEach((line) => {
+      const row = document.createElement('div');
+      row.className = 'tpv-cart-line';
+      const us = line.sale_unit === 'unit' ? 'ud' : 'g';
+      row.innerHTML = `
+        <div class="tpv-cart-line__main">
+          <div class="tpv-cart-line__title">${escapeHtml(line.product_emoji ? line.product_emoji + ' ' : '')}${escapeHtml(line.product_name)}</div>
+          <div class="tpv-cart-line__meta">Ticket ${escapeHtml(formatNum(line.grams_charged))} ${escapeHtml(us)} · Real ${escapeHtml(formatNum(line.grams_dispensed))} ${escapeHtml(us)}</div>
+        </div>
+        <div class="tpv-cart-line__side">
+          <strong>${escapeHtml(formatMoney(line.price_charged_eur))}</strong>
+          <button type="button" class="btn btn--ghost btn--small" data-tpv-cart-del="${line.cart_row_id}">Quitar</button>
+        </div>
+      `;
+      wrap.appendChild(row);
+    });
+    toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
+  }
+
+  function addCurrentLineToCart() {
+    const built = buildCurrentTpvLine();
+    if (built.error) {
+      setMsg('tpv-status', built.error, true);
+      return;
+    }
+    state.tpvCart.push(built.line);
+    renderTpvCart();
+    setMsg(
+      'tpv-status',
+      `Línea añadida: ${built.line.product_name} · ${formatMoney(built.line.price_charged_eur)}.`,
+      false,
+    );
+  }
+
+  async function registerTpvDispenseLine(line, shiftId, memberId) {
+    const payloadWithMember = {
+      p_product_id: line.product_id,
+      p_grams_charged: line.grams_charged,
+      p_grams_dispensed: line.grams_dispensed,
+      p_price_charged_eur: line.price_charged_eur,
+      p_shift_id: shiftId,
+      p_notes: line.notes || '',
+      p_member_id: memberId || null,
+    };
+    let rpcRes = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
+    let { error } = rpcRes;
+    const maybeLegacyRpc =
+      error &&
+      (error.code === 'PGRST202' ||
+        error.code === '42883' ||
+        /p_member_id|function\s+public\.club_register_tpv_dispense/i.test(error.message || ''));
+    if (maybeLegacyRpc) {
+      const payloadLegacy = {
+        p_product_id: line.product_id,
+        p_grams_charged: line.grams_charged,
+        p_grams_dispensed: line.grams_dispensed,
+        p_price_charged_eur: line.price_charged_eur,
+        p_shift_id: shiftId,
+        p_notes: line.notes || '',
+      };
+      rpcRes = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
+      error = rpcRes.error;
+    }
+    return { error, rpcRes };
+  }
+
+  async function submitTpv() {
+    const memberRaw = ($('tpv-selected-member')?.value || '').trim();
+    let lines = (state.tpvCart || []).slice();
+    if (!lines.length) {
+      const built = buildCurrentTpvLine();
+      if (built.error) {
+        setMsg('tpv-status', built.error, true);
+        return;
+      }
+      lines = [built.line];
     }
 
     const shiftId = state.tpvOpenShiftId || (await getOpenShiftId(state.ctx.club.id));
@@ -1197,55 +1305,35 @@
       return;
     }
 
-    setMsg('tpv-status', 'Registrando venta…', false);
-    const payloadWithMember = {
-      p_product_id: pid,
-      p_grams_charged: gramsCharged,
-      p_grams_dispensed: gramsDispensed,
-      p_price_charged_eur: price,
-      p_shift_id: shiftId,
-      p_notes: notes,
-      p_member_id: memberRaw || null,
-    };
-
-    let rpcRes = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
-    let { error } = rpcRes;
-
-    const maybeLegacyRpc =
-      error &&
-      (error.code === 'PGRST202' ||
-        error.code === '42883' ||
-        /p_member_id|function\s+public\.club_register_tpv_dispense/i.test(error.message || ''));
-    if (maybeLegacyRpc) {
-      const payloadLegacy = {
-        p_product_id: pid,
-        p_grams_charged: gramsCharged,
-        p_grams_dispensed: gramsDispensed,
-        p_price_charged_eur: price,
-        p_shift_id: shiftId,
-        p_notes: notes,
-      };
-      rpcRes = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
-      error = rpcRes.error;
+    const registeredIds = [];
+    let lastRpcRes = null;
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      setMsg('tpv-status', `Registrando ticket… línea ${i + 1}/${lines.length}`, false);
+      const out = await registerTpvDispenseLine(line, shiftId, memberRaw || null);
+      lastRpcRes = out.rpcRes;
+      if (out.error) {
+        const partial = registeredIds.length
+          ? ` Se guardaron ${registeredIds.length} línea(s) antes del error.`
+          : '';
+        setMsg('tpv-status', `${line.product_name}: ${out.error.message || 'No se pudo registrar.'}.${partial}`, true);
+        return;
+      }
+      if (out.rpcRes?.data) registeredIds.push(out.rpcRes.data);
     }
 
-    if (error) {
-      setMsg('tpv-status', error.message || 'No se pudo registrar.', true);
-      return;
-    }
-
+    const totalPrice = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
     setMsg(
       'tpv-status',
-      `Listo: −${formatNum(gramsDispensed)} ${unitShort(state.products.find((x) => x.id === pid))} de stock · cobrado ${formatMoney(price)}.`,
+      `Listo: ${lines.length} línea(s) cobradas · total ${formatMoney(totalPrice)}.`,
       false,
     );
-    showToast(`Venta · −${formatNum(gramsDispensed)} ${unitShort(state.products.find((x) => x.id === pid))} stock`);
+    showToast(`Venta guardada · ${lines.length} línea(s) · ${formatMoney(totalPrice)}`);
 
     const overlay = $('tpv-success-overlay');
     const detail = $('tpv-overlay-detail');
     if (overlay && detail) {
-      const us = unitShort(state.products.find((x) => x.id === pid));
-      detail.textContent = `${formatMoney(price)} · ticket ${formatNum(gramsCharged)} ${us} · real ${formatNum(gramsDispensed)} ${us}`;
+      detail.textContent = `${lines.length} línea(s) · ${formatMoney(totalPrice)}`;
       overlay.classList.remove('is-hidden');
       overlay.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
@@ -1254,10 +1342,15 @@
       }, 1400);
     }
 
+    state.tpvCart = [];
+    renderTpvCart();
     $('tpv-notes').value = '';
     updateTpvMarginHint();
     await loadProducts();
-    await loadRecentDispenses(rpcRes?.data || null);
+    await loadRecentDispenses(registeredIds.length ? registeredIds : lastRpcRes?.data || null);
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
   }
 
   async function deleteRecentDispense(row) {
@@ -1284,6 +1377,9 @@
     showToast('Venta eliminada');
     await loadProducts();
     await loadRecentDispenses();
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
   }
 
   async function loadRecentDispenses(forceDispenseId) {
@@ -1335,11 +1431,17 @@
       return;
     }
     let rows = data || [];
-    if (forceDispenseId && !rows.some((r) => r.id === forceDispenseId)) {
+    const forcedIds = Array.isArray(forceDispenseId)
+      ? forceDispenseId.filter(Boolean)
+      : forceDispenseId
+        ? [forceDispenseId]
+        : [];
+    for (const forcedId of forcedIds) {
+      if (rows.some((r) => r.id === forcedId)) continue;
       const { data: forcedRow, error: forceErr } = await sb()
         .from('tpv_dispenses')
         .select(sel)
-        .eq('id', forceDispenseId)
+        .eq('id', forcedId)
         .maybeSingle();
       if (!forceErr && forcedRow) {
         rows = [forcedRow, ...rows].slice(0, 5);
@@ -1470,6 +1572,20 @@
     });
     $('tpv-grams-dispensed')?.addEventListener('input', () => updateTpvMarginHint());
     $('tpv-submit')?.addEventListener('click', () => submitTpv());
+    $('tpv-add-line')?.addEventListener('click', () => addCurrentLineToCart());
+    $('tpv-clear-cart')?.addEventListener('click', () => {
+      state.tpvCart = [];
+      renderTpvCart();
+      setMsg('tpv-status', 'Ticket vaciado.', false);
+    });
+    $('tpv-cart-list')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-tpv-cart-del]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-tpv-cart-del');
+      if (!id) return;
+      state.tpvCart = state.tpvCart.filter((line) => line.cart_row_id !== id);
+      renderTpvCart();
+    });
 
     document.querySelectorAll('[data-tpv-step]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1509,9 +1625,11 @@
       state.invSearch = '';
       state.tpvSearch = '';
       state.tpvCatFilter = '';
+      state.tpvCart = [];
       if ($('inv-filter-category')) $('inv-filter-category').value = '';
       if ($('inv-search')) $('inv-search').value = '';
       if ($('tpv-search')) $('tpv-search').value = '';
+      renderTpvCart();
       await loadStaffDirectory();
       await loadProducts();
       await loadMembersForTpv();
