@@ -71,7 +71,33 @@
 </section>
 
 <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-ventas-title">
-  <h2 id="finance-ventas-title">Ventas recientes (TPV)</h2>
+  <h2 id="finance-ventas-title">Ventas TPV</h2>
+  <p class="hint" style="margin-top: 0">
+    Consulta las ventas registradas y filtra por <strong>hoy</strong>, <strong>semana</strong>, <strong>30 días</strong>,
+    <strong>todas</strong> o un <strong>rango de fechas</strong>.
+  </p>
+  <div class="finance-ventas-toolbar">
+    <div id="finance-ventas-range" class="chip-row" role="group" aria-label="Periodo de ventas">
+      <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-sales-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-sales-range="custom">Fechas</button>
+    </div>
+    <div id="finance-ventas-custom" class="finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-sales-from">Desde</label>
+        <input class="input" id="finance-sales-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-sales-to">Hasta</label>
+        <input class="input" id="finance-sales-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar fechas</button>
+    </div>
+  </div>
+  <p id="finance-ventas-summary" class="hint" style="margin-top: 0.75rem"></p>
+  <p id="finance-ventas-empty" class="hint" style="margin-top: 0" hidden>No hay ventas en este periodo.</p>
   <div class="table-wrap" style="margin-top: 0.75rem">
     <table class="table-compact">
       <thead>

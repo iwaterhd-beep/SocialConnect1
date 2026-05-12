@@ -13,6 +13,10 @@
   let membersCache = [];
   let membersSearch = '';
   let selectedMemberId = '';
+  let financeVentasRange = '30d';
+  let financeVentasFrom = '';
+  let financeVentasTo = '';
+  let financeVentasUiBound = false;
 
   const BUCKET = 'club_member_docs';
   const MAX_FILE_BYTES = 5242880;
@@ -778,6 +782,260 @@
     return x;
   }
 
+  function endOfDay(d) {
+    const x = new Date(d);
+    x.setHours(23, 59, 59, 999);
+    return x;
+  }
+
+  function parseFinanceDateInput(str, asEnd) {
+    const t = String(str || '').trim();
+    if (!t) return null;
+    const parts = t.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+    if (!y || m < 0 || m > 11 || !day) return null;
+    const dt = new Date(y, m, day);
+    if (Number.isNaN(dt.getTime())) return null;
+    return asEnd ? endOfDay(dt) : startOfDay(dt);
+  }
+
+  function mondayStartOfWeek(d) {
+    const x = startOfDay(d);
+    const day = x.getDay();
+    const mondayOffset = (day + 6) % 7;
+    x.setDate(x.getDate() - mondayOffset);
+    return x;
+  }
+
+  function getFinanceVentasBounds() {
+    const now = new Date();
+    if (financeVentasRange === 'today') {
+      return { from: startOfDay(now), to: null };
+    }
+    if (financeVentasRange === 'week') {
+      return { from: mondayStartOfWeek(now), to: null };
+    }
+    if (financeVentasRange === '30d') {
+      const from = startOfDay(now);
+      from.setDate(from.getDate() - 30);
+      return { from, to: null };
+    }
+    if (financeVentasRange === 'custom') {
+      const from = parseFinanceDateInput(financeVentasFrom, false);
+      const to = parseFinanceDateInput(financeVentasTo, true);
+      return { from, to };
+    }
+    return { from: null, to: null };
+  }
+
+  function financeVentasRangeLabel() {
+    if (financeVentasRange === 'today') return 'hoy';
+    if (financeVentasRange === 'week') return 'esta semana';
+    if (financeVentasRange === '30d') return 'los últimos 30 días';
+    if (financeVentasRange === 'all') return 'todo el historial';
+    if (financeVentasFrom && financeVentasTo) {
+      return `del ${financeVentasFrom} al ${financeVentasTo}`;
+    }
+    if (financeVentasFrom) return `desde ${financeVentasFrom}`;
+    if (financeVentasTo) return `hasta ${financeVentasTo}`;
+    return 'el rango elegido';
+  }
+
+  function renderFinanceVentasRangeChips() {
+    document.querySelectorAll('[data-finance-sales-range]').forEach((btn) => {
+      const active = btn.getAttribute('data-finance-sales-range') === financeVentasRange;
+      btn.classList.toggle('is-active', active);
+    });
+    const customWrap = $('finance-ventas-custom');
+    const showCustom = financeVentasRange === 'custom';
+    if (customWrap) {
+      customWrap.hidden = !showCustom;
+      customWrap.classList.toggle('is-hidden', !showCustom);
+    }
+  }
+
+  function bindFinanceVentasUiOnce() {
+    if (financeVentasUiBound) return;
+    financeVentasUiBound = true;
+
+    document.querySelectorAll('[data-finance-sales-range]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = btn.getAttribute('data-finance-sales-range') || '30d';
+        financeVentasRange = next;
+        renderFinanceVentasRangeChips();
+        if (next !== 'custom') {
+          void refreshFinanceVentasTpv();
+        }
+      });
+    });
+
+    $('finance-sales-apply')?.addEventListener('click', () => {
+      financeVentasFrom = ($('finance-sales-from')?.value || '').trim();
+      financeVentasTo = ($('finance-sales-to')?.value || '').trim();
+      financeVentasRange = 'custom';
+      renderFinanceVentasRangeChips();
+      void refreshFinanceVentasTpv();
+    });
+
+    renderFinanceVentasRangeChips();
+  }
+
+  async function refreshFinanceKpis() {
+    if (!ctx) return;
+    const clubId = ctx.club.id;
+    const now = new Date();
+    const d0 = startOfDay(now);
+    const d7 = startOfDay(now);
+    d7.setDate(d7.getDate() - 7);
+    const d30 = startOfDay(now);
+    d30.setDate(d30.getDate() - 30);
+
+    const { data: rows, error } = await sb()
+      .from('tpv_dispenses')
+      .select('price_charged_eur, created_at')
+      .eq('club_id', clubId)
+      .gte('created_at', d30.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) {
+      if (
+        error.message &&
+        (error.message.includes('member_id') || error.code === '42703')
+      ) {
+        setFinanceMsg(
+          'Ejecuta la migración 010_club_members_finance.sql para enlazar socios y KPI completos.',
+          true,
+        );
+      } else {
+        setFinanceMsg(error.message || 'Error cargando ventas.', true);
+      }
+      return false;
+    }
+
+    const list = rows || [];
+    let sumToday = 0;
+    let sum7 = 0;
+    let sum30 = 0;
+
+    list.forEach((r) => {
+      const t = new Date(r.created_at).getTime();
+      const p = Number(r.price_charged_eur) || 0;
+      if (t >= d0.getTime()) sumToday += p;
+      if (t >= d7.getTime()) sum7 += p;
+      sum30 += p;
+    });
+
+    $('finance-kpi-today').textContent = formatMoney(sumToday);
+    $('finance-kpi-7d').textContent = formatMoney(sum7);
+    $('finance-kpi-30d').textContent = formatMoney(sum30);
+    return true;
+  }
+
+  async function refreshFinanceVentasTpv() {
+    const ventasBody = $('finance-ventas-tbody');
+    const summaryEl = $('finance-ventas-summary');
+    const emptyEl = $('finance-ventas-empty');
+    if (!ventasBody || !ctx) return;
+
+    bindFinanceVentasUiOnce();
+
+    if (financeVentasRange === 'custom' && !financeVentasFrom && !financeVentasTo) {
+      ventasBody.innerHTML = '';
+      if (summaryEl) {
+        summaryEl.textContent = 'Indica al menos una fecha y pulsa «Aplicar fechas».';
+      }
+      if (emptyEl) emptyEl.hidden = true;
+      return;
+    }
+
+    const bounds = getFinanceVentasBounds();
+    if (financeVentasRange === 'custom' && !bounds.from && !bounds.to) {
+      ventasBody.innerHTML = '';
+      if (summaryEl) {
+        summaryEl.textContent = 'Las fechas indicadas no son válidas.';
+      }
+      if (emptyEl) emptyEl.hidden = true;
+      return;
+    }
+
+    let query = sb()
+      .from('tpv_dispenses')
+      .select('price_charged_eur, created_at, product_id, member_id')
+      .eq('club_id', ctx.club.id)
+      .order('created_at', { ascending: false });
+
+    if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
+    if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
+    query = query.limit(financeVentasRange === 'all' ? 5000 : 2000);
+
+    const { data: rows, error } = await query;
+    if (error) {
+      ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`;
+      if (summaryEl) summaryEl.textContent = '';
+      if (emptyEl) emptyEl.hidden = true;
+      return;
+    }
+
+    const list = rows || [];
+    const pids = [...new Set(list.map((r) => r.product_id).filter(Boolean))];
+    const mids = [...new Set(list.map((r) => r.member_id).filter(Boolean))];
+
+    let prodMap = {};
+    let memMap = {};
+    if (pids.length) {
+      const { data: pr } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji')
+        .in('id', pids);
+      if (pr) prodMap = Object.fromEntries(pr.map((x) => [x.id, x]));
+    }
+    if (mids.length) {
+      const { data: mm } = await sb()
+        .from('club_members')
+        .select('id, display_name')
+        .in('id', mids);
+      if (mm) memMap = Object.fromEntries(mm.map((x) => [x.id, x]));
+    }
+
+    ventasBody.innerHTML = '';
+    if (!list.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      if (summaryEl) {
+        summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()}.`;
+      }
+      return;
+    }
+    if (emptyEl) emptyEl.hidden = true;
+
+    let total = 0;
+    list.forEach((r) => {
+      total += Number(r.price_charged_eur) || 0;
+      const pr = prodMap[r.product_id] || {};
+      const em = (pr.emoji || '').trim();
+      const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
+      const mb = r.member_id ? memMap[r.member_id] : null;
+      const socio = mb ? mb.display_name : '—';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(prodLabel)}</td>
+        <td>${escapeHtml(socio)}</td>
+        <td>${escapeHtml(formatMoney(r.price_charged_eur))}</td>
+      `;
+      ventasBody.appendChild(tr);
+    });
+
+    if (summaryEl) {
+      const limit = financeVentasRange === 'all' ? 5000 : 2000;
+      const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
+      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasRangeLabel()} · total ${formatMoney(total)}${truncated}`;
+    }
+  }
+
   async function refreshFinanceStockAdjustments() {
     const tbody = $('finance-inventory-adjust-tbody');
     const emptyEl = $('finance-inventory-adjust-empty');
@@ -868,95 +1126,10 @@
     if (!ctx) return;
     setFinanceMsg('Cargando…', false);
 
-    const clubId = ctx.club.id;
-    const now = new Date();
-    const d0 = startOfDay(now);
-    const d7 = startOfDay(now);
-    d7.setDate(d7.getDate() - 7);
-    const d30 = startOfDay(now);
-    d30.setDate(d30.getDate() - 30);
+    const kpiOk = await refreshFinanceKpis();
+    if (!kpiOk) return;
 
-    const { data: rows, error } = await sb()
-      .from('tpv_dispenses')
-      .select('price_charged_eur, created_at, product_id, member_id')
-      .eq('club_id', clubId)
-      .gte('created_at', d30.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(500);
-
-    if (error) {
-      if (
-        error.message &&
-        (error.message.includes('member_id') || error.code === '42703')
-      ) {
-        setFinanceMsg(
-          'Ejecuta la migración 010_club_members_finance.sql para enlazar socios y KPI completos.',
-          true,
-        );
-      } else {
-        setFinanceMsg(error.message || 'Error cargando ventas.', true);
-      }
-      return;
-    }
-
-    const list = rows || [];
-    let sumToday = 0;
-    let sum7 = 0;
-    let sum30 = 0;
-
-    list.forEach((r) => {
-      const t = new Date(r.created_at).getTime();
-      const p = Number(r.price_charged_eur) || 0;
-      if (t >= d0.getTime()) sumToday += p;
-      if (t >= d7.getTime()) sum7 += p;
-      sum30 += p;
-    });
-
-    $('finance-kpi-today').textContent = formatMoney(sumToday);
-    $('finance-kpi-7d').textContent = formatMoney(sum7);
-    $('finance-kpi-30d').textContent = formatMoney(sum30);
-
-    const ventasBody = $('finance-ventas-tbody');
-    if (ventasBody) {
-      const recent = list.slice(0, 60);
-      const pids = [...new Set(recent.map((r) => r.product_id).filter(Boolean))];
-      const mids = [...new Set(recent.map((r) => r.member_id).filter(Boolean))];
-
-      let prodMap = {};
-      let memMap = {};
-      if (pids.length) {
-        const { data: pr } = await sb()
-          .from('inventory_products')
-          .select('id, name, emoji')
-          .in('id', pids);
-        if (pr) prodMap = Object.fromEntries(pr.map((x) => [x.id, x]));
-      }
-      if (mids.length) {
-        const { data: mm } = await sb()
-          .from('club_members')
-          .select('id, display_name')
-          .in('id', mids);
-        if (mm) memMap = Object.fromEntries(mm.map((x) => [x.id, x]));
-      }
-
-      ventasBody.innerHTML = '';
-      recent.forEach((r) => {
-        const pr = prodMap[r.product_id] || {};
-        const em = (pr.emoji || '').trim();
-        const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
-        const mb = r.member_id ? memMap[r.member_id] : null;
-        const socio = mb ? mb.display_name : '—';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-          <td>${escapeHtml(prodLabel)}</td>
-          <td>${escapeHtml(socio)}</td>
-          <td>${escapeHtml(formatMoney(r.price_charged_eur))}</td>
-        `;
-        ventasBody.appendChild(tr);
-      });
-    }
-
+    await refreshFinanceVentasTpv();
     await refreshFinanceShiftClosures();
     await refreshFinanceStockAdjustments();
 

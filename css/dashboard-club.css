@@ -1323,6 +1323,25 @@ body.club-dark .tpv-member-dropdown button:hover {
   color: var(--g);
 }
 
+.finance-ventas-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.finance-ventas-custom {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 720px) {
+  .finance-ventas-custom {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    align-items: end;
+  }
+}
+
 body.club-dark .finance-kpi {
   background: rgba(15, 23, 42, 0.65);
   border-color: rgba(148, 163, 184, 0.25);
