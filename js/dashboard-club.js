@@ -775,6 +775,33 @@
     });
   }
 
+  function refreshClubView(viewName) {
+    if (viewName === 'stock') {
+      if (typeof window.scClubRefreshStockUi === 'function') {
+        void window.scClubRefreshStockUi();
+      }
+      return;
+    }
+    if (viewName === 'inventory') {
+      if (typeof window.scClubRefreshInventoryUi === 'function') {
+        void window.scClubRefreshInventoryUi();
+      }
+      return;
+    }
+    if (viewName === 'tpv') {
+      if (typeof window.scClubReloadInventoryProducts === 'function') {
+        void window.scClubReloadInventoryProducts();
+      }
+      if (typeof window.scClubRefreshTpvUi === 'function') {
+        void window.scClubRefreshTpvUi();
+      }
+      return;
+    }
+    if (viewName === 'finance' && typeof window.scClubRefreshFinance === 'function') {
+      void window.scClubRefreshFinance();
+    }
+  }
+
   function initNav() {
     const tabs = document.querySelectorAll('.club-tab');
     const views = document.querySelectorAll('.club-view');
@@ -793,6 +820,7 @@
         t.classList.toggle('is-active', active);
         t.setAttribute('aria-selected', active ? 'true' : 'false');
       });
+      refreshClubView(viewName);
     }
     tabs.forEach((t) => {
       t.addEventListener('click', () => show(t.dataset.view));

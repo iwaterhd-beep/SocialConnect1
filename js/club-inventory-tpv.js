@@ -238,6 +238,15 @@
     });
   }
 
+  async function refreshStockUi() {
+    if (typeof window.scClubRefreshStockUi !== 'function') return;
+    try {
+      await window.scClubRefreshStockUi();
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function openInvAdjustModal(product) {
     if (!product) return;
     state.adjustProductId = product.id;
@@ -328,6 +337,7 @@
       false,
     );
     await loadProducts();
+    await refreshStockUi();
     if (typeof window.scClubRefreshFinance === 'function') {
       await window.scClubRefreshFinance();
     }
@@ -638,6 +648,7 @@
         setMsg('inv-status', 'Categoría eliminada.', false);
         await loadCategories();
         await loadProducts();
+        await refreshStockUi();
       });
       ul.appendChild(li);
     });
@@ -969,6 +980,7 @@
           setMsg('inv-status', 'Producto eliminado.', false);
           clearProductForm();
           await loadProducts();
+          await refreshStockUi();
         });
       }
       tr.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
@@ -1195,6 +1207,7 @@
     showToast(id ? 'Producto guardado' : 'Producto creado');
     closeInvProductModal();
     await loadProducts();
+    await refreshStockUi();
   }
 
   async function addCategory() {
@@ -1221,6 +1234,7 @@
     closeInvCatModal();
     await loadCategories();
     await loadProducts();
+    await refreshStockUi();
   }
 
   function applyTpvStep(delta) {
@@ -1649,6 +1663,7 @@
     $('tpv-notes').value = '';
     updateTpvMarginHint();
     await loadProducts();
+    await refreshStockUi();
     const visibleRows = await loadRecentDispenses(
       registeredIds.length ? registeredIds : lastRpcRes?.data || null,
     );
@@ -1691,6 +1706,7 @@
     );
     showToast('Venta eliminada');
     await loadProducts();
+    await refreshStockUi();
     await loadRecentDispenses();
     if (typeof window.scClubRefreshFinance === 'function') {
       await window.scClubRefreshFinance();
@@ -1987,6 +2003,19 @@
   window.scClubReloadInventoryProducts = async function () {
     if (!state.ctx) return;
     try {
+      await loadProducts();
+    } catch (e) {
+      /* ignore */
+    }
+  };
+
+  /** Recarga inventario al volver a la pestaña (productos, categorías y permisos). */
+  window.scClubRefreshInventoryUi = async function () {
+    if (!state.ctx) return;
+    try {
+      await loadInventoryAccessFlags(state.ctx);
+      applyInventoryEditAccess();
+      await loadCategories();
       await loadProducts();
     } catch (e) {
       /* ignore */
