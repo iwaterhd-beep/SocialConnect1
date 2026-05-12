@@ -5,8 +5,12 @@
   const sb = () => window.scSupabase;
 
   const PRODUCT_SELECT_FULL =
-    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur';
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur';
   const PRODUCT_SELECT_FULL_NO_PURCHASE_COST =
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, retail_price_eur';
+  const PRODUCT_SELECT_FULL_NO_RETAIL_PRICE =
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur';
+  const PRODUCT_SELECT_FULL_NO_OPTIONAL_PRICES =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur';
   /** Sin 015: extras de TPV sí, pero sin columna €/g. */
   const PRODUCT_SELECT_EXTRAS_NO_PER_GRAM =
@@ -40,6 +44,7 @@
     emojiPickerReady: false,
     emojiPickerLoading: false,
     hasPurchaseCostColumn: true,
+    hasRetailPriceColumn: true,
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
@@ -117,18 +122,26 @@
     modal.setAttribute('aria-hidden', 'true');
   }
 
-  function applyAdminPurchaseCostRow() {
-    const row = $('inv-row-purchase-cost');
-    if (!row) return;
+  function applyAdminInventoryPriceRows() {
     const show = state.ctx?.profile?.role === 'admin_club';
-    row.hidden = !show;
-    row.classList.toggle('is-hidden', !show);
+    const rowPc = $('inv-row-purchase-cost');
+    if (rowPc) {
+      const showPc = show && state.hasPurchaseCostColumn;
+      rowPc.hidden = !showPc;
+      rowPc.classList.toggle('is-hidden', !showPc);
+    }
+    const rowRp = $('inv-row-retail-price');
+    if (rowRp) {
+      const showRp = show && state.hasRetailPriceColumn;
+      rowRp.hidden = !showRp;
+      rowRp.classList.toggle('is-hidden', !showRp);
+    }
   }
 
   function openInvProductModal() {
     const modal = $('inv-product-modal');
     if (!modal) return;
-    applyAdminPurchaseCostRow();
+    applyAdminInventoryPriceRows();
     modal.classList.remove('is-hidden');
     modal.setAttribute('aria-hidden', 'false');
   }
@@ -248,7 +261,7 @@
       const el = $(id);
       if (el) el.hidden = !canEdit;
     });
-    applyAdminPurchaseCostRow();
+    applyAdminInventoryPriceRows();
   }
 
   async function refreshStockUi() {
@@ -378,6 +391,10 @@
         p.purchase_cost_eur != null && p.purchase_cost_eur !== ''
           ? Number(p.purchase_cost_eur)
           : null,
+      retail_price_eur:
+        p.retail_price_eur != null && p.retail_price_eur !== ''
+          ? Number(p.retail_price_eur)
+          : null,
     };
   }
 
@@ -411,6 +428,10 @@
       $('inv-label-purchase-cost').textContent = isUnit
         ? 'Coste de compra (€/ud)'
         : 'Coste de compra (€/g)';
+    if ($('inv-label-retail-price'))
+      $('inv-label-retail-price').textContent = isUnit
+        ? 'Precio de venta ref. (€/ud)'
+        : 'Precio de venta ref. (€/g)';
     const bottle = $('inv-product-bottle');
     if (bottle) bottle.disabled = isUnit;
     const rowBottle = $('inv-row-bottle');
@@ -677,6 +698,7 @@
 
   async function loadProducts() {
     state.hasPurchaseCostColumn = true;
+    state.hasRetailPriceColumn = true;
     let query = sb()
       .from('inventory_products')
       .select(state.hasProductExtras ? PRODUCT_SELECT_FULL : PRODUCT_SELECT_BASE)
@@ -691,7 +713,7 @@
         (error.message && error.message.toLowerCase().includes('column')));
 
     if (colErr && state.hasProductExtras) {
-      const msg = (error.message || '').toLowerCase();
+      let msg = (error.message || '').toLowerCase();
       if (msg.includes('purchase_cost_eur')) {
         state.hasPurchaseCostColumn = false;
         const rPc = await sb()
@@ -704,18 +726,68 @@
           error = null;
         } else {
           error = rPc.error;
+          msg = (error.message || '').toLowerCase();
         }
-      } else if (msg.includes('default_price_per_gram')) {
-        const rPg = await sb()
-          .from('inventory_products')
-          .select(PRODUCT_SELECT_EXTRAS_NO_PER_GRAM)
-          .eq('club_id', state.ctx.club.id)
-          .order('name', { ascending: true });
-        if (!rPg.error) {
-          data = rPg.data;
-          error = null;
-        } else {
-          error = rPg.error;
+      }
+      if (
+        error &&
+        (error.code === '42703' ||
+          (error.message && error.message.toLowerCase().includes('column')))
+      ) {
+        msg = (error.message || '').toLowerCase();
+        if (msg.includes('retail_price_eur')) {
+          state.hasRetailPriceColumn = false;
+          const sel = state.hasPurchaseCostColumn
+            ? PRODUCT_SELECT_FULL_NO_RETAIL_PRICE
+            : PRODUCT_SELECT_FULL_NO_OPTIONAL_PRICES;
+          const rR = await sb()
+            .from('inventory_products')
+            .select(sel)
+            .eq('club_id', state.ctx.club.id)
+            .order('name', { ascending: true });
+          if (!rR.error) {
+            data = rR.data;
+            error = null;
+          } else {
+            error = rR.error;
+            msg = (error.message || '').toLowerCase();
+          }
+        }
+      }
+      if (
+        error &&
+        (error.code === '42703' ||
+          (error.message && error.message.toLowerCase().includes('column')))
+      ) {
+        msg = (error.message || '').toLowerCase();
+        if (msg.includes('purchase_cost_eur')) {
+          state.hasPurchaseCostColumn = false;
+          const sel = state.hasRetailPriceColumn
+            ? PRODUCT_SELECT_FULL_NO_PURCHASE_COST
+            : PRODUCT_SELECT_FULL_NO_OPTIONAL_PRICES;
+          const rP2 = await sb()
+            .from('inventory_products')
+            .select(sel)
+            .eq('club_id', state.ctx.club.id)
+            .order('name', { ascending: true });
+          if (!rP2.error) {
+            data = rP2.data;
+            error = null;
+          } else {
+            error = rP2.error;
+          }
+        } else if (msg.includes('default_price_per_gram')) {
+          const rPg = await sb()
+            .from('inventory_products')
+            .select(PRODUCT_SELECT_EXTRAS_NO_PER_GRAM)
+            .eq('club_id', state.ctx.club.id)
+            .order('name', { ascending: true });
+          if (!rPg.error) {
+            data = rPg.data;
+            error = null;
+          } else {
+            error = rPg.error;
+          }
         }
       }
     }
@@ -749,6 +821,7 @@
               default_price_per_gram_eur: null,
               sale_unit: 'grams',
               purchase_cost_eur: null,
+              retail_price_eur: null,
             },
       ),
     );
@@ -765,6 +838,7 @@
     updateInvSummary();
     renderTpvGrid();
     syncTpvSelectionAfterReload();
+    applyAdminInventoryPriceRows();
   }
 
   function getFilteredByCategory(list) {
@@ -1096,6 +1170,7 @@
     $('inv-product-default-price').value = '';
     if ($('inv-product-price-per-g')) $('inv-product-price-per-g').value = '';
     if ($('inv-product-purchase-cost')) $('inv-product-purchase-cost').value = '';
+    if ($('inv-product-retail-price')) $('inv-product-retail-price').value = '';
     setInvSaleUnitUi('grams');
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Crear producto';
   }
@@ -1137,6 +1212,14 @@
         pc.value = String(p.purchase_cost_eur).replace('.', ',');
       } else {
         pc.value = '';
+      }
+    }
+    const rp = $('inv-product-retail-price');
+    if (rp) {
+      if (p.retail_price_eur != null && !Number.isNaN(Number(p.retail_price_eur))) {
+        rp.value = String(p.retail_price_eur).replace('.', ',');
+      } else {
+        rp.value = '';
       }
     }
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Actualizar producto';
@@ -1191,6 +1274,7 @@
 
     const isClubAdmin = state.ctx?.profile?.role === 'admin_club';
     let purchaseCostField = null;
+    let retailPriceField = null;
     if (isClubAdmin && state.hasProductExtras) {
       const pr = ($('inv-product-purchase-cost')?.value || '').trim();
       if (pr !== '') {
@@ -1202,6 +1286,17 @@
         purchaseCostField = pv;
       } else {
         purchaseCostField = null;
+      }
+      const rr = ($('inv-product-retail-price')?.value || '').trim();
+      if (rr !== '') {
+        const rv = parseDecimal($('inv-product-retail-price')?.value);
+        if (Number.isNaN(rv) || rv < 0) {
+          setMsg('inv-status', 'Precio de venta de referencia no válido.', true);
+          return;
+        }
+        retailPriceField = rv;
+      } else {
+        retailPriceField = null;
       }
     }
 
@@ -1221,7 +1316,10 @@
           default_sale_grams: defSale,
           default_price_eur: defPrice,
           default_price_per_gram_eur: defPerGram,
-          ...(isClubAdmin ? { purchase_cost_eur: purchaseCostField } : {}),
+          ...(isClubAdmin && state.hasPurchaseCostColumn
+            ? { purchase_cost_eur: purchaseCostField }
+            : {}),
+          ...(isClubAdmin && state.hasRetailPriceColumn ? { retail_price_eur: retailPriceField } : {}),
         }
       : {};
 
@@ -1247,6 +1345,12 @@
         res = await trySave(!id);
         msg = (res.error?.message || '').toLowerCase();
       }
+      if (msg.includes('retail_price_eur') && 'retail_price_eur' in row) {
+        delete row.retail_price_eur;
+        state.hasRetailPriceColumn = false;
+        res = await trySave(!id);
+        msg = (res.error?.message || '').toLowerCase();
+      }
       if (msg.includes('default_price_per_gram') && 'default_price_per_gram_eur' in row) {
         delete row.default_price_per_gram_eur;
         res = await trySave(!id);
@@ -1263,6 +1367,7 @@
       delete row.default_price_eur;
       delete row.default_price_per_gram_eur;
       delete row.purchase_cost_eur;
+      delete row.retail_price_eur;
       res = await trySave(!id);
     }
 

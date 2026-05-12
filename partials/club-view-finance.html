@@ -19,13 +19,19 @@
     </div>
   </div>
   <section id="finance-admin-inventory-cost" class="finance-admin-inventory-cost is-hidden" hidden aria-labelledby="finance-inv-cost-title">
-    <h3 id="finance-inv-cost-title" class="finance-admin-inventory-cost__title">Inventario al coste</h3>
+    <h3 id="finance-inv-cost-title" class="finance-admin-inventory-cost__title">Valor inventario (admin)</h3>
     <p class="hint" style="margin-top: 0">
-      Solo para el <strong>administrador del club</strong>: suma de <strong>coste de compra × stock</strong> de cada producto donde indicaste coste en Inventario (no es el dinero de caja del TPV).
+      Solo para el <strong>administrador del club</strong>: estimación desde los datos de <strong>Inventario</strong> (no es el dinero de caja del TPV).
     </p>
-    <div class="finance-kpi finance-kpi--inventory-cost">
-      <span class="finance-kpi__label">Dinero en productos (stock al coste)</span>
-      <span class="finance-kpi__value" id="finance-kpi-inventory-cost">—</span>
+    <div class="finance-admin-inventory-cost__kpis">
+      <div class="finance-kpi finance-kpi--inventory-cost" id="finance-kpi-inventory-cost-wrap">
+        <span class="finance-kpi__label">Stock al coste (coste × stock)</span>
+        <span class="finance-kpi__value" id="finance-kpi-inventory-cost">—</span>
+      </div>
+      <div class="finance-kpi finance-kpi--inventory-retail" id="finance-kpi-inventory-retail-wrap">
+        <span class="finance-kpi__label">Stock a precio de venta ref.</span>
+        <span class="finance-kpi__value" id="finance-kpi-inventory-retail">—</span>
+      </div>
     </div>
   </section>
   <div class="row-actions" style="margin-top: 1rem">

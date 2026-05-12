@@ -1356,7 +1356,10 @@
 
   async function refreshFinanceInventoryCostAdmin() {
     const wrap = $('finance-admin-inventory-cost');
-    const valEl = $('finance-kpi-inventory-cost');
+    const costVal = $('finance-kpi-inventory-cost');
+    const retailVal = $('finance-kpi-inventory-retail');
+    const costWrap = $('finance-kpi-inventory-cost-wrap');
+    const retailWrap = $('finance-kpi-inventory-retail-wrap');
     if (!wrap || !ctx) return;
     if (ctx.profile.role !== 'admin_club') {
       wrap.hidden = true;
@@ -1365,28 +1368,97 @@
     }
     wrap.hidden = false;
     wrap.classList.remove('is-hidden');
-    if (valEl) valEl.textContent = '…';
-    const { data, error } = await sb()
+    if (costWrap) {
+      costWrap.hidden = false;
+      costWrap.classList.remove('is-hidden');
+    }
+    if (retailWrap) {
+      retailWrap.hidden = false;
+      retailWrap.classList.remove('is-hidden');
+    }
+    if (costVal) costVal.textContent = '…';
+    if (retailVal) retailVal.textContent = '…';
+
+    let hasPurchase = true;
+    let hasRetail = true;
+    let sel = 'stock_grams, purchase_cost_eur, retail_price_eur';
+    let { data, error } = await sb()
       .from('inventory_products')
-      .select('stock_grams, purchase_cost_eur')
+      .select(sel)
       .eq('club_id', ctx.club.id);
-    if (error) {
-      if (String(error.message || '').toLowerCase().includes('purchase_cost_eur')) {
-        if (valEl) valEl.textContent = '—';
-        wrap.hidden = true;
-        wrap.classList.add('is-hidden');
-        return;
+
+    const colFail = (e) =>
+      e &&
+      (e.code === '42703' || (e.message && String(e.message).toLowerCase().includes('column')));
+
+    if (colFail(error)) {
+      let msg = (String(error.message || '')).toLowerCase();
+      if (msg.includes('purchase_cost_eur')) {
+        hasPurchase = false;
+        sel = 'stock_grams, retail_price_eur';
+        ({ data, error } = await sb()
+          .from('inventory_products')
+          .select(sel)
+          .eq('club_id', ctx.club.id));
+        msg = (String(error?.message || '')).toLowerCase();
       }
-      if (valEl) valEl.textContent = '—';
+      if (colFail(error) && msg.includes('retail_price_eur')) {
+        hasRetail = false;
+        sel = hasPurchase ? 'stock_grams, purchase_cost_eur' : 'stock_grams';
+        ({ data, error } = await sb()
+          .from('inventory_products')
+          .select(sel)
+          .eq('club_id', ctx.club.id));
+        msg = (String(error?.message || '')).toLowerCase();
+      }
+      if (colFail(error) && msg.includes('purchase_cost_eur')) {
+        hasPurchase = false;
+        sel = hasRetail ? 'stock_grams, retail_price_eur' : 'stock_grams';
+        ({ data, error } = await sb()
+          .from('inventory_products')
+          .select(sel)
+          .eq('club_id', ctx.club.id));
+      }
+    }
+
+    if (error) {
+      if (costVal) costVal.textContent = '—';
+      if (retailVal) retailVal.textContent = '—';
       return;
     }
-    let total = 0;
+
+    if (!hasPurchase && !hasRetail) {
+      wrap.hidden = true;
+      wrap.classList.add('is-hidden');
+      return;
+    }
+
+    if (costWrap) {
+      costWrap.classList.toggle('is-hidden', !hasPurchase);
+      costWrap.hidden = !hasPurchase;
+    }
+    if (retailWrap) {
+      retailWrap.classList.toggle('is-hidden', !hasRetail);
+      retailWrap.hidden = !hasRetail;
+    }
+
+    let totalCost = 0;
+    let totalRetail = 0;
     (data || []).forEach((p) => {
-      const c = Number(p.purchase_cost_eur);
       const s = Number(p.stock_grams) || 0;
-      if (!Number.isNaN(c) && c >= 0 && s > 0) total += c * s;
+      if (s <= 0) return;
+      if (hasPurchase) {
+        const c = Number(p.purchase_cost_eur);
+        if (!Number.isNaN(c) && c >= 0) totalCost += c * s;
+      }
+      if (hasRetail) {
+        const v = Number(p.retail_price_eur);
+        if (!Number.isNaN(v) && v >= 0) totalRetail += v * s;
+      }
     });
-    if (valEl) valEl.textContent = formatMoney(total);
+
+    if (costVal && hasPurchase) costVal.textContent = formatMoney(totalCost);
+    if (retailVal && hasRetail) retailVal.textContent = formatMoney(totalRetail);
   }
 
   async function refreshFinance() {

@@ -1342,9 +1342,30 @@ body.club-dark .tpv-member-dropdown button:hover {
   color: var(--tx);
 }
 
-.finance-kpi--inventory-cost {
+.finance-admin-inventory-cost__kpis {
+  display: grid;
+  gap: 0.75rem;
   margin-top: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .finance-admin-inventory-cost__kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.finance-kpi--inventory-cost,
+.finance-kpi--inventory-retail {
+  margin-top: 0;
   border-radius: 12px;
+}
+
+.finance-kpi--inventory-retail.is-hidden {
+  display: none !important;
+}
+
+.finance-kpi--inventory-cost.is-hidden {
+  display: none !important;
 }
 
 body.club-dark .finance-admin-inventory-cost {

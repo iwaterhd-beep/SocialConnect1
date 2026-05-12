@@ -117,7 +117,8 @@
       <div class="inv-extra-fields">
         <p class="hint inv-extra-hint" id="inv-extra-hint" hidden>
           Ejecuta <code>009_inventory_product_extras.sql</code> y <code>015_inventory_price_per_gram.sql</code> para alertas,
-          TPV y precio por gramo. El <strong>coste de compra</strong> requiere <code>022_inventory_purchase_cost.sql</code> (Finanzas admin).
+          TPV y precio por gramo. <strong>Coste de compra</strong> y <strong>precio de venta ref.</strong> requieren
+          <code>022_inventory_purchase_cost.sql</code> y <code>023_inventory_retail_price.sql</code> (Finanzas admin).
         </p>
         <div class="grid grid--2">
           <div class="form__row">
@@ -149,18 +150,31 @@
             />
           </div>
         </div>
-        <div class="form__row" id="inv-row-purchase-cost" hidden>
-          <label for="inv-product-purchase-cost" id="inv-label-purchase-cost">Coste de compra (€)</label>
-          <input
-            class="input"
-            id="inv-product-purchase-cost"
-            inputmode="decimal"
-            placeholder="€/g o €/ud — solo administrador del club"
-          />
-          <p class="hint hint--small" style="margin-top: 0.35rem">
-            Tu <strong>coste</strong> por gramo (venta por gramos) o por unidad (venta por unidades). En
-            <strong>Finanzas</strong> se muestra el dinero inmovilizado en stock (coste × stock); solo lo ve el administrador del club.
-          </p>
+        <div class="grid grid--2">
+          <div class="form__row" id="inv-row-purchase-cost" hidden>
+            <label for="inv-product-purchase-cost" id="inv-label-purchase-cost">Coste de compra (€)</label>
+            <input
+              class="input"
+              id="inv-product-purchase-cost"
+              inputmode="decimal"
+              placeholder="€/g o €/ud — solo administrador del club"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              Tu <strong>coste</strong> por gramo o por unidad. En <strong>Finanzas</strong> (admin): valor del stock al coste.
+            </p>
+          </div>
+          <div class="form__row" id="inv-row-retail-price" hidden>
+            <label for="inv-product-retail-price" id="inv-label-retail-price">Precio de venta ref. (€)</label>
+            <input
+              class="input"
+              id="inv-product-retail-price"
+              inputmode="decimal"
+              placeholder="€/g o €/ud — referencia"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              A qué <strong>vendes</strong> (referencia). En <strong>Finanzas</strong> (admin): valor del stock si se vendiera todo a ese precio.
+            </p>
+          </div>
         </div>
         <p class="hint" style="margin-top: 0.35rem">
           <strong>€/g</strong> tiene prioridad: importe = gramos en ticket × €/g.
