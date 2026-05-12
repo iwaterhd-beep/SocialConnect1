@@ -18,6 +18,7 @@
   let financeVentasTo = '';
   let financeVentasCategoryId = '';
   let financeVentasCategories = [];
+  let financeVentasSearch = '';
   let financeVentasUiBound = false;
 
   const BUCKET = 'club_member_docs';
@@ -852,6 +853,33 @@
     return c ? c.name : 'la categoría elegida';
   }
 
+  function financeVentasSearchLabel() {
+    const q = financeVentasSearch.trim();
+    return q ? `producto «${q}»` : '';
+  }
+
+  function financeVentasFilterSummaryParts() {
+    const parts = [financeVentasRangeLabel()];
+    const cat = financeVentasCategoryLabel();
+    if (cat) parts.push(`categoría ${cat}`);
+    const search = financeVentasSearchLabel();
+    if (search) parts.push(search);
+    return parts.join(' · ');
+  }
+
+  async function resolveFinanceVentasProductFilterIds() {
+    const search = financeVentasSearch.trim();
+    if (!financeVentasCategoryId && !search) return null;
+
+    let query = sb().from('inventory_products').select('id').eq('club_id', ctx.club.id);
+    if (financeVentasCategoryId) query = query.eq('category_id', financeVentasCategoryId);
+    if (search) query = query.ilike('name', `%${search}%`);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map((p) => p.id).filter(Boolean);
+  }
+
   async function loadFinanceVentasCategories() {
     if (!ctx) return;
     const { data, error } = await sb()
@@ -948,6 +976,11 @@
       void refreshFinanceVentasTpv();
     });
 
+    $('finance-sales-search')?.addEventListener('input', () => {
+      financeVentasSearch = $('finance-sales-search')?.value || '';
+      void refreshFinanceVentasTpv();
+    });
+
     renderFinanceVentasRangeChips();
   }
 
@@ -1032,27 +1065,21 @@
     }
 
     let productFilterIds = null;
-    if (financeVentasCategoryId) {
-      const { data: prods, error: prodErr } = await sb()
-        .from('inventory_products')
-        .select('id')
-        .eq('club_id', ctx.club.id)
-        .eq('category_id', financeVentasCategoryId);
-      if (prodErr) {
-        ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(prodErr.message)}</td></tr>`;
-        if (summaryEl) summaryEl.textContent = '';
-        if (emptyEl) emptyEl.hidden = true;
-        return;
+    try {
+      productFilterIds = await resolveFinanceVentasProductFilterIds();
+    } catch (prodErr) {
+      ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(prodErr.message)}</td></tr>`;
+      if (summaryEl) summaryEl.textContent = '';
+      if (emptyEl) emptyEl.hidden = true;
+      return;
+    }
+    if (productFilterIds && !productFilterIds.length) {
+      ventasBody.innerHTML = '';
+      if (emptyEl) emptyEl.hidden = false;
+      if (summaryEl) {
+        summaryEl.textContent = `0 ventas en ${financeVentasFilterSummaryParts()}.`;
       }
-      productFilterIds = (prods || []).map((p) => p.id).filter(Boolean);
-      if (!productFilterIds.length) {
-        ventasBody.innerHTML = '';
-        if (emptyEl) emptyEl.hidden = false;
-        if (summaryEl) {
-          summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()} · categoría ${financeVentasCategoryLabel()}.`;
-        }
-        return;
-      }
+      return;
     }
 
     let query = sb()
@@ -1099,10 +1126,7 @@
     if (!list.length) {
       if (emptyEl) emptyEl.hidden = false;
       if (summaryEl) {
-        const catPart = financeVentasCategoryId
-          ? ` · categoría ${financeVentasCategoryLabel()}`
-          : '';
-        summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()}${catPart}.`;
+        summaryEl.textContent = `0 ventas en ${financeVentasFilterSummaryParts()}.`;
       }
       return;
     }
@@ -1129,10 +1153,7 @@
     if (summaryEl) {
       const limit = financeVentasRange === 'all' ? 5000 : 2000;
       const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
-      const catPart = financeVentasCategoryId
-        ? ` · categoría ${financeVentasCategoryLabel()}`
-        : '';
-      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasRangeLabel()}${catPart} · total ${formatMoney(total)}${truncated}`;
+      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasFilterSummaryParts()} · total ${formatMoney(total)}${truncated}`;
     }
   }
 

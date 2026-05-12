@@ -74,9 +74,16 @@
   <h2 id="finance-ventas-title">Ventas TPV</h2>
   <p class="hint" style="margin-top: 0">
     Consulta las ventas registradas y filtra por <strong>hoy</strong>, <strong>semana</strong>, <strong>30 días</strong>,
-    <strong>todas</strong>, un <strong>rango de fechas</strong> o por <strong>categoría</strong>.
+    <strong>todas</strong>, un <strong>rango de fechas</strong>, por <strong>categoría</strong> o por <strong>producto</strong>.
   </p>
   <div class="finance-ventas-toolbar">
+    <input
+      type="search"
+      id="finance-sales-search"
+      class="input"
+      placeholder="Buscar producto…"
+      autocomplete="off"
+    />
     <div id="finance-ventas-range" class="chip-row" role="group" aria-label="Periodo de ventas">
       <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
       <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
