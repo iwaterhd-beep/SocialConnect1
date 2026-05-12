@@ -1354,6 +1354,82 @@
     });
   }
 
+  function financeInventoryColFail(e) {
+    return (
+      e &&
+      (e.code === '42703' ||
+        (e.message && String(e.message).toLowerCase().includes('column')))
+    );
+  }
+
+  /**
+   * €/g o €/ud por unidad de stock (igual que tarifa TPV): precio ref. explícito o campos sugeridos del producto.
+   */
+  function financeEffectiveRetailEurPerStockUnit(p, hasRetailPriceColumn) {
+    if (hasRetailPriceColumn && p.retail_price_eur != null && p.retail_price_eur !== '') {
+      const rp = Number(p.retail_price_eur);
+      if (!Number.isNaN(rp) && rp >= 0) return rp;
+    }
+    const saleUnit = p.sale_unit === 'unit' ? 'unit' : 'grams';
+    if (saleUnit === 'unit') {
+      if (p.default_price_eur == null || p.default_price_eur === '') return null;
+      const pr = Number(p.default_price_eur);
+      if (!Number.isNaN(pr) && pr >= 0) return pr;
+      return null;
+    }
+    if (p.default_price_per_gram_eur != null && p.default_price_per_gram_eur !== '') {
+      const perG = Number(p.default_price_per_gram_eur);
+      if (!Number.isNaN(perG) && perG >= 0) return perG;
+    }
+    const baseG = Number(p.default_sale_grams);
+    const basePrice =
+      p.default_price_eur != null && p.default_price_eur !== '' ? Number(p.default_price_eur) : NaN;
+    if (Number.isNaN(basePrice) || basePrice < 0) return null;
+    if (Number.isNaN(baseG) || baseG <= 0) return basePrice;
+    return basePrice / baseG;
+  }
+
+  function financeEffectivePurchaseEurPerStockUnit(p, hasPurchaseCostColumn) {
+    if (!hasPurchaseCostColumn) return null;
+    if (p.purchase_cost_eur == null || p.purchase_cost_eur === '') return null;
+    const c = Number(p.purchase_cost_eur);
+    if (!Number.isNaN(c) && c >= 0) return c;
+    return null;
+  }
+
+  async function financeFetchInventoryValuationRows(clubId) {
+    let fields = [
+      'stock_grams',
+      'sale_unit',
+      'purchase_cost_eur',
+      'retail_price_eur',
+      'default_price_eur',
+      'default_sale_grams',
+      'default_price_per_gram_eur',
+    ];
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const sel = fields.join(', ');
+      const { data, error } = await sb()
+        .from('inventory_products')
+        .select(sel)
+        .eq('club_id', clubId);
+      if (!error) return { data, fields, error: null };
+      if (!financeInventoryColFail(error)) return { data: null, fields: [], error };
+      const m = (String(error.message || '')).toLowerCase();
+      const before = fields.length;
+      if (m.includes('purchase_cost_eur')) fields = fields.filter((f) => f !== 'purchase_cost_eur');
+      else if (m.includes('retail_price_eur')) fields = fields.filter((f) => f !== 'retail_price_eur');
+      else if (m.includes('default_price_per_gram')) fields = fields.filter((f) => f !== 'default_price_per_gram_eur');
+      else if (m.includes('default_sale_grams')) fields = fields.filter((f) => f !== 'default_sale_grams');
+      else if (m.includes('default_price_eur')) fields = fields.filter((f) => f !== 'default_price_eur');
+      else if (m.includes('sale_unit')) fields = fields.filter((f) => f !== 'sale_unit');
+      else return { data: null, fields: [], error };
+      if (!fields.length) return { data: null, fields: [], error };
+      if (fields.length === before) return { data: null, fields: [], error };
+    }
+    return { data: null, fields: [], error: null };
+  }
+
   async function refreshFinanceInventoryCostAdmin() {
     const wrap = $('finance-admin-inventory-cost');
     const costVal = $('finance-kpi-inventory-cost');
@@ -1379,47 +1455,7 @@
     if (costVal) costVal.textContent = '…';
     if (retailVal) retailVal.textContent = '…';
 
-    let hasPurchase = true;
-    let hasRetail = true;
-    let sel = 'stock_grams, purchase_cost_eur, retail_price_eur';
-    let { data, error } = await sb()
-      .from('inventory_products')
-      .select(sel)
-      .eq('club_id', ctx.club.id);
-
-    const colFail = (e) =>
-      e &&
-      (e.code === '42703' || (e.message && String(e.message).toLowerCase().includes('column')));
-
-    if (colFail(error)) {
-      let msg = (String(error.message || '')).toLowerCase();
-      if (msg.includes('purchase_cost_eur')) {
-        hasPurchase = false;
-        sel = 'stock_grams, retail_price_eur';
-        ({ data, error } = await sb()
-          .from('inventory_products')
-          .select(sel)
-          .eq('club_id', ctx.club.id));
-        msg = (String(error?.message || '')).toLowerCase();
-      }
-      if (colFail(error) && msg.includes('retail_price_eur')) {
-        hasRetail = false;
-        sel = hasPurchase ? 'stock_grams, purchase_cost_eur' : 'stock_grams';
-        ({ data, error } = await sb()
-          .from('inventory_products')
-          .select(sel)
-          .eq('club_id', ctx.club.id));
-        msg = (String(error?.message || '')).toLowerCase();
-      }
-      if (colFail(error) && msg.includes('purchase_cost_eur')) {
-        hasPurchase = false;
-        sel = hasRetail ? 'stock_grams, retail_price_eur' : 'stock_grams';
-        ({ data, error } = await sb()
-          .from('inventory_products')
-          .select(sel)
-          .eq('club_id', ctx.club.id));
-      }
-    }
+    const { data, fields, error } = await financeFetchInventoryValuationRows(ctx.club.id);
 
     if (error) {
       if (costVal) costVal.textContent = '—';
@@ -1427,19 +1463,27 @@
       return;
     }
 
-    if (!hasPurchase && !hasRetail) {
+    const hasPurchaseCol = fields.includes('purchase_cost_eur');
+    const hasRetailPriceCol = fields.includes('retail_price_eur');
+    const hasTpvPricingCol = ['default_price_eur', 'default_sale_grams', 'default_price_per_gram_eur'].some((f) =>
+      fields.includes(f),
+    );
+    const showCostKpi = hasPurchaseCol;
+    const showRetailKpi = hasRetailPriceCol || hasTpvPricingCol;
+
+    if (!showCostKpi && !showRetailKpi) {
       wrap.hidden = true;
       wrap.classList.add('is-hidden');
       return;
     }
 
     if (costWrap) {
-      costWrap.classList.toggle('is-hidden', !hasPurchase);
-      costWrap.hidden = !hasPurchase;
+      costWrap.classList.toggle('is-hidden', !showCostKpi);
+      costWrap.hidden = !showCostKpi;
     }
     if (retailWrap) {
-      retailWrap.classList.toggle('is-hidden', !hasRetail);
-      retailWrap.hidden = !hasRetail;
+      retailWrap.classList.toggle('is-hidden', !showRetailKpi);
+      retailWrap.hidden = !showRetailKpi;
     }
 
     let totalCost = 0;
@@ -1447,18 +1491,18 @@
     (data || []).forEach((p) => {
       const s = Number(p.stock_grams) || 0;
       if (s <= 0) return;
-      if (hasPurchase) {
-        const c = Number(p.purchase_cost_eur);
-        if (!Number.isNaN(c) && c >= 0) totalCost += c * s;
+      if (showCostKpi) {
+        const rate = financeEffectivePurchaseEurPerStockUnit(p, hasPurchaseCol);
+        if (rate != null) totalCost += rate * s;
       }
-      if (hasRetail) {
-        const v = Number(p.retail_price_eur);
-        if (!Number.isNaN(v) && v >= 0) totalRetail += v * s;
+      if (showRetailKpi) {
+        const rate = financeEffectiveRetailEurPerStockUnit(p, hasRetailPriceCol);
+        if (rate != null) totalRetail += rate * s;
       }
     });
 
-    if (costVal && hasPurchase) costVal.textContent = formatMoney(totalCost);
-    if (retailVal && hasRetail) retailVal.textContent = formatMoney(totalRetail);
+    if (costVal && showCostKpi) costVal.textContent = formatMoney(totalCost);
+    if (retailVal && showRetailKpi) retailVal.textContent = formatMoney(totalRetail);
   }
 
   async function refreshFinance() {
