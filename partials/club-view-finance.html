@@ -74,7 +74,7 @@
   <h2 id="finance-ventas-title">Ventas TPV</h2>
   <p class="hint" style="margin-top: 0">
     Consulta las ventas registradas y filtra por <strong>hoy</strong>, <strong>semana</strong>, <strong>30 días</strong>,
-    <strong>todas</strong> o un <strong>rango de fechas</strong>.
+    <strong>todas</strong>, un <strong>rango de fechas</strong> o por <strong>categoría</strong>.
   </p>
   <div class="finance-ventas-toolbar">
     <div id="finance-ventas-range" class="chip-row" role="group" aria-label="Periodo de ventas">
@@ -95,6 +95,13 @@
       </div>
       <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar fechas</button>
     </div>
+    <div class="form__row finance-ventas-category" style="margin-bottom: 0">
+      <label for="finance-sales-category">Categoría</label>
+      <select class="select" id="finance-sales-category">
+        <option value="">Todas las categorías</option>
+      </select>
+    </div>
+    <div id="finance-sales-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
   </div>
   <p id="finance-ventas-summary" class="hint" style="margin-top: 0.75rem"></p>
   <p id="finance-ventas-empty" class="hint" style="margin-top: 0" hidden>No hay ventas en este periodo.</p>

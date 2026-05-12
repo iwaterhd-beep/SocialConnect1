@@ -16,6 +16,8 @@
   let financeVentasRange = '30d';
   let financeVentasFrom = '';
   let financeVentasTo = '';
+  let financeVentasCategoryId = '';
+  let financeVentasCategories = [];
   let financeVentasUiBound = false;
 
   const BUCKET = 'club_member_docs';
@@ -844,6 +846,66 @@
     return 'el rango elegido';
   }
 
+  function financeVentasCategoryLabel() {
+    if (!financeVentasCategoryId) return '';
+    const c = financeVentasCategories.find((x) => x.id === financeVentasCategoryId);
+    return c ? c.name : 'la categoría elegida';
+  }
+
+  async function loadFinanceVentasCategories() {
+    if (!ctx) return;
+    const { data, error } = await sb()
+      .from('inventory_categories')
+      .select('id, name, sort_order')
+      .eq('club_id', ctx.club.id)
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true });
+    if (error) {
+      financeVentasCategories = [];
+      return;
+    }
+    financeVentasCategories = data || [];
+    renderFinanceVentasCategoryControls();
+  }
+
+  function renderFinanceVentasCategoryControls() {
+    const select = $('finance-sales-category');
+    if (select) {
+      const current = financeVentasCategoryId || '';
+      select.innerHTML = '<option value="">Todas las categorías</option>';
+      financeVentasCategories.forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+      select.value = current;
+      if (select.value !== current) {
+        financeVentasCategoryId = '';
+        select.value = '';
+      }
+    }
+
+    const row = $('finance-sales-cat-chips');
+    if (!row) return;
+    row.innerHTML = '';
+    const mk = (label, val, active) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (active ? ' is-active' : '');
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        financeVentasCategoryId = val;
+        if ($('finance-sales-category')) $('finance-sales-category').value = val;
+        renderFinanceVentasCategoryControls();
+        void refreshFinanceVentasTpv();
+      });
+      row.appendChild(b);
+    };
+    mk('Todas', '', financeVentasCategoryId === '');
+    financeVentasCategories.forEach((c) => mk(c.name, c.id, financeVentasCategoryId === c.id));
+  }
+
   function renderFinanceVentasRangeChips() {
     document.querySelectorAll('[data-finance-sales-range]').forEach((btn) => {
       const active = btn.getAttribute('data-finance-sales-range') === financeVentasRange;
@@ -877,6 +939,12 @@
       financeVentasTo = ($('finance-sales-to')?.value || '').trim();
       financeVentasRange = 'custom';
       renderFinanceVentasRangeChips();
+      void refreshFinanceVentasTpv();
+    });
+
+    $('finance-sales-category')?.addEventListener('change', () => {
+      financeVentasCategoryId = ($('finance-sales-category')?.value || '').trim();
+      renderFinanceVentasCategoryControls();
       void refreshFinanceVentasTpv();
     });
 
@@ -942,6 +1010,7 @@
     if (!ventasBody || !ctx) return;
 
     bindFinanceVentasUiOnce();
+    await loadFinanceVentasCategories();
 
     if (financeVentasRange === 'custom' && !financeVentasFrom && !financeVentasTo) {
       ventasBody.innerHTML = '';
@@ -962,6 +1031,30 @@
       return;
     }
 
+    let productFilterIds = null;
+    if (financeVentasCategoryId) {
+      const { data: prods, error: prodErr } = await sb()
+        .from('inventory_products')
+        .select('id')
+        .eq('club_id', ctx.club.id)
+        .eq('category_id', financeVentasCategoryId);
+      if (prodErr) {
+        ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(prodErr.message)}</td></tr>`;
+        if (summaryEl) summaryEl.textContent = '';
+        if (emptyEl) emptyEl.hidden = true;
+        return;
+      }
+      productFilterIds = (prods || []).map((p) => p.id).filter(Boolean);
+      if (!productFilterIds.length) {
+        ventasBody.innerHTML = '';
+        if (emptyEl) emptyEl.hidden = false;
+        if (summaryEl) {
+          summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()} · categoría ${financeVentasCategoryLabel()}.`;
+        }
+        return;
+      }
+    }
+
     let query = sb()
       .from('tpv_dispenses')
       .select('price_charged_eur, created_at, product_id, member_id')
@@ -970,6 +1063,7 @@
 
     if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
     if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
+    if (productFilterIds) query = query.in('product_id', productFilterIds);
     query = query.limit(financeVentasRange === 'all' ? 5000 : 2000);
 
     const { data: rows, error } = await query;
@@ -1005,7 +1099,10 @@
     if (!list.length) {
       if (emptyEl) emptyEl.hidden = false;
       if (summaryEl) {
-        summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()}.`;
+        const catPart = financeVentasCategoryId
+          ? ` · categoría ${financeVentasCategoryLabel()}`
+          : '';
+        summaryEl.textContent = `0 ventas en ${financeVentasRangeLabel()}${catPart}.`;
       }
       return;
     }
@@ -1032,7 +1129,10 @@
     if (summaryEl) {
       const limit = financeVentasRange === 'all' ? 5000 : 2000;
       const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
-      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasRangeLabel()} · total ${formatMoney(total)}${truncated}`;
+      const catPart = financeVentasCategoryId
+        ? ` · categoría ${financeVentasCategoryLabel()}`
+        : '';
+      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasRangeLabel()}${catPart} · total ${formatMoney(total)}${truncated}`;
     }
   }
 
