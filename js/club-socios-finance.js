@@ -1354,6 +1354,41 @@
     });
   }
 
+  async function refreshFinanceInventoryCostAdmin() {
+    const wrap = $('finance-admin-inventory-cost');
+    const valEl = $('finance-kpi-inventory-cost');
+    if (!wrap || !ctx) return;
+    if (ctx.profile.role !== 'admin_club') {
+      wrap.hidden = true;
+      wrap.classList.add('is-hidden');
+      return;
+    }
+    wrap.hidden = false;
+    wrap.classList.remove('is-hidden');
+    if (valEl) valEl.textContent = '…';
+    const { data, error } = await sb()
+      .from('inventory_products')
+      .select('stock_grams, purchase_cost_eur')
+      .eq('club_id', ctx.club.id);
+    if (error) {
+      if (String(error.message || '').toLowerCase().includes('purchase_cost_eur')) {
+        if (valEl) valEl.textContent = '—';
+        wrap.hidden = true;
+        wrap.classList.add('is-hidden');
+        return;
+      }
+      if (valEl) valEl.textContent = '—';
+      return;
+    }
+    let total = 0;
+    (data || []).forEach((p) => {
+      const c = Number(p.purchase_cost_eur);
+      const s = Number(p.stock_grams) || 0;
+      if (!Number.isNaN(c) && c >= 0 && s > 0) total += c * s;
+    });
+    if (valEl) valEl.textContent = formatMoney(total);
+  }
+
   async function refreshFinance() {
     if (!ctx) return;
     setFinanceMsg('Cargando…', false);
@@ -1361,6 +1396,7 @@
     const kpiOk = await refreshFinanceKpis();
     if (!kpiOk) return;
 
+    await refreshFinanceInventoryCostAdmin();
     await refreshFinanceVentasTpv();
     await refreshFinanceShiftClosures();
     await refreshFinanceStockAdjustments();

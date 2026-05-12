@@ -117,7 +117,7 @@
       <div class="inv-extra-fields">
         <p class="hint inv-extra-hint" id="inv-extra-hint" hidden>
           Ejecuta <code>009_inventory_product_extras.sql</code> y <code>015_inventory_price_per_gram.sql</code> para alertas,
-          TPV y precio por gramo.
+          TPV y precio por gramo. El <strong>coste de compra</strong> requiere <code>022_inventory_purchase_cost.sql</code> (Finanzas admin).
         </p>
         <div class="grid grid--2">
           <div class="form__row">
@@ -148,6 +148,19 @@
               placeholder="Ej. 5 — prioridad en TPV"
             />
           </div>
+        </div>
+        <div class="form__row" id="inv-row-purchase-cost" hidden>
+          <label for="inv-product-purchase-cost" id="inv-label-purchase-cost">Coste de compra (€)</label>
+          <input
+            class="input"
+            id="inv-product-purchase-cost"
+            inputmode="decimal"
+            placeholder="€/g o €/ud — solo administrador del club"
+          />
+          <p class="hint hint--small" style="margin-top: 0.35rem">
+            Tu <strong>coste</strong> por gramo (venta por gramos) o por unidad (venta por unidades). En
+            <strong>Finanzas</strong> se muestra el dinero inmovilizado en stock (coste × stock); solo lo ve el administrador del club.
+          </p>
         </div>
         <p class="hint" style="margin-top: 0.35rem">
           <strong>€/g</strong> tiene prioridad: importe = gramos en ticket × €/g.

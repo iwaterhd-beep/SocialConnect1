@@ -1323,6 +1323,35 @@ body.club-dark .tpv-member-dropdown button:hover {
   color: var(--g);
 }
 
+.finance-admin-inventory-cost {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+}
+
+.finance-admin-inventory-cost.is-hidden {
+  display: none !important;
+}
+
+.finance-admin-inventory-cost__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--tx);
+}
+
+.finance-kpi--inventory-cost {
+  margin-top: 0.75rem;
+  border-radius: 12px;
+}
+
+body.club-dark .finance-admin-inventory-cost {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
 .finance-ventas-toolbar {
   display: flex;
   flex-direction: column;

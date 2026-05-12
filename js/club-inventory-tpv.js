@@ -5,6 +5,8 @@
   const sb = () => window.scSupabase;
 
   const PRODUCT_SELECT_FULL =
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur';
+  const PRODUCT_SELECT_FULL_NO_PURCHASE_COST =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur';
   /** Sin 015: extras de TPV sí, pero sin columna €/g. */
   const PRODUCT_SELECT_EXTRAS_NO_PER_GRAM =
@@ -37,6 +39,7 @@
     staffById: {},
     emojiPickerReady: false,
     emojiPickerLoading: false,
+    hasPurchaseCostColumn: true,
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
@@ -114,9 +117,18 @@
     modal.setAttribute('aria-hidden', 'true');
   }
 
+  function applyAdminPurchaseCostRow() {
+    const row = $('inv-row-purchase-cost');
+    if (!row) return;
+    const show = state.ctx?.profile?.role === 'admin_club';
+    row.hidden = !show;
+    row.classList.toggle('is-hidden', !show);
+  }
+
   function openInvProductModal() {
     const modal = $('inv-product-modal');
     if (!modal) return;
+    applyAdminPurchaseCostRow();
     modal.classList.remove('is-hidden');
     modal.setAttribute('aria-hidden', 'false');
   }
@@ -236,6 +248,7 @@
       const el = $(id);
       if (el) el.hidden = !canEdit;
     });
+    applyAdminPurchaseCostRow();
   }
 
   async function refreshStockUi() {
@@ -361,6 +374,10 @@
         p.default_price_per_gram_eur != null && p.default_price_per_gram_eur !== ''
           ? Number(p.default_price_per_gram_eur)
           : null,
+      purchase_cost_eur:
+        p.purchase_cost_eur != null && p.purchase_cost_eur !== ''
+          ? Number(p.purchase_cost_eur)
+          : null,
     };
   }
 
@@ -390,6 +407,10 @@
       $('inv-label-default-qty').textContent = isUnit ? 'Unidades sugeridas TPV' : 'Gramos sugeridos TPV';
     if ($('inv-label-rate'))
       $('inv-label-rate').textContent = isUnit ? 'Precio por unidad (€/u)' : 'Precio por gramo (€/g)';
+    if ($('inv-label-purchase-cost'))
+      $('inv-label-purchase-cost').textContent = isUnit
+        ? 'Coste de compra (€/ud)'
+        : 'Coste de compra (€/g)';
     const bottle = $('inv-product-bottle');
     if (bottle) bottle.disabled = isUnit;
     const rowBottle = $('inv-row-bottle');
@@ -655,6 +676,7 @@
   }
 
   async function loadProducts() {
+    state.hasPurchaseCostColumn = true;
     let query = sb()
       .from('inventory_products')
       .select(state.hasProductExtras ? PRODUCT_SELECT_FULL : PRODUCT_SELECT_BASE)
@@ -670,7 +692,20 @@
 
     if (colErr && state.hasProductExtras) {
       const msg = (error.message || '').toLowerCase();
-      if (msg.includes('default_price_per_gram')) {
+      if (msg.includes('purchase_cost_eur')) {
+        state.hasPurchaseCostColumn = false;
+        const rPc = await sb()
+          .from('inventory_products')
+          .select(PRODUCT_SELECT_FULL_NO_PURCHASE_COST)
+          .eq('club_id', state.ctx.club.id)
+          .order('name', { ascending: true });
+        if (!rPc.error) {
+          data = rPc.data;
+          error = null;
+        } else {
+          error = rPc.error;
+        }
+      } else if (msg.includes('default_price_per_gram')) {
         const rPg = await sb()
           .from('inventory_products')
           .select(PRODUCT_SELECT_EXTRAS_NO_PER_GRAM)
@@ -713,6 +748,7 @@
               default_price_eur: null,
               default_price_per_gram_eur: null,
               sale_unit: 'grams',
+              purchase_cost_eur: null,
             },
       ),
     );
@@ -1059,6 +1095,7 @@
     $('inv-product-default-grams').value = '';
     $('inv-product-default-price').value = '';
     if ($('inv-product-price-per-g')) $('inv-product-price-per-g').value = '';
+    if ($('inv-product-purchase-cost')) $('inv-product-purchase-cost').value = '';
     setInvSaleUnitUi('grams');
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Crear producto';
   }
@@ -1092,6 +1129,14 @@
         ppg.value = String(p.default_price_per_gram_eur).replace('.', ',');
       } else {
         ppg.value = '';
+      }
+    }
+    const pc = $('inv-product-purchase-cost');
+    if (pc) {
+      if (p.purchase_cost_eur != null && !Number.isNaN(Number(p.purchase_cost_eur))) {
+        pc.value = String(p.purchase_cost_eur).replace('.', ',');
+      } else {
+        pc.value = '';
       }
     }
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Actualizar producto';
@@ -1144,6 +1189,22 @@
       return;
     }
 
+    const isClubAdmin = state.ctx?.profile?.role === 'admin_club';
+    let purchaseCostField = null;
+    if (isClubAdmin && state.hasProductExtras) {
+      const pr = ($('inv-product-purchase-cost')?.value || '').trim();
+      if (pr !== '') {
+        const pv = parseDecimal($('inv-product-purchase-cost')?.value);
+        if (Number.isNaN(pv) || pv < 0) {
+          setMsg('inv-status', 'Coste de compra no válido.', true);
+          return;
+        }
+        purchaseCostField = pv;
+      } else {
+        purchaseCostField = null;
+      }
+    }
+
     setMsg('inv-status', 'Guardando…', false);
     const baseRow = {
       club_id: state.ctx.club.id,
@@ -1160,6 +1221,7 @@
           default_sale_grams: defSale,
           default_price_eur: defPrice,
           default_price_per_gram_eur: defPerGram,
+          ...(isClubAdmin ? { purchase_cost_eur: purchaseCostField } : {}),
         }
       : {};
 
@@ -1178,7 +1240,13 @@
       state.hasProductExtras &&
       (res.error.code === '42703' || (res.error.message && res.error.message.includes('column')));
     if (saveColErr) {
-      const msg = (res.error.message || '').toLowerCase();
+      let msg = (res.error.message || '').toLowerCase();
+      if (msg.includes('purchase_cost_eur') && 'purchase_cost_eur' in row) {
+        delete row.purchase_cost_eur;
+        state.hasPurchaseCostColumn = false;
+        res = await trySave(!id);
+        msg = (res.error?.message || '').toLowerCase();
+      }
       if (msg.includes('default_price_per_gram') && 'default_price_per_gram_eur' in row) {
         delete row.default_price_per_gram_eur;
         res = await trySave(!id);
@@ -1194,6 +1262,7 @@
       delete row.default_sale_grams;
       delete row.default_price_eur;
       delete row.default_price_per_gram_eur;
+      delete row.purchase_cost_eur;
       res = await trySave(!id);
     }
 
@@ -1208,6 +1277,9 @@
     closeInvProductModal();
     await loadProducts();
     await refreshStockUi();
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
   }
 
   async function addCategory() {
