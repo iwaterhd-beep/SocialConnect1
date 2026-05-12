@@ -1300,12 +1300,39 @@
 
   async function loadMembersForTpv() {
     if (!state.ctx) return;
-    const { data, error } = await sb()
+    let query = sb()
       .from('club_members')
-      .select('id, display_name, member_code')
+      .select('id, display_name, member_code, member_type, member_type_valid_until')
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
       .order('display_name', { ascending: true });
+    let { data, error } = await query;
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('member_type_valid_until'))
+    ) {
+      const r2 = await sb()
+        .from('club_members')
+        .select('id, display_name, member_code, member_type')
+        .eq('club_id', state.ctx.club.id)
+        .eq('is_active', true)
+        .order('display_name', { ascending: true });
+      data = r2.data;
+      error = r2.error;
+    }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('member_type'))
+    ) {
+      const r3 = await sb()
+        .from('club_members')
+        .select('id, display_name, member_code')
+        .eq('club_id', state.ctx.club.id)
+        .eq('is_active', true)
+        .order('display_name', { ascending: true });
+      data = r3.data;
+      error = r3.error;
+    }
     if (error) {
       state.tpvMembers = [];
       return;
@@ -1327,6 +1354,29 @@
     });
   }
 
+  function tpvMemberTierExpired(m) {
+    const t = m?.member_type || 'standard';
+    if (t !== 'premium' && t !== 'vip') return false;
+    const vu = m?.member_type_valid_until;
+    if (vu == null || String(vu).trim() === '') return false;
+    const raw = String(vu).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return false;
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]) - 1;
+    const d = Number(parts[2]);
+    const end = new Date(y, mo, d, 23, 59, 59, 999);
+    if (Number.isNaN(end.getTime())) return false;
+    return Date.now() > end.getTime();
+  }
+
+  function tpvMemberTierSuffix(m) {
+    const t = m?.member_type || 'standard';
+    if (t === 'vip') return tpvMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
+    if (t === 'premium') return tpvMemberTierExpired(m) ? ' · Prem. cad.' : ' · Premium';
+    return '';
+  }
+
   function renderTpvMemberDropdown(items) {
     const dd = $('tpv-member-dropdown');
     if (!dd) return;
@@ -1340,10 +1390,11 @@
       const b = document.createElement('button');
       b.type = 'button';
       const code = m.member_code ? ` · ${m.member_code}` : '';
-      b.textContent = `${m.display_name}${code}`;
+      const tier = tpvMemberTierSuffix(m);
+      b.textContent = `${m.display_name}${code}${tier}`;
       b.addEventListener('click', (ev) => {
         ev.preventDefault();
-        selectTpvMember(m.id, m.display_name, m.member_code);
+        selectTpvMember(m);
       });
       dd.appendChild(b);
     });
@@ -1351,11 +1402,13 @@
     dd.hidden = false;
   }
 
-  function selectTpvMember(id, displayName, memberCode) {
-    if ($('tpv-selected-member')) $('tpv-selected-member').value = id;
+  function selectTpvMember(m) {
+    if (!m || !m.id) return;
+    if ($('tpv-selected-member')) $('tpv-selected-member').value = m.id;
     const chip = $('tpv-member-chip');
     if (chip) {
-      chip.textContent = `Socio: ${displayName}${memberCode ? ' (' + memberCode + ')' : ''}`;
+      const code = m.member_code ? ` (${m.member_code})` : '';
+      chip.textContent = `Socio: ${m.display_name || '—'}${code}${tpvMemberTierSuffix(m)}`;
     }
     if ($('tpv-member-search')) $('tpv-member-search').value = '';
     const dd = $('tpv-member-dropdown');

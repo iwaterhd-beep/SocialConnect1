@@ -1565,7 +1565,55 @@ body.club-dark .finance-kpi__value {
   border: 1px solid rgba(22, 163, 74, 0.25);
 }
 
-body.club-dark .member-form-sc__hero {
+.member-type-pill--standard {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--tx3);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.member-type-pill--premium {
+  background: rgba(234, 179, 8, 0.22);
+  color: #854d0e;
+  border-color: rgba(234, 179, 8, 0.45);
+}
+
+.member-type-pill--vip {
+  background: rgba(139, 92, 246, 0.2);
+  color: #5b21b6;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.member-type-pill--expired {
+  opacity: 0.85;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.member-type-valid-wrap {
+  margin-top: 0.75rem;
+  max-width: 22rem;
+}
+
+.member-type-valid-wrap.is-hidden {
+  display: none !important;
+}
+
+.member-form-sc__type-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+body.club-dark .member-type-pill--premium {
+  color: #fbbf24;
+}
+
+body.club-dark .member-type-pill--vip {
+  color: #c4b5fd;
+}
+
+body.club-dark .member-type-pill--standard {
+  color: var(--tx2);
+}
   background: rgba(30, 41, 59, 0.5);
 }
 

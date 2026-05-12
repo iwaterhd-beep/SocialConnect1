@@ -1,2 +1,2 @@
-nombre,email,telefono,tipo,estado,alta,consumo,dni,fecha_nacimiento,monedero,cuota,uuid
-"Nombre Apellidos","correo@ejemplo.com","+34 600 000 000","Estándar","activo","10 abr 2026","€0.00","12345678A","1990-05-15","0","€15.00/mes",""
+nombre,email,telefono,tipo,tipo_vigencia,estado,alta,consumo,dni,fecha_nacimiento,monedero,cuota,uuid
+"Nombre Apellidos","correo@ejemplo.com","+34 600 000 000","Estándar","","activo","10 abr 2026","€0.00","12345678A","1990-05-15","0","€15.00/mes",""

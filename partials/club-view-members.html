@@ -80,6 +80,11 @@
 
   <div class="form__row member-form-sc__type">
     <span class="member-form-sc__type-label" id="member-type-label">Tipo de socio</span>
+    <p class="hint member-form-sc__type-hint" style="margin: 0 0 0.5rem">
+      <strong>Estándar</strong> acceso normal.
+      <strong>Premium</strong> y <strong>VIP</strong> marcan prioridad o condiciones especiales del club; puedes fijar una
+      <strong>fecha de vigencia</strong> (opcional).
+    </p>
     <div class="member-type-seg" role="group" aria-labelledby="member-type-label">
       <button type="button" class="member-type-seg__btn is-active" data-member-type="standard" aria-pressed="true">
         Estándar
@@ -90,6 +95,14 @@
       <button type="button" class="member-type-seg__btn" data-member-type="vip" aria-pressed="false">VIP</button>
     </div>
     <input type="hidden" id="member-type-value" value="standard" />
+    <div id="member-type-valid-wrap" class="member-type-valid-wrap is-hidden" hidden>
+      <label for="member-type-valid-until">Vigencia hasta (opcional)</label>
+      <input class="input" id="member-type-valid-until" type="date" />
+      <p class="hint hint--small" style="margin: 0.35rem 0 0">
+        Vacío = sin caducidad. Pasada la fecha, el listado y el TPV mostrarán el tipo como <strong>caducado</strong> (sigue
+        siendo el mismo socio).
+      </p>
+    </div>
   </div>
 
   <fieldset class="member-form-sc__docs">
@@ -202,7 +215,8 @@
   </div>
   <p class="hint member-csv-hint">
     <strong>Excel (España)</strong> suele guardar CSV separado por <strong>punto y coma (;)</strong>: también lo admitimos. Columnas: nombre, email, teléfono, tipo, estado, alta, consumo, dni,
-    <strong>fecha_nacimiento</strong> (ISO <code>1990-05-15</code> o <code>15/05/1990</code>), monedero, cuota y <strong>uuid</strong>. Opcional: <strong>id</strong> (#socio). Reimportar con
+    <strong>fecha_nacimiento</strong> (ISO <code>1990-05-15</code> o <code>15/05/1990</code>), <strong>tipo_vigencia</strong> (último día
+    Premium/VIP, ISO o 15/05/2026), monedero, cuota y <strong>uuid</strong>. Opcional: <strong>id</strong> (#socio). Reimportar con
     <strong>uuid</strong> actualiza la fila.
   </p>
   <div class="form__row" style="margin-top: 0.75rem">
@@ -214,6 +228,13 @@
       placeholder="Nombre, DNI, teléfono o código…"
       autocomplete="off"
     />
+  </div>
+  <div id="members-type-filter" class="chip-row" style="margin-top: 0.65rem" aria-label="Filtrar por tipo de socio">
+    <button type="button" class="chip is-active" data-members-type-filter="">Todos</button>
+    <button type="button" class="chip" data-members-type-filter="standard">Estándar</button>
+    <button type="button" class="chip" data-members-type-filter="premium">Premium</button>
+    <button type="button" class="chip" data-members-type-filter="vip">VIP</button>
+    <button type="button" class="chip" data-members-type-filter="expired">Caducados</button>
   </div>
   <div class="table-wrap" style="margin-top: 0.75rem">
     <table class="table-compact">

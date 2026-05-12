@@ -12,6 +12,7 @@
   let membersUiBound = false;
   let membersCache = [];
   let membersSearch = '';
+  let membersTypeFilter = '';
   let selectedMemberId = '';
   let financeVentasRange = '30d';
   let financeVentasFrom = '';
@@ -307,6 +308,70 @@
     return 'Estándar';
   }
 
+  function isMemberTierExpired(m) {
+    const t = m.member_type || 'standard';
+    if (t !== 'premium' && t !== 'vip') return false;
+    const vu = m.member_type_valid_until;
+    if (vu == null || String(vu).trim() === '') return false;
+    const raw = String(vu).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return false;
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]) - 1;
+    const d = Number(parts[2]);
+    const end = new Date(y, mo, d, 23, 59, 59, 999);
+    if (Number.isNaN(end.getTime())) return false;
+    return Date.now() > end.getTime();
+  }
+
+  function memberTypeShortSuffix(m) {
+    const t = m.member_type || 'standard';
+    if (t === 'vip') return isMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
+    if (t === 'premium') return isMemberTierExpired(m) ? ' · Prem. cad.' : ' · Premium';
+    return '';
+  }
+
+  function memberTypePillHtml(m) {
+    const t = m.member_type || 'standard';
+    const expired = isMemberTierExpired(m);
+    const base = memberTypeLabel(t);
+    const label = expired ? `${base} caducado` : base;
+    let cls = 'member-type-pill';
+    if (t === 'vip') cls += ' member-type-pill--vip';
+    else if (t === 'premium') cls += ' member-type-pill--premium';
+    else cls += ' member-type-pill--standard';
+    if (expired) cls += ' member-type-pill--expired';
+    return `<span class="${cls}">${escapeHtml(label)}</span>`;
+  }
+
+  function memberTierDetailLine(m) {
+    const t = m.member_type || 'standard';
+    const parts = [];
+    if (t === 'premium' || t === 'vip') {
+      const vu = m.member_type_valid_until;
+      if (vu != null && String(vu).trim() !== '') {
+        const iso = String(vu).slice(0, 10);
+        try {
+          const d = new Date(iso + 'T12:00:00');
+          parts.push(`Vigencia tipo: hasta ${d.toLocaleDateString('es-ES')}`);
+        } catch (e) {
+          parts.push(`Vigencia tipo: hasta ${iso}`);
+        }
+      } else {
+        parts.push('Vigencia tipo: sin fecha de caducidad');
+      }
+      if (isMemberTierExpired(m)) parts.push('Estado: caducado (revisar o renovar)');
+    }
+    return parts.join(' · ');
+  }
+
+  function memberMatchesType(m) {
+    if (!membersTypeFilter) return true;
+    if (membersTypeFilter === 'expired') {
+      return isMemberTierExpired(m);
+    }
+    return (m.member_type || 'standard') === membersTypeFilter;
+  }
   function memberMatchesSearch(m, q) {
     const t = String(q || '')
       .trim()
@@ -421,6 +486,12 @@
     $('member-notes').value = row.notes || '';
     $('member-active').checked = !!row.is_active;
     setMemberTypeUi(row.member_type || 'standard');
+    if ($('member-type-valid-until')) {
+      $('member-type-valid-until').value =
+        row.member_type_valid_until != null && String(row.member_type_valid_until).trim() !== ''
+          ? String(row.member_type_valid_until).slice(0, 10)
+          : '';
+    }
     const title = $('members-form-title');
     if (title) title.textContent = 'Editar socio';
     memberLoadedPaths = {
@@ -453,7 +524,9 @@
     if (!sum || !meta || !tbody) return;
 
     const type = memberTypeLabel(m.member_type || 'standard');
-    sum.textContent = `${m.display_name} · ${m.is_active ? 'Activo' : 'Inactivo'} · ${type}`;
+    sum.textContent = `${m.display_name} · ${m.is_active ? 'Activo' : 'Inactivo'} · ${type}${
+      isMemberTierExpired(m) ? ' (caducado)' : ''
+    }`;
     meta.textContent = 'Cargando dispensaciones…';
     tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     await renderMemberProfileHero(m, 0, 0);
@@ -488,6 +561,10 @@
     }
 
     const extra = [];
+    if (m.member_type === 'premium' || m.member_type === 'vip') {
+      const te = memberTierDetailLine(m);
+      if (te) extra.push(te);
+    }
     if (m.member_code) extra.push(`Código: ${m.member_code}`);
     if (m.dni) extra.push(`DNI: ${m.dni}`);
     if (m.phone) extra.push(`Tel: ${m.phone}`);
@@ -526,6 +603,13 @@
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
+    const wrap = $('member-type-valid-wrap');
+    const show = v === 'premium' || v === 'vip';
+    if (wrap) {
+      wrap.hidden = !show;
+      wrap.classList.toggle('is-hidden', !show);
+    }
+    if (!show && $('member-type-valid-until')) $('member-type-valid-until').value = '';
   }
 
   function updateMemberAvatarInitials() {
@@ -552,6 +636,7 @@
     $('member-notes').value = '';
     $('member-active').checked = true;
     setMemberTypeUi('standard');
+    if ($('member-type-valid-until')) $('member-type-valid-until').value = '';
     const title = $('members-form-title');
     if (title) title.textContent = 'Nuevo socio';
     memberPendingFiles.avatar = null;
@@ -581,17 +666,18 @@
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    membersCache.filter((m) => memberMatchesSearch(m, membersSearch)).forEach((m) => {
+    membersCache
+      .filter((m) => memberMatchesSearch(m, membersSearch) && memberMatchesType(m))
+      .forEach((m) => {
       const tr = document.createElement('tr');
       const dni =
         m.dni != null && String(m.dni).trim() !== ''
           ? String(m.dni).trim()
           : '—';
-      const tipoLabel = memberTypeLabel(m.member_type || 'standard');
       tr.innerHTML = `
         <td>${escapeHtml(m.display_name)}</td>
         <td>${escapeHtml(dni)}</td>
-        <td><span class="member-type-pill">${escapeHtml(tipoLabel)}</span></td>
+        <td>${memberTypePillHtml(m)}</td>
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
@@ -679,7 +765,13 @@
     const birthRaw = ($('member-birth')?.value || '').trim();
     const notes = ($('member-notes')?.value || '').trim();
     const is_active = $('member-active')?.checked !== false;
-    const member_type = ($('member-type-value')?.value || 'standard').trim();
+    const mtRaw = ($('member-type-value')?.value || 'standard').trim();
+    const member_type = mtRaw === 'premium' || mtRaw === 'vip' ? mtRaw : 'standard';
+    const validRaw = ($('member-type-valid-until')?.value || '').trim();
+    let member_type_valid_until = null;
+    if (member_type === 'premium' || member_type === 'vip') {
+      member_type_valid_until = validRaw === '' ? null : validRaw;
+    }
     const feeRaw = ($('member-enrollment-fee')?.value || '').trim();
     let enrollment_fee_eur = feeRaw === '' ? 0 : Number(feeRaw);
     if (Number.isNaN(enrollment_fee_eur) || enrollment_fee_eur < 0) {
@@ -705,24 +797,33 @@
       birth_date: birthRaw === '' ? null : birthRaw,
       notes,
       is_active,
-      member_type:
-        member_type === 'premium' || member_type === 'vip'
-          ? member_type
-          : 'standard',
+      member_type,
+      member_type_valid_until,
       enrollment_fee_eur,
     };
 
     let memberId = id;
     let error;
 
-    if (id) {
-      const r = await sb().from('club_members').update(row).eq('id', id);
+    async function tryPersist(payload) {
+      if (id) return sb().from('club_members').update(payload).eq('id', id);
+      return sb().from('club_members').insert([payload]).select('id').single();
+    }
+
+    let r = await tryPersist(row);
+    error = r.error;
+    let savedWithoutValidUntilColumn = false;
+    if (error && String(error.message || '').toLowerCase().includes('member_type_valid_until')) {
+      const row2 = { ...row };
+      delete row2.member_type_valid_until;
+      r = await tryPersist(row2);
       error = r.error;
-      memberId = id;
-    } else {
-      const r = await sb().from('club_members').insert([row]).select('id').single();
-      error = r.error;
-      memberId = r.data?.id ? String(r.data.id) : '';
+      if (!error) savedWithoutValidUntilColumn = true;
+    }
+
+    if (!error) {
+      if (id) memberId = id;
+      else memberId = r.data?.id ? String(r.data.id) : '';
     }
 
     if (error) {
@@ -774,9 +875,19 @@
       }
     }
 
-    setMemberMsg(id ? 'Socio actualizado.' : 'Socio creado.', false);
+    setMemberMsg(
+      savedWithoutValidUntilColumn
+        ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
+        : id
+          ? 'Socio actualizado.'
+          : 'Socio creado.',
+      false,
+    );
     clearMemberForm();
     await loadMembersTable();
+    if (typeof window.scClubInventoryReloadMembers === 'function') {
+      await window.scClubInventoryReloadMembers();
+    }
   }
 
   function startOfDay(d) {
@@ -1367,6 +1478,15 @@
       else if (k === 'email') idx.email = i;
       else if (k === 'telefono' || k === 'teléfono' || k === 'telefono movil' || kn === 'telefonomovil') idx.telefono = i;
       else if (k === 'tipo') idx.tipo = i;
+      else if (
+        k === 'tipo_vigencia' ||
+        k === 'vigencia_tipo' ||
+        kn === 'tipovigencia' ||
+        k === 'vip_hasta' ||
+        k === 'member_type_valid_until'
+      ) {
+        idx.tipo_vigencia = i;
+      }
       else if (k === 'estado') idx.estado = i;
       else if (k === 'alta') idx.alta = i;
       else if (k === 'consumo') idx.consumo = i;
@@ -1503,6 +1623,7 @@
       'email',
       'telefono',
       'tipo',
+      'tipo_vigencia',
       'estado',
       'alta',
       'consumo',
@@ -1521,11 +1642,16 @@
         m.birth_date != null && String(m.birth_date).trim() !== ''
           ? String(m.birth_date).slice(0, 10)
           : '';
+      const vigIso =
+        m.member_type_valid_until != null && String(m.member_type_valid_until).trim() !== ''
+          ? String(m.member_type_valid_until).slice(0, 10)
+          : '';
       const row = [
         csvEscapeField(nombre),
         csvEscapeField(m.email != null ? String(m.email) : ''),
         csvEscapeField(m.phone != null ? String(m.phone) : ''),
         csvEscapeField(tipoExportEs(m.member_type)),
+        csvEscapeField(vigIso),
         csvEscapeField(m.is_active !== false ? 'activo' : 'inactivo'),
         csvEscapeField(formatAltaExport(m.created_at)),
         csvEscapeField(''),
@@ -1588,6 +1714,11 @@
       const email = csvCell(row, idx, 'email').trim();
       const telefono = csvCell(row, idx, 'telefono').trim();
       const tipo = normalizeTipoImport(csvCell(row, idx, 'tipo'));
+      const tipoVigRaw = csvCell(row, idx, 'tipo_vigencia').trim();
+      let member_type_valid_until = null;
+      if ((tipo === 'premium' || tipo === 'vip') && tipoVigRaw) {
+        member_type_valid_until = parseBirthDateCsv(tipoVigRaw);
+      }
       const activo = normalizeEstadoImport(csvCell(row, idx, 'estado'));
       const dni = csvCell(row, idx, 'dni').trim();
       const cuota = parseCuotaEuros(csvCell(row, idx, 'cuota'));
@@ -1612,6 +1743,7 @@
         dni,
         member_code: legacyId,
         member_type: tipo,
+        member_type_valid_until,
         is_active: activo,
         enrollment_fee_eur: cuota,
         birth_date,
@@ -1771,6 +1903,16 @@
       renderMembersTable();
     });
 
+    document.querySelectorAll('[data-members-type-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        membersTypeFilter = btn.getAttribute('data-members-type-filter') || '';
+        document.querySelectorAll('[data-members-type-filter]').forEach((b) => {
+          const on = (b.getAttribute('data-members-type-filter') || '') === membersTypeFilter;
+          b.classList.toggle('is-active', on);
+        });
+        renderMembersTable();
+      });
+    });
     document.querySelectorAll('[data-member-type]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const v = btn.getAttribute('data-member-type') || 'standard';
