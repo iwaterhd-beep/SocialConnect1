@@ -1,16 +1,16 @@
-<div class="card-section tpv-shell">
-  <p id="tpv-shift-banner" class="hint tpv-shift-banner" role="status">
+<div class="card-section tpv-shell tpv-shell--stage">
+  <p id="tpv-shift-banner" class="hint tpv-shift-banner status-pill" role="status">
     Comprobando turno…
   </p>
   <div class="tpv-shell__hdr">
-    <div>
+    <div class="tpv-shell__intro">
       <h2 id="tpv-title">TPV</h2>
-      <p class="hint" style="margin-top: 0">
+      <p class="hint tpv-shell__lede">
         Toca un producto, ajusta gramos y precio. El <strong>stock</strong> baja solo por los gramos
         <strong>reales</strong>; el precio en € es el del ticket.
       </p>
     </div>
-    <label class="tpv-link-toggle">
+    <label class="tpv-link-toggle tpv-link-toggle--card">
       <input type="checkbox" id="tpv-link-grams" checked />
       Copiar gramos ticket → reales
     </label>
@@ -19,13 +19,16 @@
   <div class="tpv-layout">
     <div class="tpv-col tpv-col--main">
       <div class="tpv-toolbar">
-        <input
-          type="search"
-          id="tpv-search"
-          class="input"
-          placeholder="Buscar producto…"
-          autocomplete="off"
-        />
+        <label class="tpv-search-field">
+          <span class="visually-hidden">Buscar producto</span>
+          <input
+            type="search"
+            id="tpv-search"
+            class="input tpv-search-input"
+            placeholder="Buscar producto…"
+            autocomplete="off"
+          />
+        </label>
         <div id="tpv-cat-chips" class="chip-row" aria-label="Filtrar por categoría"></div>
       </div>
       <div id="tpv-product-grid" class="tpv-prod-grid" role="list"></div>
@@ -125,10 +128,8 @@
           <section class="tpv-ticket-block" aria-labelledby="tpv-lbl-cart">
             <h3 class="tpv-ticket-block__title" id="tpv-lbl-cart">Ticket</h3>
             <div class="tpv-ticket-field">
+              <p class="hint tpv-cart-hint">Al tocar un producto se añade al ticket. Cambia cantidad o precio y se actualiza solo.</p>
               <div class="tpv-cart-actions">
-                <button type="button" class="btn btn--ghost btn--small" id="tpv-add-line">
-                  Añadir línea
-                </button>
                 <button type="button" class="btn btn--ghost btn--small" id="tpv-clear-cart">
                   Vaciar
                 </button>

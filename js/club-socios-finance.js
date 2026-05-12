@@ -778,6 +778,92 @@
     return x;
   }
 
+  async function refreshFinanceStockAdjustments() {
+    const tbody = $('finance-inventory-adjust-tbody');
+    const emptyEl = $('finance-inventory-adjust-empty');
+    const section = $('finance-inventory-adjust-section');
+    if (!tbody || !ctx) return;
+
+    const d30 = startOfDay(new Date());
+    d30.setDate(d30.getDate() - 30);
+
+    const { data: rows, error } = await sb()
+      .from('inventory_stock_adjustments')
+      .select(
+        'id, created_at, delta_grams, previous_stock_grams, new_stock_grams, notes, product_id, created_by',
+      )
+      .eq('club_id', ctx.club.id)
+      .gte('created_at', d30.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) {
+      if (
+        error.code === '42P01' ||
+        (error.message && error.message.includes('inventory_stock_adjustments'))
+      ) {
+        if (section) section.hidden = true;
+        return;
+      }
+      tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
+      if (emptyEl) emptyEl.hidden = true;
+      if (section) section.hidden = false;
+      return;
+    }
+
+    if (section) section.hidden = false;
+
+    const list = rows || [];
+    const pids = [...new Set(list.map((r) => r.product_id).filter(Boolean))];
+    let prodMap = {};
+    if (pids.length) {
+      const { data: pr } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji, sale_unit')
+        .in('id', pids);
+      if (pr) prodMap = Object.fromEntries(pr.map((x) => [x.id, x]));
+    }
+
+    let staffMap = {};
+    try {
+      const { data: sd } = await sb().rpc('club_staff_directory');
+      (sd || []).forEach((row) => {
+        const id = row.user_id ?? row.userId;
+        if (id && row.email) staffMap[id] = row.email;
+      });
+    } catch (e) {
+      /* ignore */
+    }
+
+    tbody.innerHTML = '';
+    if (!list.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+    if (emptyEl) emptyEl.hidden = true;
+
+    list.forEach((r) => {
+      const pr = prodMap[r.product_id] || {};
+      const em = (pr.emoji || '').trim();
+      const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
+      const u = pr.sale_unit === 'unit' ? 'ud' : 'g';
+      const delta = Number(r.delta_grams);
+      const sign = delta > 0 ? '+' : '';
+      const mov = `${sign}${formatQty(delta)} ${u}`;
+      const who = r.created_by && staffMap[r.created_by] ? staffMap[r.created_by] : '—';
+      const note = (r.notes || '').trim() || '—';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(prodLabel)}</td>
+        <td>${escapeHtml(who)}</td>
+        <td>${escapeHtml(mov)}</td>
+        <td>${escapeHtml(note)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
   async function refreshFinance() {
     if (!ctx) return;
     setFinanceMsg('Cargando…', false);
@@ -872,6 +958,7 @@
     }
 
     await refreshFinanceShiftClosures();
+    await refreshFinanceStockAdjustments();
 
     setFinanceMsg('', false);
   }

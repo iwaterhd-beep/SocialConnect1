@@ -46,6 +46,30 @@
   </div>
 </section>
 
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-inventory-adjust-title" id="finance-inventory-adjust-section">
+  <h2 id="finance-inventory-adjust-title">Movimientos de inventario (+/-)</h2>
+  <p class="hint" style="margin-top: 0">
+    Altas y bajas de stock hechas desde <strong>Inventario</strong> con el botón <strong>+/-</strong>: quién lo hizo, cuánto y la nota opcional.
+  </p>
+  <p id="finance-inventory-adjust-empty" class="hint" style="margin-top: 0" hidden>
+    No hay ajustes de inventario en los últimos 30 días.
+  </p>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Usuario</th>
+          <th>Movimiento</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody id="finance-inventory-adjust-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
 <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-ventas-title">
   <h2 id="finance-ventas-title">Ventas recientes (TPV)</h2>
   <div class="table-wrap" style="margin-top: 0.75rem">

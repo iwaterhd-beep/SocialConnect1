@@ -181,3 +181,34 @@
     </div>
   </section>
 </div>
+
+<div id="inv-adjust-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-inv-close-adjust-modal="1"></div>
+  <section class="card-section shift-modal__panel" role="dialog" aria-modal="true" aria-labelledby="inv-adjust-title">
+    <h2 id="inv-adjust-title" class="shift-modal__title">Ajustar stock</h2>
+    <div class="shift-modal__body">
+      <p class="hint" style="margin-top: 0">
+        Producto: <strong id="inv-adjust-product">—</strong>
+      </p>
+      <p class="hint" style="margin-top: 0.35rem">
+        Stock actual: <strong id="inv-adjust-current">—</strong> <span id="inv-adjust-unit">—</span>
+      </p>
+      <div class="inv-adjust-dir" role="group" aria-label="Tipo de ajuste">
+        <button type="button" class="btn btn--ghost btn--small is-active" id="inv-adjust-dir-add">Añadir</button>
+        <button type="button" class="btn btn--ghost btn--small" id="inv-adjust-dir-remove">Retirar</button>
+      </div>
+      <div class="form__row" style="margin-top: 0.75rem">
+        <label for="inv-adjust-qty">Cantidad</label>
+        <input class="input" id="inv-adjust-qty" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 5" />
+      </div>
+      <div class="form__row">
+        <label for="inv-adjust-note">Nota (opcional)</label>
+        <textarea class="input" id="inv-adjust-note" rows="2" placeholder="Motivo del ajuste"></textarea>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn--ghost" data-inv-close-adjust-modal="1">Cancelar</button>
+      <button type="button" class="btn" id="inv-adjust-save">Guardar ajuste</button>
+    </div>
+  </section>
+</div>

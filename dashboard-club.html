@@ -39,9 +39,10 @@
     </header>
 
     <div class="shell shell--app">
-      <div class="panel panel--wide">
-        <header class="dash-header">
-          <div>
+      <div class="panel panel--wide club-panel">
+        <header class="dash-header dash-header--club">
+          <div class="dash-header__copy">
+            <p class="dash-header__eyebrow">Panel del club</p>
             <h1 id="club-name-display">Club</h1>
             <p class="dash-meta">
               Rol: <strong id="club-role-display">—</strong> ·
@@ -94,6 +95,31 @@
 
         <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
           <p class="hint club-partial-placeholder">Cargando…</p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="shift-wizard-modal"
+      class="shift-modal is-hidden"
+      aria-hidden="true"
+      aria-labelledby="shift-wizard-title"
+    >
+      <div class="shift-modal__backdrop"></div>
+      <div class="shift-modal__panel card-section" role="dialog">
+        <h3 id="shift-wizard-title" class="shift-modal__title">Cerrar turno</h3>
+        <div id="shift-wizard-body" class="shift-modal__body"></div>
+        <div id="shift-wizard-actions" class="row-actions shift-modal__actions"></div>
+      </div>
+    </div>
+
+    <div id="shift-summary-modal" class="shift-modal is-hidden" aria-hidden="true">
+      <div class="shift-modal__backdrop"></div>
+      <div class="shift-modal__panel card-section shift-modal__panel--wide" role="dialog">
+        <h3 class="shift-modal__title">Resumen del turno cerrado</h3>
+        <div id="shift-summary-body" class="shift-modal__body shift-modal__body--scroll"></div>
+        <div class="row-actions">
+          <button type="button" class="btn" id="shift-summary-ok">Entendido</button>
         </div>
       </div>
     </div>

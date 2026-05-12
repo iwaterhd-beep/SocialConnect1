@@ -11,6 +11,9 @@
   const state = {
     ctx: null,
     products: [],
+    categories: [],
+    filterCategoryId: '',
+    sortBy: 'name_asc',
     shiftId: null,
     shiftOpenedAt: null,
     uiBound: false,
@@ -96,10 +99,114 @@
     });
   }
 
+  async function loadCategories() {
+    const { data, error } = await sb()
+      .from('inventory_categories')
+      .select('id, name, sort_order')
+      .eq('club_id', state.ctx.club.id)
+      .order('sort_order', { ascending: true })
+      .order('name', { ascending: true });
+    if (error) throw error;
+    state.categories = data || [];
+    renderCategoryControls();
+  }
+
+  function renderCategoryControls() {
+    const select = $('stk-filter-category');
+    if (select) {
+      const current = state.filterCategoryId || '';
+      select.innerHTML = '<option value="">Todas las categorías</option>';
+      state.categories.forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+      select.value = current;
+      if (select.value !== current) {
+        state.filterCategoryId = '';
+        select.value = '';
+      }
+    }
+
+    const sort = $('stk-sort-by');
+    if (sort) sort.value = state.sortBy || 'name_asc';
+
+    const row = $('stk-cat-chips');
+    if (!row) return;
+    row.innerHTML = '';
+    const mk = (label, val, active) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (active ? ' is-active' : '');
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        state.filterCategoryId = val;
+        if ($('stk-filter-category')) $('stk-filter-category').value = val;
+        renderCategoryControls();
+        renderManualTable();
+      });
+      row.appendChild(b);
+    };
+    mk('Todas', '', state.filterCategoryId === '');
+    state.categories.forEach((c) => mk(c.name, c.id, state.filterCategoryId === c.id));
+  }
+
+  function getCategorySortMeta(categoryId) {
+    if (!categoryId) return { order: 9999, name: 'zzz' };
+    const c = state.categories.find((x) => x.id === categoryId);
+    return c
+      ? { order: Number(c.sort_order) || 0, name: String(c.name || '') }
+      : { order: 9998, name: 'zzz' };
+  }
+
+  function getDisplayedProducts() {
+    let list = state.products.slice();
+    if (state.filterCategoryId) {
+      list = list.filter((p) => p.category_id === state.filterCategoryId);
+    }
+
+    const sortBy = state.sortBy || 'name_asc';
+    list.sort((a, b) => {
+      if (sortBy === 'stock_asc' || sortBy === 'stock_desc') {
+        const diff = (Number(a.stock_grams) || 0) - (Number(b.stock_grams) || 0);
+        if (diff !== 0) return sortBy === 'stock_asc' ? diff : -diff;
+        return String(a.name || '').localeCompare(String(b.name || ''), 'es', {
+          sensitivity: 'base',
+        });
+      }
+      if (sortBy === 'category') {
+        const ca = getCategorySortMeta(a.category_id);
+        const cb = getCategorySortMeta(b.category_id);
+        if (ca.order !== cb.order) return ca.order - cb.order;
+        const byCat = ca.name.localeCompare(cb.name, 'es', { sensitivity: 'base' });
+        if (byCat !== 0) return byCat;
+        return String(a.name || '').localeCompare(String(b.name || ''), 'es', {
+          sensitivity: 'base',
+        });
+      }
+      const cmp = String(a.name || '').localeCompare(String(b.name || ''), 'es', {
+        sensitivity: 'base',
+      });
+      return sortBy === 'name_desc' ? -cmp : cmp;
+    });
+    return list;
+  }
+
+  function capturePendingInputs() {
+    const map = {};
+    document.querySelectorAll('.stk-net-input').forEach((input) => {
+      const id = input.getAttribute('data-product-id');
+      const value = (input.value || '').trim();
+      if (id && value) map[id] = value;
+    });
+    return map;
+  }
+
   async function loadProducts() {
     const { data, error } = await sb()
       .from('inventory_products')
-      .select('id, name, emoji, bottle_weight_grams, stock_grams')
+      .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id')
       .eq('club_id', state.ctx.club.id)
       .order('name', { ascending: true });
     if (error) throw error;
@@ -111,8 +218,14 @@
   function renderManualTable() {
     const tbody = $('stock-manual-tbody');
     if (!tbody) return;
+    const pending = capturePendingInputs();
+    const list = getDisplayedProducts();
     tbody.innerHTML = '';
-    state.products.forEach((p) => {
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="4">No hay productos con este filtro.</td></tr>';
+      return;
+    }
+    list.forEach((p) => {
       const tr = document.createElement('tr');
       const em = (p.emoji || '').trim();
       const tare = Number(p.bottle_weight_grams) || 0;
@@ -120,13 +233,13 @@
         tare > 0
           ? `<div class="hint hint--small stock-tara-hint">${escapeHtml(`Bote ${formatNum(tare)} g — se resta del peso que indiques`)}</div>`
           : '';
-      const placeholder =
-        tare > 0 ? 'Total báscula (g)' : 'Ej. 10,5';
+      const placeholder = tare > 0 ? 'Total báscula (g)' : 'Ej. 10,5';
+      const pendingValue = pending[p.id] ? ` value="${escapeHtml(pending[p.id])}"` : '';
       tr.innerHTML = `
         <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}${tareLine}</td>
         <td>${escapeHtml(formatNum(p.stock_grams))}</td>
         <td>
-          <input type="text" class="input stk-net-input" inputmode="decimal" data-product-id="${p.id}" placeholder="${escapeHtml(placeholder)}" style="max-width: 9rem" autocomplete="off" />
+          <input type="text" class="input stk-net-input" inputmode="decimal" data-product-id="${p.id}" placeholder="${escapeHtml(placeholder)}" style="max-width: 9rem" autocomplete="off"${pendingValue} />
         </td>
         <td class="actions">
           <button type="button" class="btn btn--ghost btn--small stk-save-row" data-product-id="${p.id}">Guardar</button>
@@ -265,6 +378,15 @@
   function bindStockUi() {
     if (state.uiBound) return;
     state.uiBound = true;
+    $('stk-filter-category')?.addEventListener('change', () => {
+      state.filterCategoryId = ($('stk-filter-category')?.value || '').trim();
+      renderCategoryControls();
+      renderManualTable();
+    });
+    $('stk-sort-by')?.addEventListener('change', () => {
+      state.sortBy = ($('stk-sort-by')?.value || 'name_asc').trim() || 'name_asc';
+      renderManualTable();
+    });
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.stk-save-row');
       if (!btn) return;
@@ -279,6 +401,7 @@
     bindStockUi();
     try {
       await refreshShift();
+      await loadCategories();
       await loadProducts();
       await loadShiftEvents();
       setStockMsg('', false);
@@ -291,6 +414,7 @@
     if (!state.ctx) return;
     try {
       await refreshShift();
+      await loadCategories();
       await loadProducts();
       await loadShiftEvents();
     } catch (e) {

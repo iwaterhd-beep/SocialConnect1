@@ -237,19 +237,27 @@
     if (!tbody) return;
     const { data, error } = await sb()
       .from('club_access')
-      .select('email, role, created_at')
+      .select('id, email, role, created_at, can_edit_inventory')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false });
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="2">${escapeHtml(error.message)}</td></tr>`;
+      const cols = error.code === '42703' ? 2 : 3;
+      tbody.innerHTML = `<tr><td colspan="${cols}">${escapeHtml(error.message)}</td></tr>`;
       return;
     }
     tbody.innerHTML = '';
     (data || []).forEach((row) => {
       const tr = document.createElement('tr');
+      const invCell =
+        row.role === 'admin_club'
+          ? '<span class="hint">Siempre</span>'
+          : `<label class="team-inv-edit"><input type="checkbox" data-team-inv-edit="${escapeHtml(row.id)}"${
+              row.can_edit_inventory ? ' checked' : ''
+            } /> Permitir</label>`;
       tr.innerHTML = `
         <td>${escapeHtml(row.email)}</td>
         <td>${escapeHtml(row.role)}</td>
+        <td>${invCell}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -265,6 +273,29 @@
       return;
     }
     sec.dataset.bound = '1';
+
+    $('club-team-tbody')?.addEventListener('change', async (e) => {
+      const cb = e.target.closest('[data-team-inv-edit]');
+      if (!cb) return;
+      const accessId = cb.getAttribute('data-team-inv-edit');
+      if (!accessId) return;
+      const checked = Boolean(cb.checked);
+      setClubTeamMsg('Guardando permiso…', false);
+      const { error } = await sb()
+        .from('club_access')
+        .update({ can_edit_inventory: checked })
+        .eq('id', accessId);
+      if (error) {
+        cb.checked = !checked;
+        const msg =
+          error.code === '42703'
+            ? 'Ejecuta en Supabase la migración 020_inventory_adjustments.sql para gestionar permisos de inventario.'
+            : error.message || 'No se pudo guardar el permiso.';
+        setClubTeamMsg(msg, true);
+        return;
+      }
+      setClubTeamMsg(checked ? 'Permiso de edición de inventario concedido.' : 'Permiso de edición de inventario retirado.', false);
+    });
 
     $('team-gen-pwd')?.addEventListener('click', () => {
       const el = $('team-worker-password');
@@ -364,6 +395,25 @@
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
   }
 
+  function getShiftStockDelta(ev) {
+    if (!ev) return null;
+    if (ev.delta_grams != null && ev.delta_grams !== '') {
+      const d = Number(ev.delta_grams);
+      if (!Number.isNaN(d)) return d;
+    }
+    if (ev.previous_stock_grams != null && ev.stock_net_grams != null) {
+      const prev = Number(ev.previous_stock_grams);
+      const net = Number(ev.stock_net_grams);
+      if (!Number.isNaN(prev) && !Number.isNaN(net)) return net - prev;
+    }
+    return null;
+  }
+
+  function formatGramsDelta(d) {
+    if (d === null || Number.isNaN(d)) return '—';
+    return `${d > 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 3 })}`;
+  }
+
   function openShiftWizardModal() {
     const el = $('shift-wizard-modal');
     if (!el) return;
@@ -449,7 +499,7 @@
         .eq('shift_id', shiftId),
       sb()
         .from('shift_stock_events')
-        .select('product_id, stock_net_grams, delta_grams, source, created_at')
+        .select('product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at')
         .eq('shift_id', shiftId)
         .order('created_at', { ascending: true }),
       sb()
@@ -463,6 +513,10 @@
     const events = evRes.data || [];
     const products = prodRes.data || [];
     const prodMap = Object.fromEntries(products.map((p) => [p.id, p]));
+    const countByProduct = {};
+    events.forEach((ev) => {
+      countByProduct[ev.product_id] = ev;
+    });
 
     let salesTotal = 0;
     const gramsByProduct = {};
@@ -487,14 +541,8 @@
       .map((ev) => {
         const pr = prodMap[ev.product_id] || {};
         const em = (pr.emoji || '').trim();
-        const d =
-          ev.delta_grams != null && ev.delta_grams !== ''
-            ? Number(ev.delta_grams)
-            : null;
-        const dTxt =
-          d !== null && !Number.isNaN(d)
-            ? `${d > 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 3 })}`
-            : '—';
+        const d = getShiftStockDelta(ev);
+        const dTxt = formatGramsDelta(d);
         return `<tr>
           <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(pr.name || '—')}</td>
           <td>${escapeHtml(ev.source === 'scale' ? 'Báscula' : 'Manual')}</td>
@@ -522,9 +570,12 @@
       .sort((a, b) => String(a.name).localeCompare(String(b.name)))
       .map((p) => {
         const em = (p.emoji || '').trim();
+        const countEv = countByProduct[p.id];
+        const descTxt = formatGramsDelta(getShiftStockDelta(countEv));
         return `<tr>
         <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}</td>
         <td>${escapeHtml(Number(p.stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
+        <td>${escapeHtml(descTxt)}</td>
       </tr>`;
       })
       .join('');
@@ -573,7 +624,7 @@
       </div>
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Stock actual tras cerrar (inventario)</h4>
-        <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th></tr></thead><tbody>${stockSnapshot}</tbody></table></div>
+        <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (g)</th></tr></thead><tbody>${stockSnapshot}</tbody></table></div>
       </div>
     `;
   }

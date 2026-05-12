@@ -28,6 +28,7 @@
     tpvMembers: [],
     tpvCart: [],
     tpvCartSeq: 0,
+    tpvPendingCartRowId: null,
     uiBound: false,
     hasProductExtras: true,
     /** Turno abierto actual (TPV); null si no hay. */
@@ -36,6 +37,9 @@
     staffById: {},
     emojiPickerReady: false,
     emojiPickerLoading: false,
+    canEditInventory: false,
+    adjustProductId: null,
+    adjustDirection: 'add',
   };
   const EMOJI_RECENT_KEY = 'sc_inv_recent_emojis';
 
@@ -197,6 +201,138 @@
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
   }
 
+  function canManageInventoryEdits() {
+    return Boolean(state.canEditInventory);
+  }
+
+  async function loadInventoryAccessFlags(ctx) {
+    if (!ctx?.profile) {
+      state.canEditInventory = false;
+      return;
+    }
+    if (ctx.profile.role === 'admin_club') {
+      state.canEditInventory = true;
+      return;
+    }
+    state.canEditInventory = false;
+    try {
+      const { data, error } = await sb()
+        .from('club_access')
+        .select('can_edit_inventory')
+        .eq('club_id', ctx.club.id)
+        .eq('auth_user_id', ctx.profile.id)
+        .maybeSingle();
+      if (!error && data) {
+        state.canEditInventory = Boolean(data.can_edit_inventory);
+      }
+    } catch (e) {
+      state.canEditInventory = false;
+    }
+  }
+
+  function applyInventoryEditAccess() {
+    const canEdit = canManageInventoryEdits();
+    ['inv-open-cat-modal', 'inv-open-product-modal'].forEach((id) => {
+      const el = $(id);
+      if (el) el.hidden = !canEdit;
+    });
+  }
+
+  function openInvAdjustModal(product) {
+    if (!product) return;
+    state.adjustProductId = product.id;
+    state.adjustDirection = 'add';
+    const modal = $('inv-adjust-modal');
+    const title = $('inv-adjust-product');
+    const unit = $('inv-adjust-unit');
+    const stock = $('inv-adjust-current');
+    const qty = $('inv-adjust-qty');
+    const note = $('inv-adjust-note');
+    const dirAdd = $('inv-adjust-dir-add');
+    const dirRemove = $('inv-adjust-dir-remove');
+    const em = (product.emoji || '').trim();
+    if (title) title.textContent = `${em ? em + ' ' : ''}${product.name || '—'}`;
+    if (unit) unit.textContent = unitShort(product);
+    if (stock) stock.textContent = formatNum(product.stock_grams);
+    if (qty) qty.value = '';
+    if (note) note.value = '';
+    dirAdd?.classList.add('is-active');
+    dirRemove?.classList.remove('is-active');
+    if (modal) {
+      modal.classList.remove('is-hidden');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    qty?.focus();
+  }
+
+  function closeInvAdjustModal() {
+    const modal = $('inv-adjust-modal');
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    state.adjustProductId = null;
+  }
+
+  function setInvAdjustDirection(direction) {
+    state.adjustDirection = direction === 'remove' ? 'remove' : 'add';
+    $('inv-adjust-dir-add')?.classList.toggle('is-active', state.adjustDirection === 'add');
+    $('inv-adjust-dir-remove')?.classList.toggle('is-active', state.adjustDirection === 'remove');
+  }
+
+  async function submitInvAdjust() {
+    const productId = state.adjustProductId;
+    const product = state.products.find((x) => x.id === productId);
+    if (!product) {
+      setMsg('inv-status', 'Producto no encontrado.', true);
+      return;
+    }
+    const raw = ($('inv-adjust-qty')?.value || '').trim();
+    const amount = parseDecimal(raw);
+    if (Number.isNaN(amount) || amount <= 0) {
+      setMsg('inv-status', 'Indica una cantidad mayor que cero.', true);
+      return;
+    }
+    let delta = amount;
+    if (unitKey(product) === 'unit') {
+      if (Math.abs(amount - Math.round(amount)) > 0.0001) {
+        setMsg('inv-status', 'En productos por unidad, la cantidad debe ser entera.', true);
+        return;
+      }
+      delta = Math.round(amount);
+    }
+    if (state.adjustDirection === 'remove') delta = -delta;
+    const notes = ($('inv-adjust-note')?.value || '').trim();
+    setMsg('inv-status', 'Guardando ajuste…', false);
+    const { data, error } = await sb().rpc('club_apply_inventory_stock_adjustment', {
+      p_product_id: productId,
+      p_delta_grams: delta,
+      p_notes: notes,
+    });
+    if (error) {
+      const msg = error.message || 'No se pudo guardar el ajuste.';
+      if (error.code === '42883' || msg.includes('club_apply_inventory_stock_adjustment')) {
+        setMsg(
+          'inv-status',
+          'Ejecuta en Supabase la migración 020_inventory_adjustments.sql para activar los ajustes +/-.',
+          true,
+        );
+      } else {
+        setMsg('inv-status', msg, true);
+      }
+      return;
+    }
+    closeInvAdjustModal();
+    setMsg(
+      'inv-status',
+      `Stock actualizado: ${formatNum(data)} ${unitShort(product)}.`,
+      false,
+    );
+    await loadProducts();
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
+  }
+
   function normalizeProduct(p) {
     return {
       ...p,
@@ -349,7 +485,6 @@
   function toggleTpvShiftControls(on) {
     const ids = [
       'tpv-submit',
-      'tpv-add-line',
       'tpv-clear-cart',
       'tpv-price',
       'tpv-grams-charged',
@@ -415,6 +550,36 @@
         maximumFractionDigits: 2,
       });
     }
+    scheduleAutoTpvLine();
+  }
+
+  function formatTpvQuantityInput(qty, p) {
+    if (unitKey(p) === 'unit') {
+      return String(Math.max(0, Math.round(qty))).replace('.', ',');
+    }
+    const rounded = Math.max(0, Math.round(qty * 1000) / 1000);
+    return String(rounded).replace('.', ',');
+  }
+
+  /** Recalcula cantidad en ticket según precio y tarifa del producto. */
+  function updateTicketGramsFromPrice() {
+    const p = state.tpvSelectedId
+      ? state.products.find((x) => x.id === state.tpvSelectedId)
+      : null;
+    const rate = getPricePerGramForProduct(p);
+    if (rate == null || rate <= 0) return;
+    const price = parseDecimal($('tpv-price')?.value);
+    if (Number.isNaN(price) || price < 0) return;
+    const qty = price / rate;
+    const chargedEl = $('tpv-grams-charged');
+    const qtyStr = formatTpvQuantityInput(qty, p);
+    if (chargedEl) chargedEl.value = qtyStr;
+    if ($('tpv-link-grams')?.checked !== false) {
+      const dispensedEl = $('tpv-grams-dispensed');
+      if (dispensedEl) dispensedEl.value = qtyStr;
+    }
+    updateTpvMarginHint();
+    scheduleAutoTpvLine();
   }
 
   async function loadCategories() {
@@ -660,17 +825,22 @@
       card.setAttribute('role', 'listitem');
       const em = (p.emoji || '').trim();
       const rate = state.hasProductExtras ? getPricePerGramForProduct(p) : null;
+      const rateLabel = unitShort(p);
       const priceHint =
         rate != null && !Number.isNaN(rate)
-          ? `<div class="tpv-card__price">${escapeHtml(formatMoney(rate))}/g</div>`
+          ? `<div class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</div>`
           : p.default_price_eur != null && !Number.isNaN(p.default_price_eur)
             ? `<div class="tpv-card__price">${escapeHtml(formatMoney(p.default_price_eur))}</div>`
             : '';
       card.innerHTML = `
-        <span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span>
-        <span class="tpv-card__name">${escapeHtml(p.name)}</span>
-        <span class="tpv-card__meta">Stock ${escapeHtml(formatNum(stock))} ${escapeHtml(unitShort(p))}</span>
-        ${priceHint}
+        <span class="tpv-card__body">
+          <span class="tpv-card__emoji-wrap"><span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span></span>
+          <span class="tpv-card__info">
+            <span class="tpv-card__name">${escapeHtml(p.name)}</span>
+            <span class="tpv-card__meta">Stock ${escapeHtml(formatNum(stock))} ${escapeHtml(unitShort(p))}</span>
+            ${priceHint}
+          </span>
+        </span>
       `;
       card.addEventListener('click', () => {
         if (!state.tpvOpenShiftId) {
@@ -689,6 +859,10 @@
   function selectTpvProduct(id) {
     const p = state.products.find((x) => x.id === id);
     if (!p) return;
+    if (state.tpvSelectedId) {
+      syncAutoTpvLine({ silent: true });
+      state.tpvPendingCartRowId = null;
+    }
     state.tpvSelectedId = id;
     if ($('tpv-selected-product')) $('tpv-selected-product').value = id;
 
@@ -723,6 +897,7 @@
     applyTpvStepPreset(p);
     updateTpvMarginHint();
     updatePriceFromTicketGrams();
+    syncAutoTpvLine({ silent: true });
     renderTpvGrid();
   }
 
@@ -762,6 +937,11 @@
         state.hasProductExtras && Number(p.stock_alert_grams) > 0
           ? formatNum(p.stock_alert_grams)
           : '—';
+      const canEdit = canManageInventoryEdits();
+      const editBtns = canEdit
+        ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
+          <button type="button" class="btn btn--ghost btn--small" data-del="${p.id}">Borrar</button>`
+        : '';
       tr.innerHTML = `
         <td class="inv-emoji-cell">${escapeHtml(em || '—')}</td>
         <td>${escapeHtml(p.name)}</td>
@@ -770,25 +950,28 @@
         <td>${escapeHtml(formatNum(p.stock_grams))}</td>
         <td>${escapeHtml(alertTxt)}</td>
         <td class="actions">
-          <button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
-          <button type="button" class="btn btn--ghost btn--small" data-del="${p.id}">Borrar</button>
+          ${editBtns}
+          <button type="button" class="btn btn--ghost btn--small btn--adjust" data-adjust="${p.id}" title="Añadir o retirar stock">+/-</button>
         </td>
       `;
       if (lvl === 'out') tr.style.background = 'rgba(254, 226, 226, 0.35)';
       else if (lvl === 'low') tr.style.background = 'rgba(254, 243, 199, 0.35)';
-      tr.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
-      tr.querySelector('[data-del]').addEventListener('click', async () => {
-        if (!confirm(`¿Eliminar el producto «${p.name}»?`)) return;
-        setMsg('inv-status', 'Eliminando…', false);
-        const { error } = await sb().from('inventory_products').delete().eq('id', p.id);
-        if (error) {
-          setMsg('inv-status', error.message || 'No se pudo borrar (¿hay ventas registradas?).', true);
-          return;
-        }
-        setMsg('inv-status', 'Producto eliminado.', false);
-        clearProductForm();
-        await loadProducts();
-      });
+      if (canEdit) {
+        tr.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
+        tr.querySelector('[data-del]').addEventListener('click', async () => {
+          if (!confirm(`¿Eliminar el producto «${p.name}»?`)) return;
+          setMsg('inv-status', 'Eliminando…', false);
+          const { error } = await sb().from('inventory_products').delete().eq('id', p.id);
+          if (error) {
+            setMsg('inv-status', error.message || 'No se pudo borrar (¿hay ventas registradas?).', true);
+            return;
+          }
+          setMsg('inv-status', 'Producto eliminado.', false);
+          clearProductForm();
+          await loadProducts();
+        });
+      }
+      tr.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
       tbody.appendChild(tr);
     });
   }
@@ -815,6 +998,10 @@
           : lvl === 'low'
             ? '<span class="badge-stock badge-stock--low">Stock bajo</span>'
             : '<span class="badge-stock badge-stock--ok">OK</span>';
+      const canEdit = canManageInventoryEdits();
+      const editBtn = canEdit
+        ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>`
+        : '';
       card.innerHTML = `
         <div class="inv-card__top">
           <span class="inv-card__emoji">${escapeHtml(em || '📦')}</span>
@@ -823,10 +1010,14 @@
         <div class="inv-card__name">${escapeHtml(p.name)}</div>
         <div class="inv-card__stock">${escapeHtml(categoryName(p.category_id))} · ${escapeHtml(formatNum(p.stock_grams))} ${escapeHtml(unitShort(p))}</div>
         <div class="inv-card__actions">
-          <button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
+          ${editBtn}
+          <button type="button" class="btn btn--ghost btn--small btn--adjust" data-adjust="${p.id}" title="Añadir o retirar stock">+/-</button>
         </div>
       `;
-      card.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
+      if (canEdit) {
+        card.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
+      }
+      card.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
       wrap.appendChild(card);
     });
   }
@@ -897,6 +1088,10 @@
   }
 
   async function saveProduct() {
+    if (!canManageInventoryEdits()) {
+      setMsg('inv-status', 'No tienes permiso para editar productos.', true);
+      return;
+    }
     const id = ($('inv-product-id')?.value || '').trim();
     const emoji = ($('inv-product-emoji')?.value || '').trim().slice(0, 8);
     const name = ($('inv-product-name')?.value || '').trim();
@@ -1003,6 +1198,10 @@
   }
 
   async function addCategory() {
+    if (!canManageInventoryEdits()) {
+      setMsg('inv-status', 'No tienes permiso para crear categorías.', true);
+      return;
+    }
     const name = ($('inv-cat-name')?.value || '').trim();
     if (!name) {
       setMsg('inv-status', 'Escribe el nombre de la categoría.', true);
@@ -1042,6 +1241,7 @@
     }
     updateTpvMarginHint();
     updatePriceFromTicketGrams();
+    scheduleAutoTpvLine();
   }
 
   function syncDispensedFromCharged() {
@@ -1050,6 +1250,7 @@
       $('tpv-grams-dispensed').value = s;
     }
     updateTpvMarginHint();
+    scheduleAutoTpvLine();
   }
 
   function updateTpvMarginHint() {
@@ -1167,6 +1368,48 @@
     return `line-${Date.now()}-${state.tpvCartSeq}`;
   }
 
+  let tpvAutoLineTimer = null;
+
+  function scheduleAutoTpvLine() {
+    clearTimeout(tpvAutoLineTimer);
+    tpvAutoLineTimer = setTimeout(() => {
+      syncAutoTpvLine({ silent: true });
+    }, 250);
+  }
+
+  function syncAutoTpvLine(options = {}) {
+    const silent = Boolean(options.silent);
+    const forceNew = Boolean(options.forceNew);
+    const pid = state.tpvSelectedId || ($('tpv-selected-product')?.value || '').trim();
+    if (!pid) return false;
+
+    const built = buildCurrentTpvLine();
+    if (built.error) {
+      if (!silent) setMsg('tpv-status', built.error, true);
+      return false;
+    }
+
+    if (forceNew) state.tpvPendingCartRowId = null;
+
+    const pendingId = state.tpvPendingCartRowId;
+    const idx = pendingId ? state.tpvCart.findIndex((x) => x.cart_row_id === pendingId) : -1;
+    if (idx >= 0) {
+      state.tpvCart[idx] = { ...built.line, cart_row_id: pendingId };
+    } else {
+      state.tpvPendingCartRowId = built.line.cart_row_id;
+      state.tpvCart.push(built.line);
+    }
+    renderTpvCart();
+    if (!silent) {
+      setMsg(
+        'tpv-status',
+        `Línea añadida: ${built.line.product_name} · ${formatMoney(built.line.price_charged_eur)}.`,
+        false,
+      );
+    }
+    return true;
+  }
+
   function buildCurrentTpvLine() {
     const pid = ($('tpv-selected-product')?.value || '').trim() || state.tpvSelectedId;
     const gramsCharged = parseDecimal($('tpv-grams-charged')?.value);
@@ -1218,7 +1461,8 @@
     totalEl.textContent = `Total: ${formatMoney(total)}`;
     wrap.innerHTML = '';
     if (!lines.length) {
-      wrap.innerHTML = '<p class="hint">Ticket vacío. Añade líneas para cobrar varias de una vez.</p>';
+      wrap.innerHTML =
+        '<p class="hint">Toca un producto para añadirlo al ticket. Ajusta cantidad o precio y se actualizará solo.</p>';
       return;
     }
     lines.forEach((line) => {
@@ -1241,18 +1485,7 @@
   }
 
   function addCurrentLineToCart() {
-    const built = buildCurrentTpvLine();
-    if (built.error) {
-      setMsg('tpv-status', built.error, true);
-      return;
-    }
-    state.tpvCart.push(built.line);
-    renderTpvCart();
-    setMsg(
-      'tpv-status',
-      `Línea añadida: ${built.line.product_name} · ${formatMoney(built.line.price_charged_eur)}.`,
-      false,
-    );
+    return syncAutoTpvLine({ silent: false, forceNew: true });
   }
 
   async function registerTpvDispenseLine(line, shiftId, memberId) {
@@ -1346,6 +1579,7 @@
   }
 
   async function submitTpv() {
+    syncAutoTpvLine({ silent: true });
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
     let lines = (state.tpvCart || []).slice();
     if (!lines.length) {
@@ -1410,6 +1644,7 @@
     }
 
     state.tpvCart = [];
+    state.tpvPendingCartRowId = null;
     renderTpvCart();
     $('tpv-notes').value = '';
     updateTpvMarginHint();
@@ -1629,11 +1864,18 @@
       const emoji = ev?.detail?.unicode || '';
       setProductEmojiAndClose(emoji);
     });
+    $('inv-adjust-save')?.addEventListener('click', () => void submitInvAdjust());
+    $('inv-adjust-dir-add')?.addEventListener('click', () => setInvAdjustDirection('add'));
+    $('inv-adjust-dir-remove')?.addEventListener('click', () => setInvAdjustDirection('remove'));
+    document.querySelectorAll('[data-inv-close-adjust-modal]').forEach((el) => {
+      el.addEventListener('click', () => closeInvAdjustModal());
+    });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       if ($('inv-cat-modal') && !$('inv-cat-modal').classList.contains('is-hidden')) closeInvCatModal();
       if ($('inv-product-modal') && !$('inv-product-modal').classList.contains('is-hidden')) closeInvProductModal();
       if ($('inv-emoji-modal') && !$('inv-emoji-modal').classList.contains('is-hidden')) closeInvEmojiModal();
+      if ($('inv-adjust-modal') && !$('inv-adjust-modal').classList.contains('is-hidden')) closeInvAdjustModal();
     });
     $('inv-product-new')?.addEventListener('click', () => {
       clearProductForm();
@@ -1646,16 +1888,25 @@
       state.tpvSearch = $('tpv-search')?.value || '';
       renderTpvGrid();
     });
-    $('tpv-link-grams')?.addEventListener('change', () => syncDispensedFromCharged());
+    $('tpv-link-grams')?.addEventListener('change', () => {
+      syncDispensedFromCharged();
+      scheduleAutoTpvLine();
+    });
     $('tpv-grams-charged')?.addEventListener('input', () => {
       syncDispensedFromCharged();
       updatePriceFromTicketGrams();
+      scheduleAutoTpvLine();
     });
-    $('tpv-grams-dispensed')?.addEventListener('input', () => updateTpvMarginHint());
+    $('tpv-grams-dispensed')?.addEventListener('input', () => {
+      updateTpvMarginHint();
+      scheduleAutoTpvLine();
+    });
+    $('tpv-price')?.addEventListener('input', () => updateTicketGramsFromPrice());
+    $('tpv-notes')?.addEventListener('input', () => scheduleAutoTpvLine());
     $('tpv-submit')?.addEventListener('click', () => submitTpv());
-    $('tpv-add-line')?.addEventListener('click', () => addCurrentLineToCart());
     $('tpv-clear-cart')?.addEventListener('click', () => {
       state.tpvCart = [];
+      state.tpvPendingCartRowId = null;
       renderTpvCart();
       setMsg('tpv-status', 'Ticket vaciado.', false);
     });
@@ -1664,6 +1915,7 @@
       if (!btn) return;
       const id = btn.getAttribute('data-tpv-cart-del');
       if (!id) return;
+      if (id === state.tpvPendingCartRowId) state.tpvPendingCartRowId = null;
       state.tpvCart = state.tpvCart.filter((line) => line.cart_row_id !== id);
       renderTpvCart();
     });
@@ -1702,11 +1954,14 @@
 
     try {
       await loadCategories();
+      await loadInventoryAccessFlags(ctx);
+      applyInventoryEditAccess();
       state.filterCategoryId = '';
       state.invSearch = '';
       state.tpvSearch = '';
       state.tpvCatFilter = '';
       state.tpvCart = [];
+      state.tpvPendingCartRowId = null;
       if ($('inv-filter-category')) $('inv-filter-category').value = '';
       if ($('inv-search')) $('inv-search').value = '';
       if ($('tpv-search')) $('tpv-search').value = '';

@@ -1,6 +1,6 @@
 <section class="card-section stock-shell" aria-labelledby="stock-title">
   <h2 id="stock-title">Stock del turno</h2>
-  <p id="stock-shift-banner" class="hint stock-shift-banner" role="status">
+  <p id="stock-shift-banner" class="hint stock-shift-banner status-pill" role="status">
     Comprobando turno…
   </p>
   <p class="hint" style="margin-top: 0">
@@ -13,6 +13,25 @@
   <p class="hint" style="margin-top: 0">
     Si el producto tiene <strong>bote</strong> configurado, escribe el <strong>peso total en báscula</strong> (bote + contenido); se resta la tara y se guarda el <strong>stock neto</strong>. Si no hay bote, el valor es el stock neto directamente.
   </p>
+  <div class="inv-toolbar">
+    <div class="form__row" style="margin-bottom: 0">
+      <label for="stk-filter-category">Categoría</label>
+      <select class="select" id="stk-filter-category">
+        <option value="">Todas las categorías</option>
+      </select>
+    </div>
+    <div class="form__row" style="margin-bottom: 0">
+      <label for="stk-sort-by">Ordenar por</label>
+      <select class="select" id="stk-sort-by">
+        <option value="name_asc">Nombre (A-Z)</option>
+        <option value="name_desc">Nombre (Z-A)</option>
+        <option value="stock_asc">Stock (menor a mayor)</option>
+        <option value="stock_desc">Stock (mayor a menor)</option>
+        <option value="category">Categoría</option>
+      </select>
+    </div>
+    <div id="stk-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
+  </div>
   <div class="table-wrap" style="margin-top: 0.75rem">
     <table class="table-compact">
       <thead>
