@@ -254,12 +254,12 @@ body.has-club-topnav {
 */
 @media (min-width: 900px) {
   #club-view-tpv:not(.is-hidden) {
-    min-height: calc(100svh - 3.25rem);
+    min-height: calc(100svh - 5.25rem);
   }
 
   #club-view-tpv > .tpv-shell {
     flex: 1 1 auto;
-    min-height: calc(100svh - 7.5rem);
+    min-height: calc(100svh - 10.75rem);
     max-height: none;
     overflow: hidden;
   }
@@ -693,11 +693,6 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   border: 1px dashed rgba(13, 148, 136, 0.22);
 }
 
-.tpv-ticket-inner > .tpv-ticket-stock-wrap {
-  flex-shrink: 0;
-  margin: 0 0.85rem 0.85rem;
-}
-
 .tpv-ticket-stock-wrap.is-empty {
   display: none;
   margin: 0;
@@ -722,7 +717,7 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
 
 .tpv-ticket-actions {
   flex-shrink: 0;
-  margin-top: auto;
+  margin-top: 0;
   padding: 0.85rem 0.85rem 0.95rem;
   background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 55%, #e8edf3 100%);
   border-top: 1px solid rgba(15, 23, 42, 0.07);
