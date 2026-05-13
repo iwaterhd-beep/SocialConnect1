@@ -2481,9 +2481,15 @@ body.club-dark .btn--danger:hover {
 }
 
 /*
-  Mismo ancho que el resto de paneles “wide”: theme .panel--wide (min(1120px, 100%)).
-  No forzar 100% del viewport aquí: TPV, Inventario y Finanzas quedan alineados.
+  Un poco más ancho que theme .panel--wide (1120px), pero igual en todas las pestañas
+  y sin ocupar el 100% del viewport.
 */
+body.has-club-topnav .panel.panel--wide.club-panel {
+  width: min(1280px, 100%);
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 .club-panel {
   position: relative;
