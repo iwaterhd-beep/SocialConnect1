@@ -251,8 +251,9 @@ body.has-club-topnav {
 /* ---------- TPV ---------- */
 .tpv-shell {
   position: relative;
-  overflow-x: clip;
-  overflow-y: visible;
+  /* visible en ambos ejes: si overflow-x es clip/hidden y overflow-y visible,
+     el estándar fuerza overflow-y a auto y recorta el ticket (p. ej. botón Cobrar). */
+  overflow: visible;
 }
 
 .tpv-shell__hdr {
