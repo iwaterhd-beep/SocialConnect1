@@ -1521,6 +1521,21 @@
 
   async function loadMembersForTpv() {
     if (!state.ctx) return;
+    try {
+      const { error: tickErr } = await sb().rpc('club_members_vip_rule_tick_club', {
+        p_club_id: state.ctx.club.id,
+      });
+      if (
+        tickErr &&
+        tickErr.code !== 'PGRST202' &&
+        tickErr.code !== '42883' &&
+        !String(tickErr.message || '').toLowerCase().includes('club_members_vip_rule_tick_club')
+      ) {
+        void tickErr;
+      }
+    } catch (_) {
+      /* RPC opcional hasta migración 027 */
+    }
     let query = sb()
       .from('club_members')
       .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
@@ -2062,6 +2077,9 @@
     }
     if (typeof window.scClubRefreshFinance === 'function') {
       await window.scClubRefreshFinance();
+    }
+    if (memberRaw && typeof window.scClubInventoryReloadMembers === 'function') {
+      await window.scClubInventoryReloadMembers();
     }
   }
 

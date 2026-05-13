@@ -50,6 +50,8 @@
   };
 
   let memberAvatarObjectUrl = null;
+  /** Tipo al abrir el formulario (para no borrar vip_rule_period_start del VIP automático al guardar). */
+  let memberEditInitialType = 'standard';
 
   function extFromFile(f) {
     const n = f.name || '';
@@ -562,6 +564,7 @@
     await refreshAvatarPreview();
     updateAllDocLabels();
     setMemberMsg('Editando socio.', false);
+    memberEditInitialType = row.member_type || 'standard';
   }
 
   async function showMemberProfile(memberId) {
@@ -679,6 +682,7 @@
   }
 
   function clearMemberForm() {
+    memberEditInitialType = 'standard';
     $('member-edit-id').value = '';
     $('member-first-name').value = '';
     $('member-last-name').value = '';
@@ -754,6 +758,22 @@
   async function loadMembersTable() {
     const tbody = $('members-tbody');
     if (!tbody || !ctx) return;
+
+    try {
+      const { error: tickErr } = await sb().rpc('club_members_vip_rule_tick_club', {
+        p_club_id: ctx.club.id,
+      });
+      if (
+        tickErr &&
+        tickErr.code !== 'PGRST202' &&
+        tickErr.code !== '42883' &&
+        !String(tickErr.message || '').toLowerCase().includes('club_members_vip_rule_tick_club')
+      ) {
+        void tickErr;
+      }
+    } catch (_) {
+      /* RPC opcional hasta aplicar migración 027 */
+    }
 
     const { data, error } = await sb()
       .from('club_members')
@@ -858,6 +878,12 @@
       enrollment_fee_eur,
     };
 
+    if (member_type !== 'vip') {
+      row.vip_rule_period_start = null;
+    } else if (!id || memberEditInitialType !== 'vip') {
+      row.vip_rule_period_start = null;
+    }
+
     let memberId = id;
     let error;
 
@@ -875,6 +901,15 @@
       r = await tryPersist(row2);
       error = r.error;
       if (!error) savedWithoutValidUntilColumn = true;
+    }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('vip_rule_period_start'))
+    ) {
+      const row3 = { ...row };
+      delete row3.vip_rule_period_start;
+      r = await tryPersist(row3);
+      error = r.error;
     }
 
     if (!error) {
