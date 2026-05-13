@@ -225,6 +225,7 @@ body.has-club-topnav {
 }
 
 #club-view-tpv > .tpv-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -248,6 +249,12 @@ body.has-club-topnav {
 }
 
 @media (min-width: 900px) {
+  #club-view-tpv > .tpv-shell {
+    max-height: calc(100dvh - 9.5rem);
+    overflow: hidden;
+  }
+
+  #club-view-tpv > .tpv-shell > .tpv-layout,
   #club-view-tpv .tpv-layout {
     flex: 1 1 auto;
     min-height: 0;
@@ -354,15 +361,19 @@ body.has-club-topnav {
 
 @media (min-width: 900px) {
   .tpv-col--ticket {
-    position: sticky;
-    top: 4.5rem;
-    align-self: start;
-    max-height: calc(100dvh - 5.25rem);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-gutter: stable;
+    align-self: stretch;
+    min-height: 0;
+    max-height: none;
+    position: relative;
+    top: auto;
+    overflow: visible;
+  }
+
+  #club-view-tpv .tpv-ticket-paper {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    height: 100%;
   }
 }
 
