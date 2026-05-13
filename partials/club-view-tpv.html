@@ -132,14 +132,14 @@
             </div>
           </section>
 
-          <section class="tpv-ticket-block" aria-labelledby="tpv-lbl-cart">
+          <section class="tpv-ticket-block tpv-ticket-block--cart" aria-labelledby="tpv-lbl-cart">
             <h3 class="tpv-ticket-block__title" id="tpv-lbl-cart">Ticket</h3>
             <div class="tpv-ticket-field">
-              <p class="hint tpv-cart-hint">Al tocar un producto se añade al ticket. Cambia cantidad o precio y se actualiza solo.</p>
-              <div class="tpv-cart-actions">
-                <button type="button" class="btn btn--ghost btn--small" id="tpv-clear-cart">
-                  Vaciar
-                </button>
+              <div class="tpv-cart-toolbar">
+                <p class="hint tpv-cart-hint">
+                  Al tocar un producto se añade al ticket. Cambia cantidad o precio y se actualiza solo.
+                </p>
+                <button type="button" class="btn btn--ghost btn--small" id="tpv-clear-cart">Vaciar</button>
               </div>
               <div id="tpv-cart-list" class="tpv-cart-list"></div>
               <p id="tpv-cart-total" class="tpv-cart-total">Total: 0,00 €</p>
