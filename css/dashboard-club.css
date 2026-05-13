@@ -195,12 +195,26 @@ body.has-club-topnav {
     0 10px 28px rgba(22, 163, 74, 0.35);
 }
 
+/*
+  El ticket TPV va en columna sticky; al compartir scroll con .club-panel puede
+  solaparse en pintura con las pestañas (más arriba en el DOM) y «robar» clics.
+  Subimos cabecera, mensaje de estado y pestañas por encima del contenido de vistas.
+*/
+.has-club-topnav .dash-header--club,
+.has-club-topnav #club-status,
+.has-club-topnav .club-tabs {
+  position: relative;
+  z-index: 50;
+}
+
 .club-view.is-hidden {
   display: none;
 }
 
 /* Vista TPV: usa el alto disponible y tabla de ventas con scroll propio */
 #club-view-tpv {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -2614,8 +2628,9 @@ body.club-dark .finance-kpi {
   border-color: rgba(148, 163, 184, 0.22);
 }
 
-/* ---------- TPV stage ---------- */
-.tpv-shell--stage {
+/* ---------- TPV / panel (mismo “stage” cristal que TPV) ---------- */
+.tpv-shell--stage,
+.club-view-stage {
   padding: 1.35rem clamp(1rem, 2vw, 1.6rem) 1.5rem;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -2656,7 +2671,8 @@ body.club-dark .finance-kpi {
   min-height: 3rem;
 }
 
-body.club-dark .tpv-shell--stage {
+body.club-dark .tpv-shell--stage,
+body.club-dark .club-view-stage {
   border-color: rgba(148, 163, 184, 0.16);
   background: rgba(15, 23, 42, 0.45);
   box-shadow:
