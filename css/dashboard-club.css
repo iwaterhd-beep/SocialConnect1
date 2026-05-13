@@ -194,6 +194,60 @@ body.has-club-topnav {
   display: none;
 }
 
+/* Vista TPV: usa el alto disponible y tabla de ventas con scroll propio */
+#club-view-tpv {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: calc(100dvh - 8.75rem);
+}
+
+#club-view-tpv > .tpv-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#club-view-tpv .tpv-shift-banner,
+#club-view-tpv .tpv-shell__hdr {
+  flex-shrink: 0;
+}
+
+#club-view-tpv .tpv-recent-section {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+#club-view-tpv .tpv-recent-table-wrap {
+  margin-top: 0.75rem;
+  max-height: min(44vh, 520px);
+  overflow: auto;
+}
+
+@media (min-width: 900px) {
+  #club-view-tpv .tpv-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: 1fr;
+  }
+
+  #club-view-tpv .tpv-col--main {
+    min-height: 0;
+  }
+
+  #club-view-tpv .tpv-toolbar {
+    flex-shrink: 0;
+  }
+
+  #club-view-tpv .tpv-prod-grid {
+    flex: 1 1 auto;
+    min-height: 12rem;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
 /* ---------- TPV ---------- */
 .tpv-shell {
   position: relative;
@@ -246,7 +300,7 @@ body.has-club-topnav {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 30%);
     align-items: stretch;
     gap: 1.25rem;
-    min-height: min(72vh, 760px);
+    min-height: min(58vh, 640px);
   }
 }
 
@@ -280,7 +334,7 @@ body.has-club-topnav {
     position: sticky;
     top: 4.5rem;
     align-self: start;
-    max-height: calc(100vh - 5.5rem);
+    max-height: calc(100dvh - 5.25rem);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -648,12 +702,12 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
 .tpv-card {
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 18px;
-  padding: 0.8rem 0.9rem;
+  padding: 0.85rem 0.95rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
   cursor: pointer;
   text-align: left;
   display: block;
-  min-height: 96px;
+  min-height: 104px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 10px 24px rgba(15, 23, 42, 0.05);
@@ -2186,8 +2240,8 @@ body.club-dark .btn--danger:hover {
 }
 
 .has-club-topnav .panel.panel--wide {
-  width: min(1520px, 97vw);
-  max-width: min(1520px, 97vw);
+  width: min(1680px, 99vw);
+  max-width: min(1680px, 99vw);
 }
 
 .club-panel {
