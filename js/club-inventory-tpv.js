@@ -3,6 +3,7 @@
  */
 (function () {
   const sb = () => window.scSupabase;
+  const MEMBER_AVATAR_BUCKET = 'club_member_docs';
 
   const PRODUCT_SELECT_FULL =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur';
@@ -1522,18 +1523,31 @@
     if (!state.ctx) return;
     let query = sb()
       .from('club_members')
-      .select('id, display_name, member_code, member_type, member_type_valid_until')
+      .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
       .order('display_name', { ascending: true });
     let { data, error } = await query;
     if (
       error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('avatar_path'))
+    ) {
+      const r0 = await sb()
+        .from('club_members')
+        .select('id, display_name, member_code, member_type, member_type_valid_until')
+        .eq('club_id', state.ctx.club.id)
+        .eq('is_active', true)
+        .order('display_name', { ascending: true });
+      data = r0.data;
+      error = r0.error;
+    }
+    if (
+      error &&
       (error.code === '42703' || String(error.message || '').toLowerCase().includes('member_type_valid_until'))
     ) {
       const r2 = await sb()
         .from('club_members')
-        .select('id, display_name, member_code, member_type')
+        .select('id, display_name, member_code, member_type, avatar_path')
         .eq('club_id', state.ctx.club.id)
         .eq('is_active', true)
         .order('display_name', { ascending: true });
@@ -1596,16 +1610,30 @@
     return !tpvMemberTierExpired(m);
   }
 
+  function syncTpvTicketPaperVipClass() {
+    const paper = $('tpv-ticket-paper');
+    if (!paper) return;
+    const id = ($('tpv-selected-member')?.value || '').trim();
+    if (!id) {
+      paper.classList.remove('tpv-ticket-paper--vip');
+      return;
+    }
+    const m = (state.tpvMembers || []).find((x) => x.id === id);
+    paper.classList.toggle('tpv-ticket-paper--vip', isTpvActiveVipMember(m));
+  }
+
   function syncTpvMemberFieldVipFromSelection() {
     const field = document.querySelector('.tpv-member-field');
     if (!field) return;
     const id = ($('tpv-selected-member')?.value || '').trim();
     if (!id) {
       field.classList.remove('tpv-member-field--vip');
+      syncTpvTicketPaperVipClass();
       return;
     }
     const m = (state.tpvMembers || []).find((x) => x.id === id);
     field.classList.toggle('tpv-member-field--vip', isTpvActiveVipMember(m));
+    syncTpvTicketPaperVipClass();
   }
 
   function tpvMemberTierSuffix(m) {
@@ -1613,6 +1641,71 @@
     if (t === 'vip') return tpvMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
     if (t === 'premium') return tpvMemberTierExpired(m) ? ' · Prem. cad.' : ' · Premium';
     return '';
+  }
+
+  function tpvChipMemberInitials(m) {
+    const parts = String(m?.display_name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!parts.length) return '?';
+    const a = parts[0]?.[0] || '';
+    const b = parts.length > 1 ? parts[1]?.[0] || '' : '';
+    return (a + b).toUpperCase();
+  }
+
+  async function renderTpvMemberChipDisplay(m) {
+    const wrap = $('tpv-member-chip-wrap');
+    const chip = $('tpv-member-chip');
+    const img = $('tpv-member-chip-img');
+    const initials = $('tpv-member-chip-initials');
+    if (!m || !m.id) {
+      if (wrap) {
+        wrap.classList.add('is-hidden');
+        wrap.hidden = true;
+      }
+      if (chip) chip.textContent = '';
+      if (img) {
+        img.onload = null;
+        img.onerror = null;
+        img.classList.add('is-hidden');
+        img.removeAttribute('src');
+        img.alt = '';
+      }
+      if (initials) initials.textContent = '?';
+      return;
+    }
+    if (wrap) {
+      wrap.classList.remove('is-hidden');
+      wrap.hidden = false;
+    }
+    if (chip) {
+      const code = m.member_code ? ` (${m.member_code})` : '';
+      chip.textContent = `Socio: ${m.display_name || '—'}${code}${tpvMemberTierSuffix(m)}`;
+    }
+    if (initials) initials.textContent = tpvChipMemberInitials(m);
+    if (!img) return;
+    img.onload = null;
+    img.onerror = null;
+    img.classList.add('is-hidden');
+    img.removeAttribute('src');
+    img.alt = '';
+    const path = m.avatar_path != null ? String(m.avatar_path).trim() : '';
+    if (!path) return;
+    const { data, error } = await sb().storage.from(MEMBER_AVATAR_BUCKET).createSignedUrl(path, 3600);
+    if (error || !data?.signedUrl) return;
+    img.alt = m.display_name ? `Foto de ${String(m.display_name)}` : '';
+    img.onload = () => {
+      img.classList.remove('is-hidden');
+    };
+    img.onerror = () => {
+      img.classList.add('is-hidden');
+      img.removeAttribute('src');
+    };
+    img.src = data.signedUrl;
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.remove('is-hidden');
+    }
   }
 
   function renderTpvMemberDropdown(items) {
@@ -1641,33 +1734,28 @@
     dd.hidden = false;
   }
 
-  function selectTpvMember(m) {
+  async function selectTpvMember(m) {
     if (!m || !m.id) return;
     if ($('tpv-selected-member')) $('tpv-selected-member').value = m.id;
-    const chip = $('tpv-member-chip');
-    if (chip) {
-      const code = m.member_code ? ` (${m.member_code})` : '';
-      chip.textContent = `Socio: ${m.display_name || '—'}${code}${tpvMemberTierSuffix(m)}`;
-    }
     if ($('tpv-member-search')) $('tpv-member-search').value = '';
     const dd = $('tpv-member-dropdown');
     if (dd) {
       dd.classList.add('is-hidden');
       dd.hidden = true;
     }
+    await renderTpvMemberChipDisplay(m);
     syncTpvMemberFieldVipFromSelection();
   }
 
-  function clearTpvMember() {
+  async function clearTpvMember() {
     if ($('tpv-selected-member')) $('tpv-selected-member').value = '';
     if ($('tpv-member-search')) $('tpv-member-search').value = '';
-    const chip = $('tpv-member-chip');
-    if (chip) chip.textContent = '';
     const dd = $('tpv-member-dropdown');
     if (dd) {
       dd.classList.add('is-hidden');
       dd.hidden = true;
     }
+    await renderTpvMemberChipDisplay(null);
     syncTpvMemberFieldVipFromSelection();
   }
 
