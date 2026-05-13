@@ -197,7 +197,8 @@ body.has-club-topnav {
 /* ---------- TPV ---------- */
 .tpv-shell {
   position: relative;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .tpv-shell__hdr {
@@ -271,13 +272,20 @@ body.has-club-topnav {
   flex-direction: column;
   box-shadow: none;
   align-self: stretch;
+  min-height: 0;
 }
 
 @media (min-width: 900px) {
   .tpv-col--ticket {
     position: sticky;
     top: 4.5rem;
+    align-self: start;
     max-height: calc(100vh - 5.5rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
   }
 }
 
@@ -2184,7 +2192,8 @@ body.club-dark .btn--danger:hover {
 
 .club-panel {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   border-radius: 22px;
   padding: 1.75rem 1.65rem 1.85rem;
   border: 1px solid rgba(148, 163, 184, 0.22);
