@@ -982,11 +982,25 @@
     const search = financeVentasSearch.trim();
     if (!financeVentasCategoryId && !search) return null;
 
-    let query = sb().from('inventory_products').select('id').eq('club_id', ctx.club.id);
-    if (financeVentasCategoryId) query = query.eq('category_id', financeVentasCategoryId);
-    if (search) query = query.ilike('name', `%${search}%`);
+    const build = (withArchivedFilter) => {
+      let query = sb().from('inventory_products').select('id').eq('club_id', ctx.club.id);
+      if (withArchivedFilter) query = query.eq('is_archived', false);
+      if (financeVentasCategoryId) query = query.eq('category_id', financeVentasCategoryId);
+      if (search) query = query.ilike('name', `%${search}%`);
+      return query;
+    };
 
-    const { data, error } = await query;
+    let { data, error } = await build(true);
+    if (
+      error &&
+      (error.code === '42703' ||
+        (error.message && String(error.message).toLowerCase().includes('column'))) &&
+      String(error.message || '')
+        .toLowerCase()
+        .includes('is_archived')
+    ) {
+      ({ data, error } = await build(false));
+    }
     if (error) throw error;
     return (data || []).map((p) => p.id).filter(Boolean);
   }
@@ -1407,15 +1421,19 @@
       'default_sale_grams',
       'default_price_per_gram_eur',
     ];
-    for (let attempt = 0; attempt < 12; attempt++) {
+    let useArchiveFilter = true;
+    for (let attempt = 0; attempt < 14; attempt++) {
       const sel = fields.join(', ');
-      const { data, error } = await sb()
-        .from('inventory_products')
-        .select(sel)
-        .eq('club_id', clubId);
+      let q = sb().from('inventory_products').select(sel).eq('club_id', clubId);
+      if (useArchiveFilter) q = q.eq('is_archived', false);
+      const { data, error } = await q;
       if (!error) return { data, fields, error: null };
       if (!financeInventoryColFail(error)) return { data: null, fields: [], error };
       const m = (String(error.message || '')).toLowerCase();
+      if (useArchiveFilter && m.includes('is_archived')) {
+        useArchiveFilter = false;
+        continue;
+      }
       const before = fields.length;
       if (m.includes('purchase_cost_eur')) fields = fields.filter((f) => f !== 'purchase_cost_eur');
       else if (m.includes('retail_price_eur')) fields = fields.filter((f) => f !== 'retail_price_eur');

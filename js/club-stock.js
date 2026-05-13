@@ -204,11 +204,27 @@
   }
 
   async function loadProducts() {
-    const { data, error } = await sb()
+    let q = sb()
       .from('inventory_products')
       .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id')
       .eq('club_id', state.ctx.club.id)
+      .eq('is_archived', false)
       .order('name', { ascending: true });
+    let { data, error } = await q;
+    if (
+      error &&
+      (error.code === '42703' ||
+        (error.message && String(error.message).toLowerCase().includes('column'))) &&
+      String(error.message || '')
+        .toLowerCase()
+        .includes('is_archived')
+    ) {
+      ({ data, error } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id')
+        .eq('club_id', state.ctx.club.id)
+        .order('name', { ascending: true }));
+    }
     if (error) throw error;
     state.products = data || [];
     renderManualTable();

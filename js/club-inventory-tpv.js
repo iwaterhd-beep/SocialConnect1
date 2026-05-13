@@ -45,11 +45,22 @@
     emojiPickerLoading: false,
     hasPurchaseCostColumn: true,
     hasRetailPriceColumn: true,
+    /** Listados activos: false si la BD no tiene columna is_archived (migración 024). */
+    hasArchivedColumn: true,
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
   };
   const EMOJI_RECENT_KEY = 'sc_inv_recent_emojis';
+
+  function inventoryProductListQuery(selectColumns) {
+    let q = sb()
+      .from('inventory_products')
+      .select(selectColumns)
+      .eq('club_id', state.ctx.club.id);
+    if (state.hasArchivedColumn) q = q.eq('is_archived', false);
+    return q.order('name', { ascending: true });
+  }
 
   function readRecentEmojis() {
     try {
@@ -699,11 +710,9 @@
   async function loadProducts() {
     state.hasPurchaseCostColumn = true;
     state.hasRetailPriceColumn = true;
-    let query = sb()
-      .from('inventory_products')
-      .select(state.hasProductExtras ? PRODUCT_SELECT_FULL : PRODUCT_SELECT_BASE)
-      .eq('club_id', state.ctx.club.id)
-      .order('name', { ascending: true });
+    let query = inventoryProductListQuery(
+      state.hasProductExtras ? PRODUCT_SELECT_FULL : PRODUCT_SELECT_BASE,
+    );
 
     let { data, error } = await query;
 
@@ -716,11 +725,7 @@
       let msg = (error.message || '').toLowerCase();
       if (msg.includes('purchase_cost_eur')) {
         state.hasPurchaseCostColumn = false;
-        const rPc = await sb()
-          .from('inventory_products')
-          .select(PRODUCT_SELECT_FULL_NO_PURCHASE_COST)
-          .eq('club_id', state.ctx.club.id)
-          .order('name', { ascending: true });
+        const rPc = await inventoryProductListQuery(PRODUCT_SELECT_FULL_NO_PURCHASE_COST);
         if (!rPc.error) {
           data = rPc.data;
           error = null;
@@ -740,11 +745,7 @@
           const sel = state.hasPurchaseCostColumn
             ? PRODUCT_SELECT_FULL_NO_RETAIL_PRICE
             : PRODUCT_SELECT_FULL_NO_OPTIONAL_PRICES;
-          const rR = await sb()
-            .from('inventory_products')
-            .select(sel)
-            .eq('club_id', state.ctx.club.id)
-            .order('name', { ascending: true });
+          const rR = await inventoryProductListQuery(sel);
           if (!rR.error) {
             data = rR.data;
             error = null;
@@ -765,11 +766,7 @@
           const sel = state.hasRetailPriceColumn
             ? PRODUCT_SELECT_FULL_NO_PURCHASE_COST
             : PRODUCT_SELECT_FULL_NO_OPTIONAL_PRICES;
-          const rP2 = await sb()
-            .from('inventory_products')
-            .select(sel)
-            .eq('club_id', state.ctx.club.id)
-            .order('name', { ascending: true });
+          const rP2 = await inventoryProductListQuery(sel);
           if (!rP2.error) {
             data = rP2.data;
             error = null;
@@ -777,11 +774,7 @@
             error = rP2.error;
           }
         } else if (msg.includes('default_price_per_gram')) {
-          const rPg = await sb()
-            .from('inventory_products')
-            .select(PRODUCT_SELECT_EXTRAS_NO_PER_GRAM)
-            .eq('club_id', state.ctx.club.id)
-            .order('name', { ascending: true });
+          const rPg = await inventoryProductListQuery(PRODUCT_SELECT_EXTRAS_NO_PER_GRAM);
           if (!rPg.error) {
             data = rPg.data;
             error = null;
@@ -798,13 +791,22 @@
         (error.message && error.message.toLowerCase().includes('column')))
     ) {
       state.hasProductExtras = false;
-      const r2 = await sb()
-        .from('inventory_products')
-        .select(PRODUCT_SELECT_BASE)
-        .eq('club_id', state.ctx.club.id)
-        .order('name', { ascending: true });
+      const r2 = await inventoryProductListQuery(PRODUCT_SELECT_BASE);
       data = r2.data;
       error = r2.error;
+    }
+
+    if (
+      error &&
+      state.hasArchivedColumn &&
+      (error.code === '42703' ||
+        (error.message && String(error.message).toLowerCase().includes('column'))) &&
+      String(error.message || '')
+        .toLowerCase()
+        .includes('is_archived')
+    ) {
+      state.hasArchivedColumn = false;
+      return loadProducts();
     }
 
     if (error) throw error;
@@ -1080,17 +1082,58 @@
       if (canEdit) {
         tr.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
         tr.querySelector('[data-del]').addEventListener('click', async () => {
-          if (!confirm(`¿Eliminar el producto «${p.name}»?`)) return;
+          if (
+            !confirm(
+              `¿Eliminar el producto «${p.name}»? Si tiene ventas TPV o movimientos +/- de stock, se archivará y dejará de mostrarse; el histórico se conserva.`,
+            )
+          )
+            return;
           setMsg('inv-status', 'Eliminando…', false);
           const { error } = await sb().from('inventory_products').delete().eq('id', p.id);
-          if (error) {
-            setMsg('inv-status', error.message || 'No se pudo borrar (¿hay ventas registradas?).', true);
+          if (!error) {
+            setMsg('inv-status', 'Producto eliminado.', false);
+            clearProductForm();
+            await loadProducts();
+            await refreshStockUi();
+            if (typeof window.scClubRefreshFinance === 'function') {
+              await window.scClubRefreshFinance();
+            }
             return;
           }
-          setMsg('inv-status', 'Producto eliminado.', false);
-          clearProductForm();
-          await loadProducts();
-          await refreshStockUi();
+          const msg = String(error.message || '').toLowerCase();
+          const fk =
+            error.code === '23503' ||
+            msg.includes('foreign key') ||
+            msg.includes('tpv_dispenses') ||
+            msg.includes('inventory_stock_adjustments');
+          if (fk && state.hasArchivedColumn) {
+            const { error: uerr } = await sb()
+              .from('inventory_products')
+              .update({ is_archived: true, stock_grams: 0 })
+              .eq('id', p.id);
+            if (uerr) {
+              setMsg('inv-status', uerr.message || 'No se pudo archivar.', true);
+              return;
+            }
+            setMsg(
+              'inv-status',
+              'Producto archivado (tenía ventas o ajustes; ya no aparece en inventario ni TPV).',
+              false,
+            );
+            clearProductForm();
+            await loadProducts();
+            await refreshStockUi();
+            if (typeof window.scClubRefreshFinance === 'function') {
+              await window.scClubRefreshFinance();
+            }
+            return;
+          }
+          setMsg(
+            'inv-status',
+            error.message ||
+              'No se pudo borrar. Si hay ventas o ajustes, ejecuta en Supabase la migración 024_inventory_product_archived.sql y vuelve a intentar.',
+            true,
+          );
         });
       }
       tr.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
