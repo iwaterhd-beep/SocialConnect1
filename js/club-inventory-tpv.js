@@ -1558,6 +1558,7 @@
       return;
     }
     state.tpvMembers = data || [];
+    syncTpvMemberFieldVipFromSelection();
   }
 
   window.scClubInventoryReloadMembers = async function () {
@@ -1590,6 +1591,23 @@
     return Date.now() > end.getTime();
   }
 
+  function isTpvActiveVipMember(m) {
+    if (!m || (m.member_type || 'standard') !== 'vip') return false;
+    return !tpvMemberTierExpired(m);
+  }
+
+  function syncTpvMemberFieldVipFromSelection() {
+    const field = document.querySelector('.tpv-member-field');
+    if (!field) return;
+    const id = ($('tpv-selected-member')?.value || '').trim();
+    if (!id) {
+      field.classList.remove('tpv-member-field--vip');
+      return;
+    }
+    const m = (state.tpvMembers || []).find((x) => x.id === id);
+    field.classList.toggle('tpv-member-field--vip', isTpvActiveVipMember(m));
+  }
+
   function tpvMemberTierSuffix(m) {
     const t = m?.member_type || 'standard';
     if (t === 'vip') return tpvMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
@@ -1612,6 +1630,7 @@
       const code = m.member_code ? ` · ${m.member_code}` : '';
       const tier = tpvMemberTierSuffix(m);
       b.textContent = `${m.display_name}${code}${tier}`;
+      if (isTpvActiveVipMember(m)) b.classList.add('tpv-member-dropdown__item--vip');
       b.addEventListener('click', (ev) => {
         ev.preventDefault();
         selectTpvMember(m);
@@ -1636,6 +1655,7 @@
       dd.classList.add('is-hidden');
       dd.hidden = true;
     }
+    syncTpvMemberFieldVipFromSelection();
   }
 
   function clearTpvMember() {
@@ -1648,6 +1668,7 @@
       dd.classList.add('is-hidden');
       dd.hidden = true;
     }
+    syncTpvMemberFieldVipFromSelection();
   }
 
   function makeTpvCartRowId() {

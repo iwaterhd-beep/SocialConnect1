@@ -324,6 +324,19 @@
     return Date.now() > end.getTime();
   }
 
+  function isActiveVipMember(m) {
+    if (!m || (m.member_type || 'standard') !== 'vip') return false;
+    return !isMemberTierExpired(m);
+  }
+
+  function syncMemberProfileModalVipClass(m) {
+    const on = isActiveVipMember(m);
+    const modal = $('member-profile-modal');
+    const hero = document.querySelector('#member-profile-modal .member-profile-hero');
+    if (modal) modal.classList.toggle('is-vip-member', on);
+    if (hero) hero.classList.toggle('member-profile-hero--vip', on);
+  }
+
   function memberTypeShortSuffix(m) {
     const t = m.member_type || 'standard';
     if (t === 'vip') return isMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
@@ -413,6 +426,7 @@
       initials.textContent = '?';
       initials.setAttribute('aria-hidden', 'false');
     }
+    syncMemberProfileModalVipClass(null);
   }
 
   function getInitialsFromDisplayName(name) {
@@ -486,6 +500,7 @@
     if (!modal) return;
     modal.classList.add('is-hidden');
     modal.setAttribute('aria-hidden', 'true');
+    syncMemberProfileModalVipClass(null);
   }
 
   async function editMemberFromRow(memberId) {
@@ -557,6 +572,7 @@
     }
     selectedMemberId = memberId;
     openMemberProfileModal();
+    syncMemberProfileModalVipClass(m);
     const sum = $('member-profile-summary');
     const meta = $('member-profile-meta');
     const tbody = $('member-dispenses-tbody');
@@ -709,6 +725,7 @@
       .filter((m) => memberMatchesSearch(m, membersSearch) && memberMatchesType(m))
       .forEach((m) => {
       const tr = document.createElement('tr');
+      if (isActiveVipMember(m)) tr.classList.add('member-row--vip');
       const dni =
         m.dni != null && String(m.dni).trim() !== ''
           ? String(m.dni).trim()
