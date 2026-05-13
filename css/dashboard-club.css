@@ -2765,18 +2765,9 @@ body.club-dark .finance-kpi {
     0 18px 48px rgba(15, 23, 42, 0.06);
 }
 
-.club-view-stage {
-  padding: 1.35rem clamp(1rem, 2vw, 1.6rem) 1.5rem;
-}
-
+.club-view-stage,
 .tpv-shell--stage {
-  padding: 1.25rem clamp(0.45rem, 1vw, 1rem) 1.45rem;
-}
-
-@media (min-width: 1100px) {
-  .tpv-shell--stage {
-    padding: 1.2rem clamp(0.35rem, 0.9vw, 0.85rem) 1.4rem;
-  }
+  padding: 1.35rem clamp(1rem, 2vw, 1.6rem) 1.5rem;
 }
 
 .tpv-shell__hdr {
