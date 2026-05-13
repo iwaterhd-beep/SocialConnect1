@@ -211,8 +211,11 @@ body.has-club-topnav {
   display: none;
 }
 
-/* Vista TPV: usa el alto disponible y tabla de ventas con scroll propio */
-#club-view-tpv {
+/*
+  No usar solo #club-view-tpv { display: flex }: el ID gana a .club-view.is-hidden
+  y el TPV seguía visible en Inicio / Finanzas / etc.
+*/
+#club-view-tpv:not(.is-hidden) {
   position: relative;
   z-index: 0;
   display: flex;
