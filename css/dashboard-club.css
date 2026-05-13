@@ -658,6 +658,20 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   border: 1px dashed rgba(13, 148, 136, 0.22);
 }
 
+.tpv-ticket-stock-wrap.is-empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-height: 0;
+}
+
+.tpv-cart-empty-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
 .tpv-ticket-stock {
   margin: 0;
   font-size: 0.74rem;

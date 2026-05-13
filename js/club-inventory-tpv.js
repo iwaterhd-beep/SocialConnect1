@@ -983,6 +983,7 @@
   function selectTpvProduct(id) {
     const p = state.products.find((x) => x.id === id);
     if (!p) return;
+    cancelScheduledAutoTpvLine();
     if (state.tpvSelectedId) {
       syncAutoTpvLine({ silent: true });
       state.tpvPendingCartRowId = null;
@@ -1017,10 +1018,12 @@
     if (hint) {
       hint.textContent = `Stock disponible: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
     }
+    syncTpvStockWrapVisibility();
     updateTpvUnitLabels(p);
     applyTpvStepPreset(p);
     updateTpvMarginHint();
     updatePriceFromTicketGrams();
+    ensureTpvPriceForCurrentLine();
     syncAutoTpvLine({ silent: true });
     renderTpvGrid();
   }
@@ -1033,6 +1036,7 @@
       if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
       $('tpv-selected-label').textContent = 'Toca un producto a la izquierda';
       if ($('tpv-stock-hint')) $('tpv-stock-hint').textContent = '';
+      syncTpvStockWrapVisibility();
       updateTpvUnitLabels({ sale_unit: 'grams' });
       applyTpvStepPreset({ sale_unit: 'grams' });
       renderTpvGrid();
@@ -1042,6 +1046,7 @@
     if ($('tpv-stock-hint') && p) {
       $('tpv-stock-hint').textContent = `Stock disponible: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
     }
+    syncTpvStockWrapVisibility();
     if (p) {
       updateTpvUnitLabels(p);
       applyTpvStepPreset(p);
@@ -1788,10 +1793,34 @@
     }, 250);
   }
 
+  function cancelScheduledAutoTpvLine() {
+    if (tpvAutoLineTimer) {
+      clearTimeout(tpvAutoLineTimer);
+      tpvAutoLineTimer = null;
+    }
+  }
+
+  /** Si no hay tarifa calculable, el precio puede quedar vacío y falla buildCurrentTpvLine (no se añade línea al ticket). */
+  function ensureTpvPriceForCurrentLine() {
+    const pe = $('tpv-price');
+    if (!pe) return;
+    if (String(pe.value || '').trim()) return;
+    updatePriceFromTicketGrams();
+    if (String(pe.value || '').trim()) return;
+    pe.value = '0';
+  }
+
+  function syncTpvStockWrapVisibility() {
+    const h = $('tpv-stock-hint');
+    const w = h?.closest?.('.tpv-ticket-stock-wrap');
+    if (!w) return;
+    w.classList.toggle('is-empty', !(h.textContent && h.textContent.trim()));
+  }
+
   function syncAutoTpvLine(options = {}) {
     const silent = Boolean(options.silent);
     const forceNew = Boolean(options.forceNew);
-    const pid = state.tpvSelectedId || ($('tpv-selected-product')?.value || '').trim();
+    const pid = ($('tpv-selected-product')?.value || '').trim() || state.tpvSelectedId;
     if (!pid) return false;
 
     const built = buildCurrentTpvLine();
@@ -1872,8 +1901,7 @@
     totalEl.textContent = `Total: ${formatMoney(total)}`;
     wrap.innerHTML = '';
     if (!lines.length) {
-      wrap.innerHTML =
-        '<p class="hint">Toca un producto para añadirlo al ticket. Ajusta cantidad o precio y se actualizará solo.</p>';
+      wrap.innerHTML = '<p class="hint tpv-cart-empty-hint">Aún no hay líneas en el ticket.</p>';
       return;
     }
     lines.forEach((line) => {
@@ -2382,6 +2410,7 @@
       if ($('inv-search')) $('inv-search').value = '';
       if ($('tpv-search')) $('tpv-search').value = '';
       renderTpvCart();
+      syncTpvStockWrapVisibility();
       await loadStaffDirectory();
       await loadProducts();
       await loadMembersForTpv();
