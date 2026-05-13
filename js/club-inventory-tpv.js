@@ -948,10 +948,7 @@
       const empty = stock <= 0;
       const card = document.createElement('button');
       card.type = 'button';
-      card.className =
-        'tpv-card' +
-        (tpvIdsEqual(state.tpvSelectedId, p.id) ? ' is-selected' : '') +
-        (empty ? ' is-empty-stock' : '');
+      card.className = 'tpv-card' + (empty ? ' is-empty-stock' : '');
       card.setAttribute('role', 'listitem');
       const em = (p.emoji || '').trim();
       const rate = state.hasProductExtras ? getPricePerGramForProduct(p) : null;
@@ -973,10 +970,6 @@
         </span>
       `;
       card.addEventListener('click', () => {
-        if (tpvIdsEqual(state.tpvSelectedId, p.id)) {
-          clearTpvProductSelection();
-          return;
-        }
         if (!state.tpvOpenShiftId) {
           showToast('Abre un turno en Inicio para cobrar');
           return;
@@ -1055,6 +1048,10 @@
     ensureTpvPriceForCurrentLine();
     syncAutoTpvLine({ silent: true });
     renderTpvGrid();
+    const ae = document.activeElement;
+    if (ae && typeof ae.closest === 'function' && ae.closest('#tpv-product-grid') && typeof ae.blur === 'function') {
+      ae.blur();
+    }
   }
 
   function syncTpvSelectionAfterReload() {
