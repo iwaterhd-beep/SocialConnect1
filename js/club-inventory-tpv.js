@@ -23,6 +23,12 @@
     return document.getElementById(id);
   }
 
+  /** Comparación robusta de ids de producto (Supabase / UUID como string). */
+  function tpvIdsEqual(a, b) {
+    if (a == null || b == null) return false;
+    return String(a).trim() === String(b).trim();
+  }
+
   const state = {
     ctx: null,
     categories: [],
@@ -600,7 +606,7 @@
   /** Recalcula precio al cliente según gramos en ticket y tarifa del producto. */
   function updatePriceFromTicketGrams() {
     const p = state.tpvSelectedId
-      ? state.products.find((x) => x.id === state.tpvSelectedId)
+      ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId))
       : null;
     const rate = getPricePerGramForProduct(p);
     if (rate == null) return;
@@ -628,7 +634,7 @@
   /** Recalcula cantidad en ticket según precio y tarifa del producto. */
   function updateTicketGramsFromPrice() {
     const p = state.tpvSelectedId
-      ? state.products.find((x) => x.id === state.tpvSelectedId)
+      ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId))
       : null;
     const rate = getPricePerGramForProduct(p);
     if (rate == null || rate <= 0) return;
@@ -944,7 +950,7 @@
       card.type = 'button';
       card.className =
         'tpv-card' +
-        (state.tpvSelectedId === p.id ? ' is-selected' : '') +
+        (tpvIdsEqual(state.tpvSelectedId, p.id) ? ' is-selected' : '') +
         (empty ? ' is-empty-stock' : '');
       card.setAttribute('role', 'listitem');
       const em = (p.emoji || '').trim();
@@ -967,7 +973,7 @@
         </span>
       `;
       card.addEventListener('click', () => {
-        if (state.tpvSelectedId === p.id) {
+        if (tpvIdsEqual(state.tpvSelectedId, p.id)) {
           clearTpvProductSelection();
           return;
         }
@@ -986,10 +992,7 @@
 
   function clearTpvProductSelection() {
     cancelScheduledAutoTpvLine();
-    if (state.tpvSelectedId) {
-      syncAutoTpvLine({ silent: true });
-      state.tpvPendingCartRowId = null;
-    }
+    state.tpvPendingCartRowId = null;
     state.tpvSelectedId = '';
     if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
     if ($('tpv-selected-label')) $('tpv-selected-label').textContent = 'Toca un producto a la izquierda';
@@ -999,18 +1002,23 @@
     applyTpvStepPreset({ sale_unit: 'grams' });
     updateTpvMarginHint();
     renderTpvGrid();
+    const ae = document.activeElement;
+    if (ae && typeof ae.closest === 'function' && ae.closest('#tpv-product-grid') && typeof ae.blur === 'function') {
+      ae.blur();
+    }
   }
 
   function selectTpvProduct(id) {
-    const p = state.products.find((x) => x.id === id);
+    const p = state.products.find((x) => tpvIdsEqual(x.id, id));
     if (!p) return;
     cancelScheduledAutoTpvLine();
     if (state.tpvSelectedId) {
       syncAutoTpvLine({ silent: true });
       state.tpvPendingCartRowId = null;
     }
-    state.tpvSelectedId = id;
-    if ($('tpv-selected-product')) $('tpv-selected-product').value = id;
+    const idNorm = String(id).trim();
+    state.tpvSelectedId = idNorm;
+    if ($('tpv-selected-product')) $('tpv-selected-product').value = idNorm;
 
     const em = (p.emoji || '').trim();
     $('tpv-selected-label').textContent = `${em ? em + ' ' : ''}${p.name}`;
@@ -1051,12 +1059,12 @@
 
   function syncTpvSelectionAfterReload() {
     if (!state.tpvSelectedId) return;
-    const still = state.products.some((x) => x.id === state.tpvSelectedId);
+    const still = state.products.some((x) => tpvIdsEqual(x.id, state.tpvSelectedId));
     if (!still) {
       clearTpvProductSelection();
       return;
     }
-    const p = state.products.find((x) => x.id === state.tpvSelectedId);
+    const p = state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId));
     if ($('tpv-stock-hint') && p) {
       $('tpv-stock-hint').textContent = `Stock disponible: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
     }
@@ -1482,7 +1490,7 @@
     if (!chargedEl) return;
     let v = parseDecimal(chargedEl.value);
     if (Number.isNaN(v)) v = 0;
-    const p = state.tpvSelectedId ? state.products.find((x) => x.id === state.tpvSelectedId) : null;
+    const p = state.tpvSelectedId ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)) : null;
     if (unitKey(p) === 'unit') {
       v = Math.max(0, Math.round(v + delta));
     } else {
@@ -1512,7 +1520,7 @@
     if (!el) return;
     const a = parseDecimal($('tpv-grams-charged')?.value);
     const b = parseDecimal($('tpv-grams-dispensed')?.value);
-    const p = state.tpvSelectedId ? state.products.find((x) => x.id === state.tpvSelectedId) : null;
+    const p = state.tpvSelectedId ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)) : null;
     if (unitKey(p) === 'unit') {
       if (!Number.isNaN(a) && Math.abs(a - Math.round(a)) > 0.0001) {
         el.textContent = 'En productos por unidad, la cantidad en ticket debe ser entera.';
@@ -1534,8 +1542,8 @@
     }
     el.textContent =
       d > 0
-        ? `Margen físico: +${formatNum(d)} ${unitShort(state.products.find((x) => x.id === state.tpvSelectedId))} salen del inventario respecto al ticket.`
-        : `Ajuste: ${formatNum(Math.abs(d))} ${unitShort(state.products.find((x) => x.id === state.tpvSelectedId))} menos dispensados que en ticket.`;
+        ? `Margen físico: +${formatNum(d)} ${unitShort(state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)))} salen del inventario respecto al ticket.`
+        : `Ajuste: ${formatNum(Math.abs(d))} ${unitShort(state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)))} menos dispensados que en ticket.`;
   }
 
   async function loadMembersForTpv() {
@@ -1870,7 +1878,7 @@
     const gramsDispensed = parseDecimal($('tpv-grams-dispensed')?.value);
     const price = parseDecimal($('tpv-price')?.value);
     const notes = ($('tpv-notes')?.value || '').trim();
-    const selected = state.products.find((x) => x.id === pid);
+    const selected = state.products.find((x) => tpvIdsEqual(x.id, pid));
 
     if (!pid || !selected) return { error: 'Elige un producto en la rejilla.' };
     if (Number.isNaN(gramsCharged) || gramsCharged < 0) {
