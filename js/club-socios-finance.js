@@ -400,6 +400,19 @@
     if (c) c.textContent = '0';
     if (t) t.textContent = formatMoney(0);
     if (tbody) tbody.innerHTML = '<tr><td colspan="5">Sin datos.</td></tr>';
+    const img = $('member-profile-avatar-img');
+    const initials = $('member-profile-avatar-initials');
+    if (img) {
+      img.onload = null;
+      img.onerror = null;
+      img.classList.add('is-hidden');
+      img.removeAttribute('src');
+      img.alt = '';
+    }
+    if (initials) {
+      initials.textContent = '?';
+      initials.setAttribute('aria-hidden', 'false');
+    }
   }
 
   function getInitialsFromDisplayName(name) {
@@ -422,16 +435,42 @@
     if (t) t.textContent = formatMoney(totalSpent || 0);
     if (!img || !initials) return;
 
+    img.onload = null;
+    img.onerror = null;
     img.classList.add('is-hidden');
     img.removeAttribute('src');
+    img.alt = '';
     initials.textContent = getInitialsFromDisplayName(m?.display_name);
+    initials.setAttribute('aria-hidden', 'false');
+
+    const showInitialsOnly = () => {
+      img.classList.add('is-hidden');
+      img.removeAttribute('src');
+      img.alt = '';
+      initials.setAttribute('aria-hidden', 'false');
+    };
 
     const avatarPath = m?.avatar_path ? String(m.avatar_path) : '';
     if (!avatarPath) return;
+
     const { data, error } = await sb().storage.from(BUCKET).createSignedUrl(avatarPath, 3600);
-    if (!error && data?.signedUrl) {
-      img.src = data.signedUrl;
+    if (error || !data?.signedUrl) {
+      showInitialsOnly();
+      return;
+    }
+
+    img.onload = () => {
       img.classList.remove('is-hidden');
+      initials.setAttribute('aria-hidden', 'true');
+    };
+    img.onerror = () => {
+      showInitialsOnly();
+    };
+    img.alt = m?.display_name ? `Foto de ${String(m.display_name)}` : 'Avatar del socio';
+    img.src = data.signedUrl;
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.remove('is-hidden');
+      initials.setAttribute('aria-hidden', 'true');
     }
   }
 
