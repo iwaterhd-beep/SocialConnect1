@@ -7,9 +7,10 @@
 
 body.has-club-topnav {
   background:
-    radial-gradient(ellipse 120% 80% at 0% -10%, rgba(34, 197, 94, 0.14), transparent 46%),
-    radial-gradient(ellipse 85% 60% at 100% 0%, rgba(13, 148, 136, 0.12), transparent 42%),
-    linear-gradient(180deg, #f4f8f5 0%, var(--bg) 38%, #f8fafc 100%);
+    radial-gradient(ellipse 140% 90% at 10% -20%, rgba(34, 197, 94, 0.2), transparent 50%),
+    radial-gradient(ellipse 100% 70% at 95% 10%, rgba(13, 148, 136, 0.16), transparent 48%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(15, 118, 110, 0.08), transparent 55%),
+    linear-gradient(165deg, #ecfdf5 0%, #f0fdf9 22%, #f8fafc 52%, #f1f5f9 100%);
   background-attachment: fixed;
 }
 
@@ -30,9 +31,9 @@ body.has-club-topnav {
 
 .club-topnav__inner {
   width: 100%;
-  max-width: min(1520px, 97vw);
+  max-width: min(1920px, 100%);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -144,17 +145,21 @@ body.has-club-topnav {
   color: var(--g);
 }
 
-/* Pestañas estilo SocialConnect (.tabrow) */
+/* Pestañas — barra flotante tipo cristal */
 .club-tabs {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.35rem;
-  margin: 0 0 1.35rem;
-  padding: 0.35rem;
-  background: rgba(255, 255, 255, 0.72);
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  gap: 0.28rem;
+  margin: 0 0 1.5rem;
+  padding: 0.38rem;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 12px 40px rgba(15, 23, 42, 0.07);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -167,27 +172,27 @@ body.has-club-topnav {
   border: none;
   background: transparent;
   color: var(--tx3);
-  border-radius: 10px;
-  padding: 0.58rem 1rem;
+  border-radius: 999px;
+  padding: 0.62rem 1.15rem;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s;
 }
 
 .club-tab:hover {
   color: var(--tx);
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .club-tab.is-active {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  color: var(--tx);
+  background: linear-gradient(135deg, #16a34a 0%, #0f766e 55%, #0d9488 100%);
+  color: #fff;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 8px 18px rgba(15, 23, 42, 0.08);
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 10px 28px rgba(22, 163, 74, 0.35);
 }
 
 .club-view.is-hidden {
@@ -1209,19 +1214,24 @@ body.club-dark {
 }
 
 body.club-dark .panel {
-  background: var(--w);
-  border-color: var(--bd);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 body.club-dark .card-section {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: var(--bd);
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 body.club-dark .club-tabs {
-  background: var(--bg2);
-  border-color: var(--bd);
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
 body.club-dark .club-tab {
@@ -1234,9 +1244,11 @@ body.club-dark .club-tab:hover {
 }
 
 body.club-dark .club-tab.is-active {
-  background: var(--w);
-  color: var(--tx);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(135deg, #22c55e 0%, #0d9488 100%);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 body.club-dark .tpv-col--ticket {
@@ -2232,82 +2244,104 @@ body.club-dark .btn--danger:hover {
   color: var(--g);
 }
 
-/* ---------- Club panel refresh ---------- */
+/* ---------- Club layout abierto (sin panel “caja” único) ---------- */
 .has-club-topnav .shell--app {
-  padding-top: 1.35rem;
-  padding-bottom: 2rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  padding-top: 1.1rem;
+  padding-bottom: 2.75rem;
+  padding-left: clamp(0.75rem, 2.5vw, 2rem);
+  padding-right: clamp(0.75rem, 2.5vw, 2rem);
 }
 
 .has-club-topnav .panel.panel--wide {
-  width: min(1680px, 99vw);
-  max-width: min(1680px, 99vw);
+  width: 100%;
+  max-width: min(1920px, 100%);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .club-panel {
   position: relative;
   overflow-x: hidden;
   overflow-y: visible;
-  border-radius: 22px;
-  padding: 1.75rem 1.65rem 1.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.94) 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 28px 60px rgba(15, 23, 42, 0.08);
+  border-radius: 0;
+  padding: 0.25rem 0 1.5rem;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .club-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 4px;
-  background: linear-gradient(90deg, #16a34a, #0d9488);
+  display: none;
 }
 
 .dash-header--club {
   margin-bottom: 1.35rem;
-  padding-bottom: 1.15rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  padding: 1.2rem clamp(1rem, 2vw, 1.5rem);
+  border-bottom: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 16px 48px rgba(15, 23, 42, 0.06);
 }
 
-.dash-header__eyebrow {
+.dash-header--club .dash-header__eyebrow {
   margin: 0 0 0.35rem;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--tx4);
+  color: #0d9488;
 }
 
 .dash-header--club h1 {
-  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
-  line-height: 1.1;
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  background: linear-gradient(120deg, #0f172a 0%, #14532d 40%, #0f766e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.has-club-topnav .dash-header--club .dash-meta {
+  color: var(--tx2);
+  font-size: 0.9rem;
 }
 
 .has-club-topnav .card-section {
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 14px 34px rgba(15, 23, 42, 0.04);
+    0 20px 50px rgba(15, 23, 42, 0.06);
 }
 
 .has-club-topnav .card-section h2 {
-  font-size: 1.02rem;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .has-club-topnav .table-wrap {
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .has-club-topnav th {
   background: rgba(248, 250, 252, 0.92);
+}
+
+body.club-dark .has-club-topnav th {
+  background: rgba(30, 41, 59, 0.88);
 }
 
 .status-pill {
@@ -2384,28 +2418,52 @@ body.club-dark .btn--danger:hover {
 
 body.club-dark.has-club-topnav {
   background:
-    radial-gradient(ellipse 120% 80% at 0% -10%, rgba(34, 197, 94, 0.12), transparent 46%),
-    radial-gradient(ellipse 85% 60% at 100% 0%, rgba(13, 148, 136, 0.1), transparent 42%),
-    linear-gradient(180deg, #0b1220 0%, #0f172a 38%, #111827 100%);
+    radial-gradient(ellipse 140% 90% at 8% -25%, rgba(34, 197, 94, 0.18), transparent 52%),
+    radial-gradient(ellipse 100% 70% at 100% 0%, rgba(13, 148, 136, 0.14), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 50% 110%, rgba(15, 118, 110, 0.12), transparent 55%),
+    linear-gradient(165deg, #0b1220 0%, #0f172a 40%, #111827 100%);
 }
 
 body.club-dark .club-panel {
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
-  border-color: rgba(148, 163, 184, 0.22);
-  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
-body.club-dark .club-tabs {
-  background: rgba(15, 23, 42, 0.72);
+body.club-dark .dash-header--club {
+  background: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 16px 48px rgba(0, 0, 0, 0.35);
 }
 
-body.club-dark .club-tab.is-active {
-  background: linear-gradient(180deg, rgba(51, 65, 85, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
+body.club-dark .dash-header--club .dash-header__eyebrow {
+  color: #5eead4;
+}
+
+body.club-dark .dash-header--club h1 {
+  background: linear-gradient(120deg, #f8fafc 0%, #86efac 45%, #5eead4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.club-dark .has-club-topnav .dash-header--club .dash-meta {
+  color: var(--tx3);
+}
+
+body.club-dark .has-club-topnav .card-section {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(148, 163, 184, 0.12);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 8px 18px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+body.club-dark .has-club-topnav .table-wrap {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(148, 163, 184, 0.14);
 }
 
 body.club-dark .status-pill {
@@ -2464,12 +2522,15 @@ body.club-dark .finance-kpi {
 
 /* ---------- TPV stage ---------- */
 .tpv-shell--stage {
-  padding: 1.35rem 1.4rem 1.5rem;
+  padding: 1.35rem clamp(1rem, 2vw, 1.6rem) 1.5rem;
   border-radius: 22px;
-  background:
-    radial-gradient(ellipse 90% 55% at 0% 0%, rgba(34, 197, 94, 0.08), transparent 58%),
-    radial-gradient(ellipse 70% 45% at 100% 0%, rgba(13, 148, 136, 0.07), transparent 52%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 18px 48px rgba(15, 23, 42, 0.06);
 }
 
 .tpv-shell__hdr {
@@ -2520,8 +2581,9 @@ body.club-dark .finance-kpi {
 }
 
 body.club-dark .tpv-shell--stage {
-  background:
-    radial-gradient(ellipse 90% 55% at 0% 0%, rgba(34, 197, 94, 0.1), transparent 58%),
-    radial-gradient(ellipse 70% 45% at 100% 0%, rgba(13, 148, 136, 0.08), transparent 52%),
-    linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 20px 50px rgba(0, 0, 0, 0.28);
 }
