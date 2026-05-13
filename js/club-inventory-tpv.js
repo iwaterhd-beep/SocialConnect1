@@ -1006,7 +1006,12 @@
     if (!p) return;
     cancelScheduledAutoTpvLine();
     if (state.tpvSelectedId) {
-      syncAutoTpvLine({ silent: true });
+      const pendingId = state.tpvPendingCartRowId;
+      const pendingStillInCart =
+        Boolean(pendingId) && state.tpvCart.some((line) => line.cart_row_id === pendingId);
+      if (pendingStillInCart) {
+        syncAutoTpvLine({ silent: true });
+      }
       state.tpvPendingCartRowId = null;
     }
     const idNorm = String(id).trim();
