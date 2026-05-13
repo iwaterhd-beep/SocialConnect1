@@ -221,9 +221,9 @@ body.has-club-topnav {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Más alto vertical: aprovecha mejor el viewport bajo la topnav */
-  min-height: calc(100dvh - 6rem);
-  min-height: calc(100svh - 6rem);
+  /* Un poco más de alto útil para que el ticket (incl. Cobrar) no quede recortado */
+  min-height: calc(100dvh - 5.5rem);
+  min-height: calc(100svh - 5.5rem);
 }
 
 #club-view-tpv > .tpv-shell {
@@ -252,9 +252,9 @@ body.has-club-topnav {
 
 @media (min-width: 900px) {
   #club-view-tpv > .tpv-shell {
-    /* Antes 9.5rem dejaba el bloque TPV bajo; menos resta = más alto (rejilla + ticket). */
-    max-height: calc(100dvh - 5.5rem);
-    max-height: calc(100svh - 5.5rem);
+    /* Menos resta = más alto; antes el pie del ticket (Cobrar) quedaba cortado */
+    max-height: calc(100dvh - 4rem);
+    max-height: calc(100svh - 4rem);
     overflow: hidden;
   }
 
@@ -334,7 +334,7 @@ body.has-club-topnav {
     grid-template-columns: minmax(0, 1.2fr) minmax(400px, 44%);
     align-items: stretch;
     gap: 1.5rem;
-    min-height: min(72vh, 900px);
+    min-height: min(74vh, 920px);
   }
 }
 
