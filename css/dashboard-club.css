@@ -221,9 +221,9 @@ body.has-club-topnav {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Un poco más de alto útil para que el ticket (incl. Cobrar) no quede recortado */
-  min-height: calc(100dvh - 5.5rem);
-  min-height: calc(100svh - 5.5rem);
+  /* Más alto útil: ticket completo y menos recorte del pie */
+  min-height: calc(100dvh - 4.75rem);
+  min-height: calc(100svh - 4.75rem);
 }
 
 #club-view-tpv > .tpv-shell {
@@ -246,15 +246,14 @@ body.has-club-topnav {
 
 #club-view-tpv .tpv-recent-table-wrap {
   margin-top: 0.75rem;
-  max-height: min(32vh, 420px);
+  max-height: min(26vh, 360px);
   overflow: auto;
 }
 
 @media (min-width: 900px) {
   #club-view-tpv > .tpv-shell {
-    /* Menos resta = más alto; antes el pie del ticket (Cobrar) quedaba cortado */
-    max-height: calc(100dvh - 4rem);
-    max-height: calc(100svh - 4rem);
+    max-height: calc(100dvh - 3rem);
+    max-height: calc(100svh - 3rem);
     overflow: hidden;
   }
 
@@ -334,7 +333,7 @@ body.has-club-topnav {
     grid-template-columns: minmax(0, 1.2fr) minmax(400px, 44%);
     align-items: stretch;
     gap: 1.5rem;
-    min-height: min(74vh, 920px);
+    min-height: min(78vh, 980px);
   }
 }
 
