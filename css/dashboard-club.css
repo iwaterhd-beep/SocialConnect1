@@ -248,11 +248,11 @@ body.has-club-topnav {
 }
 
 /*
-  Escritorio: el bloque TPV + ticket debe alargarse hacia abajo hasta casi el borde inferior
-  útil (svh). Sin max-height en el shell: antes el alto era solo el del contenido y quedaba
-  hueco vacío. min-height en el shell fuerza altura; la rejilla hace scroll dentro.
+  TPV + ticket: min-height hasta casi el borde útil (svh); la rejilla hace scroll dentro.
+  Desde 768px: portátiles o zoom a menudo quedan bajo 900px y no aplicaban estas reglas.
+  El grid en dos columnas del TPV sigue activándose a 900px (.tpv-layout).
 */
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   #club-view-tpv:not(.is-hidden) {
     min-height: calc(100svh - 3.25rem);
   }
@@ -383,7 +383,7 @@ body.has-club-topnav {
   min-height: 0;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .tpv-col--ticket {
     align-self: stretch;
     min-height: 0;
