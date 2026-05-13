@@ -967,6 +967,10 @@
         </span>
       `;
       card.addEventListener('click', () => {
+        if (state.tpvSelectedId === p.id) {
+          clearTpvProductSelection();
+          return;
+        }
         if (!state.tpvOpenShiftId) {
           showToast('Abre un turno en Inicio para cobrar');
           return;
@@ -978,6 +982,23 @@
       });
       grid.appendChild(card);
     });
+  }
+
+  function clearTpvProductSelection() {
+    cancelScheduledAutoTpvLine();
+    if (state.tpvSelectedId) {
+      syncAutoTpvLine({ silent: true });
+      state.tpvPendingCartRowId = null;
+    }
+    state.tpvSelectedId = '';
+    if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
+    if ($('tpv-selected-label')) $('tpv-selected-label').textContent = 'Toca un producto a la izquierda';
+    if ($('tpv-stock-hint')) $('tpv-stock-hint').textContent = '';
+    syncTpvStockWrapVisibility();
+    updateTpvUnitLabels({ sale_unit: 'grams' });
+    applyTpvStepPreset({ sale_unit: 'grams' });
+    updateTpvMarginHint();
+    renderTpvGrid();
   }
 
   function selectTpvProduct(id) {
@@ -1032,14 +1053,7 @@
     if (!state.tpvSelectedId) return;
     const still = state.products.some((x) => x.id === state.tpvSelectedId);
     if (!still) {
-      state.tpvSelectedId = '';
-      if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
-      $('tpv-selected-label').textContent = 'Toca un producto a la izquierda';
-      if ($('tpv-stock-hint')) $('tpv-stock-hint').textContent = '';
-      syncTpvStockWrapVisibility();
-      updateTpvUnitLabels({ sale_unit: 'grams' });
-      applyTpvStepPreset({ sale_unit: 'grams' });
-      renderTpvGrid();
+      clearTpvProductSelection();
       return;
     }
     const p = state.products.find((x) => x.id === state.tpvSelectedId);
