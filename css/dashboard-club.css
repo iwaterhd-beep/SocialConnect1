@@ -266,6 +266,13 @@ body.has-club-topnav {
 
   #club-view-tpv .tpv-col--main {
     min-height: 0;
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  #club-view-tpv .tpv-col--ticket {
+    align-self: start;
   }
 
   #club-view-tpv .tpv-toolbar {
@@ -277,6 +284,25 @@ body.has-club-topnav {
     min-height: min(36vh, 20rem);
     max-height: none;
     overflow-y: auto;
+  }
+
+  #club-view-tpv .tpv-ticket-paper {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: none;
+    height: auto;
+    align-self: start;
+  }
+
+  #club-view-tpv .tpv-ticket-inner {
+    flex: none;
+    min-height: 0;
+  }
+
+  #club-view-tpv .tpv-ticket-scroll {
+    flex: none;
+    min-height: 0;
+    overflow-y: visible;
   }
 }
 
@@ -378,19 +404,12 @@ body.has-club-topnav {
 
 @media (min-width: 900px) {
   .tpv-col--ticket {
-    align-self: stretch;
+    align-self: start;
     min-height: 0;
     max-height: none;
     position: relative;
     top: auto;
     overflow: visible;
-  }
-
-  #club-view-tpv .tpv-ticket-paper {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: none;
-    height: 100%;
   }
 }
 
