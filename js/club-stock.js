@@ -18,6 +18,7 @@
     shiftOpenedAt: null,
     uiBound: false,
     eventsAvailable: true,
+    lastCountByProduct: {},
   };
 
   function parseDecimal(str) {
@@ -32,6 +33,56 @@
     const x = Number(n);
     if (Number.isNaN(x)) return String(n);
     return x.toLocaleString('es-ES', { maximumFractionDigits: 3 });
+  }
+
+  function getShiftStockDelta(ev) {
+    if (!ev) return null;
+    if (ev.delta_grams != null && ev.delta_grams !== '') {
+      const d = Number(ev.delta_grams);
+      if (!Number.isNaN(d)) return d;
+    }
+    if (ev.previous_stock_grams != null && ev.stock_net_grams != null) {
+      const prev = Number(ev.previous_stock_grams);
+      const net = Number(ev.stock_net_grams);
+      if (!Number.isNaN(prev) && !Number.isNaN(net)) return net - prev;
+    }
+    return null;
+  }
+
+  function formatStockDiscrepancy(prod, delta) {
+    if (delta === null || Number.isNaN(delta)) return '—';
+    const sign = delta > 0 ? '+' : '';
+    if (prod && prod.sale_unit === 'unit') {
+      return `${sign}${delta.toLocaleString('es-ES', { maximumFractionDigits: 0 })} ud`;
+    }
+    let txt = `${sign}${delta.toLocaleString('es-ES', { maximumFractionDigits: 3 })} g`;
+    const dsg = Number(prod && prod.default_sale_grams);
+    if (dsg > 0) {
+      const units = delta / dsg;
+      const uSign = units > 0 ? '+' : '';
+      txt += ` · ${uSign}${units.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ud`;
+    }
+    return txt;
+  }
+
+  function buildLatestCountByProduct(events) {
+    const map = {};
+    (events || []).forEach((ev) => {
+      const cur = map[ev.product_id];
+      if (!cur || new Date(ev.created_at) >= new Date(cur.created_at)) {
+        map[ev.product_id] = ev;
+      }
+    });
+    return map;
+  }
+
+  function previewManualDelta(prod, rawValue) {
+    const parsed = parseDecimal(rawValue);
+    if (Number.isNaN(parsed) || parsed < 0) return null;
+    const tare = prod ? Number(prod.bottle_weight_grams) || 0 : 0;
+    const net = tare > 0 ? Math.max(0, parsed - tare) : parsed;
+    const prev = prod ? Number(prod.stock_grams) || 0 : 0;
+    return net - prev;
   }
 
   function formatTsShort(iso) {
@@ -206,7 +257,7 @@
   async function loadProducts() {
     let q = sb()
       .from('inventory_products')
-      .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id')
+      .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, default_sale_grams')
       .eq('club_id', state.ctx.club.id)
       .eq('is_archived', false)
       .order('name', { ascending: true });
@@ -221,8 +272,20 @@
     ) {
       ({ data, error } = await sb()
         .from('inventory_products')
+        .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, default_sale_grams')
+        .eq('club_id', state.ctx.club.id)
+        .order('name', { ascending: true }));
+    }
+    if (
+      error &&
+      (error.code === '42703' ||
+        (error.message && String(error.message).toLowerCase().includes('column')))
+    ) {
+      ({ data, error } = await sb()
+        .from('inventory_products')
         .select('id, name, emoji, bottle_weight_grams, stock_grams, category_id')
         .eq('club_id', state.ctx.club.id)
+        .eq('is_archived', false)
         .order('name', { ascending: true }));
     }
     if (error) throw error;
@@ -238,7 +301,7 @@
     const list = getDisplayedProducts();
     tbody.innerHTML = '';
     if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="4">No hay productos con este filtro.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5">No hay productos con este filtro.</td></tr>';
       return;
     }
     list.forEach((p) => {
@@ -251,12 +314,23 @@
           : '';
       const placeholder = tare > 0 ? 'Total báscula (g)' : 'Ej. 10,5';
       const pendingValue = pending[p.id] ? ` value="${escapeHtml(pending[p.id])}"` : '';
+      const savedEv = state.lastCountByProduct[p.id];
+      const savedDelta = getShiftStockDelta(savedEv);
+      const previewDelta = pending[p.id] ? previewManualDelta(p, pending[p.id]) : null;
+      const descSaved =
+        savedDelta !== null ? formatStockDiscrepancy(p, savedDelta) : '—';
+      const descPreview =
+        previewDelta !== null ? formatStockDiscrepancy(p, previewDelta) : '';
+      const descCell = descPreview
+        ? `<span class="hint">${escapeHtml(descPreview)}</span>`
+        : escapeHtml(descSaved);
       tr.innerHTML = `
         <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}${tareLine}</td>
         <td>${escapeHtml(formatNum(p.stock_grams))}</td>
         <td>
           <input type="text" class="input stk-net-input" inputmode="decimal" data-product-id="${p.id}" placeholder="${escapeHtml(placeholder)}" style="max-width: 9rem" autocomplete="off"${pendingValue} />
         </td>
+        <td class="stk-desc-cell" data-product-id="${p.id}">${descCell}</td>
         <td class="actions">
           <button type="button" class="btn btn--ghost btn--small stk-save-row" data-product-id="${p.id}">Guardar</button>
         </td>
@@ -305,12 +379,13 @@
         }
         return;
       }
-      tbody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
       return;
     }
 
     const rows = data || [];
     const prodMap = Object.fromEntries(state.products.map((p) => [p.id, p]));
+    state.lastCountByProduct = buildLatestCountByProduct(rows);
 
     tbody.innerHTML = '';
     if (!rows.length) {
@@ -328,18 +403,18 @@
       const em = (pr.emoji || '').trim();
       const label = `${em ? em + ' ' : ''}${pr.name || '—'}`;
       const origin = ev.source === 'scale' ? 'Báscula' : 'Manual';
-      let deltaTxt = '—';
-      if (ev.delta_grams != null && ev.delta_grams !== '') {
-        const d = Number(ev.delta_grams);
-        if (!Number.isNaN(d)) {
-          deltaTxt = (d > 0 ? '+' : '') + formatNum(d);
-        }
-      }
+      const d = getShiftStockDelta(ev);
+      const deltaTxt = formatStockDiscrepancy(pr, d);
+      const prevTxt =
+        ev.previous_stock_grams != null && ev.previous_stock_grams !== ''
+          ? formatNum(ev.previous_stock_grams)
+          : '—';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(ev.created_at).toLocaleString())}</td>
         <td>${escapeHtml(turnoLabel)}</td>
         <td>${escapeHtml(label)}</td>
+        <td>${escapeHtml(prevTxt)}</td>
         <td>${escapeHtml(formatNum(ev.stock_net_grams))}</td>
         <td>${escapeHtml(deltaTxt)}</td>
         <td>${escapeHtml(origin)}</td>
@@ -365,9 +440,11 @@
     }
     const tare = p ? Number(p.bottle_weight_grams) || 0 : 0;
     const net = tare > 0 ? Math.max(0, parsed - tare) : parsed;
+    const prevStock = p ? Number(p.stock_grams) || 0 : 0;
+    const deltaPreview = net - prevStock;
 
     setStockMsg('Guardando…', false);
-    const { error: uerr } = await sb().rpc('club_register_manual_stock_count', {
+    const { data: rpcData, error: uerr } = await sb().rpc('club_register_manual_stock_count', {
       p_product_id: productId,
       p_new_stock_grams: net,
     });
@@ -375,17 +452,34 @@
       setStockMsg(uerr.message || 'No se pudo actualizar.', true);
       return;
     }
+    let delta = deltaPreview;
+    let rpcPayload = rpcData;
+    if (typeof rpcPayload === 'string') {
+      try {
+        rpcPayload = JSON.parse(rpcPayload);
+      } catch (e) {
+        rpcPayload = null;
+      }
+    }
+    if (rpcPayload && typeof rpcPayload === 'object' && rpcPayload.delta_grams != null) {
+      const d = Number(rpcPayload.delta_grams);
+      if (!Number.isNaN(d)) delta = d;
+    } else if (typeof rpcData === 'number' && !Number.isNaN(rpcData)) {
+      delta = deltaPreview;
+    }
+    const descTxt = formatStockDiscrepancy(p, delta);
     if (input) input.value = '';
     if (tare > 0) {
       setStockMsg(
-        `Stock neto guardado: ${formatNum(net)} g (peso indicado ${formatNum(parsed)} g − bote ${formatNum(tare)} g).`,
+        `Stock neto guardado: ${formatNum(net)} g (peso ${formatNum(parsed)} g − bote ${formatNum(tare)} g). Descuadre: ${descTxt}.`,
         false,
       );
     } else {
-      setStockMsg('Stock actualizado.', false);
+      setStockMsg(`Stock actualizado. Descuadre: ${descTxt}.`, false);
     }
     await loadProducts();
     await loadShiftEvents();
+    renderManualTable();
     if (typeof window.scClubReloadInventoryProducts === 'function') {
       await window.scClubReloadInventoryProducts();
     }
@@ -408,6 +502,23 @@
       if (!btn) return;
       const id = btn.getAttribute('data-product-id');
       if (id) void saveManualRow(id);
+    });
+    document.addEventListener('input', (e) => {
+      const input = e.target.closest('.stk-net-input');
+      if (!input) return;
+      const id = input.getAttribute('data-product-id');
+      const prod = state.products.find((x) => x.id === id);
+      const cell = document.querySelector(`.stk-desc-cell[data-product-id="${id}"]`);
+      if (!cell || !prod) return;
+      const raw = (input.value || '').trim();
+      if (!raw) {
+        const savedEv = state.lastCountByProduct[id];
+        const savedDelta = getShiftStockDelta(savedEv);
+        cell.textContent = savedDelta !== null ? formatStockDiscrepancy(prod, savedDelta) : '—';
+        return;
+      }
+      const d = previewManualDelta(prod, raw);
+      cell.innerHTML = d !== null ? `<span class="hint">${escapeHtml(formatStockDiscrepancy(prod, d))}</span>` : '—';
     });
   }
 

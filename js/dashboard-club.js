@@ -414,6 +414,59 @@
     return `${d > 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 3 })}`;
   }
 
+  function isMissingDbColumnError(err) {
+    if (!err) return false;
+    if (err.code === '42703') return true;
+    const m = String(err.message || '').toLowerCase();
+    return m.includes('column') && (m.includes('does not exist') || m.includes('no existe'));
+  }
+
+  function buildLatestCountByProduct(events) {
+    const map = {};
+    (events || []).forEach((ev) => {
+      const cur = map[ev.product_id];
+      if (!cur || new Date(ev.created_at) >= new Date(cur.created_at)) {
+        map[ev.product_id] = ev;
+      }
+    });
+    return map;
+  }
+
+  function formatStockDiscrepancy(prod, delta) {
+    if (delta === null || Number.isNaN(delta)) return '—';
+    const sign = delta > 0 ? '+' : '';
+    const isUnit = prod && prod.sale_unit === 'unit';
+    if (isUnit) {
+      return `${sign}${delta.toLocaleString('es-ES', { maximumFractionDigits: 0 })} ud`;
+    }
+    let txt = `${sign}${delta.toLocaleString('es-ES', { maximumFractionDigits: 3 })} g`;
+    const dsg = Number(prod && prod.default_sale_grams);
+    if (dsg > 0) {
+      const units = delta / dsg;
+      const uSign = units > 0 ? '+' : '';
+      txt += ` · ${uSign}${units.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ud`;
+    }
+    return txt;
+  }
+
+  async function fetchShiftStockEvents(shiftId) {
+    const fullCols =
+      'product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at';
+    let res = await sb()
+      .from('shift_stock_events')
+      .select(fullCols)
+      .eq('shift_id', shiftId)
+      .order('created_at', { ascending: true });
+    if (res.error && isMissingDbColumnError(res.error)) {
+      res = await sb()
+        .from('shift_stock_events')
+        .select('product_id, stock_net_grams, source, created_at')
+        .eq('shift_id', shiftId)
+        .order('created_at', { ascending: true });
+    }
+    return res;
+  }
+
   function openShiftWizardModal() {
     const el = $('shift-wizard-modal');
     if (!el) return;
@@ -686,27 +739,20 @@
       sb().from('shifts').select('*').eq('id', shiftId).maybeSingle(),
       fetchShiftWalletCashNet(shiftId, dispenseIds),
       buildShiftWalletSectionHtml(shiftId, dispRes.dispenses),
-      sb()
-        .from('shift_stock_events')
-        .select('product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at')
-        .eq('shift_id', shiftId)
-        .order('created_at', { ascending: true }),
+      fetchShiftStockEvents(shiftId),
       sb()
         .from('inventory_products')
-        .select('id, name, emoji, stock_grams')
+        .select('id, name, emoji, stock_grams, sale_unit, default_sale_grams')
         .eq('club_id', clubId),
     ]);
 
     const shift = shiftRes.data;
     const dispenses = dispRes.dispenses || [];
     const walletSection = walletSectionHtml || '';
-    const events = evRes.data || [];
+    const events = evRes.error ? [] : evRes.data || [];
     const products = prodRes.data || [];
     const prodMap = Object.fromEntries(products.map((p) => [p.id, p]));
-    const countByProduct = {};
-    events.forEach((ev) => {
-      countByProduct[ev.product_id] = ev;
-    });
+    const countByProduct = buildLatestCountByProduct(events);
 
     const { cashSales, walletSales, salesTotal } = summarizeShiftDispenseSales(dispenses);
     const gramsByProduct = {};
@@ -731,10 +777,15 @@
         const pr = prodMap[ev.product_id] || {};
         const em = (pr.emoji || '').trim();
         const d = getShiftStockDelta(ev);
-        const dTxt = formatGramsDelta(d);
+        const dTxt = formatStockDiscrepancy(pr, d);
+        const prevTxt =
+          ev.previous_stock_grams != null && ev.previous_stock_grams !== ''
+            ? Number(ev.previous_stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 })
+            : '—';
         return `<tr>
           <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(pr.name || '—')}</td>
           <td>${escapeHtml(ev.source === 'scale' ? 'Báscula' : 'Manual')}</td>
+          <td>${escapeHtml(prevTxt)}</td>
           <td>${escapeHtml(Number(ev.stock_net_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
           <td>${escapeHtml(dTxt)}</td>
         </tr>`;
@@ -770,7 +821,7 @@
       .map((p) => {
         const em = (p.emoji || '').trim();
         const countEv = countByProduct[p.id];
-        const descTxt = formatGramsDelta(getShiftStockDelta(countEv));
+        const descTxt = formatStockDiscrepancy(p, getShiftStockDelta(countEv));
         return `<tr>
         <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}</td>
         <td>${escapeHtml(Number(p.stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
@@ -839,13 +890,13 @@
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Contajes de stock en el turno</h4>
         ${
           events.length
-            ? `<div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Origen</th><th>Stock anotado (g)</th><th>Δ (g)</th></tr></thead><tbody>${stockRows}</tbody></table></div>`
+            ? `<div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Origen</th><th>Stock antes</th><th>Stock contado</th><th>Descuadre (g / ud)</th></tr></thead><tbody>${stockRows}</tbody></table></div>`
             : '<p class="hint" style="margin:0">Sin registros de stock en este turno.</p>'
         }
       </div>
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Stock actual tras cerrar (inventario)</h4>
-        <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (g)</th></tr></thead><tbody>${stockSnapshot}</tbody></table></div>
+        <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (g / ud)</th></tr></thead><tbody>${stockSnapshot}</tbody></table></div>
       </div>
     `;
   }

@@ -12,6 +12,8 @@ Ejecuta **una por una**, en este orden:
 8. `supabase/migrations/015_inventory_price_per_gram.sql`
 9. `supabase/migrations/016_tpv_delete_dispense.sql`
 10. `supabase/migrations/017_inventory_sale_unit.sql`
+11. … (018–030 según lo que aún no tengas en el proyecto)
+12. **`supabase/migrations/031_shift_stock_count_events.sql`** — contajes manuales siempre ligados al turno; devuelve JSON con descuadre. Si falla por tipo de retorno, el script ya incluye `DROP FUNCTION` antes de crear.
 
 ---
 
