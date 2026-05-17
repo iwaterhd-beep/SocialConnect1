@@ -23,4 +23,10 @@ window.SC_CONFIG = {
    * Solo necesario si despliegas en un subdirectorio; por defecto "partials/".
    */
   partialsBase: 'partials/',
+
+  /**
+   * Origen del sitio público (menú tablet). Ej: https://socialconnectcs.com
+   * Si está vacío, se deduce desde la URL del panel.
+   */
+  publicSiteOrigin: 'https://socialconnectcs.com',
 };

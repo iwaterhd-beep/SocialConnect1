@@ -57,6 +57,7 @@
     hasCannabisStrainColumn: true,
     hasCategoryMenuStrainColumn: true,
     menuSettings: { enabled: false, slug: '' },
+    menuUiBound: false,
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
@@ -897,18 +898,68 @@
     row.hidden = !show;
   }
 
+  function getPublicMenuBaseUrl() {
+    const cfg = window.SC_CONFIG || {};
+    const fromCfg = (cfg.publicSiteOrigin || '').trim();
+    if (fromCfg) return fromCfg.replace(/\/?$/, '/');
+    const path = window.location.pathname || '/';
+    const slash = path.lastIndexOf('/');
+    const dir = slash > 0 ? path.slice(0, slash + 1) : '/';
+    return `${window.location.origin}${dir}`;
+  }
+
+  function buildPublicMenuUrl(slug) {
+    const s = (slug || '').trim().toLowerCase();
+    if (!s) return '';
+    return `${getPublicMenuBaseUrl()}menu/?club=${encodeURIComponent(s)}`;
+  }
+
+  function setMenuStatus(text, isError) {
+    const el = $('inv-menu-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
+  }
+
   function updateMenuUrlPreview() {
     const slug = ($('inv-menu-slug')?.value || '').trim().toLowerCase();
     const preview = $('inv-menu-url-preview');
     const link = $('inv-menu-open-link');
-    const base = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}`;
-    const root = base.includes('dashboard-club') ? base.replace(/dashboard-club\.html.*$/, '') : base.replace(/\/?$/, '/');
-    const url = slug ? `${root}menu/?club=${encodeURIComponent(slug)}` : '—';
-    if (preview) preview.textContent = slug ? url : 'Indica una ruta para generar el enlace.';
-    if (link) {
-      link.href = slug ? url : '#';
-      link.classList.toggle('is-disabled', !slug);
+    const url = buildPublicMenuUrl(slug);
+    if (preview) {
+      preview.textContent = url || 'Escribe una ruta (ej. tfp) y guarda para activar el enlace.';
     }
+    if (link) {
+      link.href = url || 'javascript:void(0)';
+      link.setAttribute('aria-disabled', url ? 'false' : 'true');
+      link.classList.toggle('btn--disabled', !url);
+    }
+  }
+
+  function bindMenuUi() {
+    if (state.menuUiBound) return;
+    const saveBtn = $('inv-menu-save');
+    const slugInput = $('inv-menu-slug');
+    const openLink = $('inv-menu-open-link');
+    if (!saveBtn && !slugInput && !openLink) return;
+
+    state.menuUiBound = true;
+
+    saveBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      void saveMenuSettings();
+    });
+    slugInput?.addEventListener('input', updateMenuUrlPreview);
+    openLink?.addEventListener('click', (e) => {
+      const url = buildPublicMenuUrl(($('inv-menu-slug')?.value || '').trim());
+      if (!url) {
+        e.preventDefault();
+        setMenuStatus('Indica una ruta y pulsa Guardar menú antes de abrir.', true);
+        return;
+      }
+      e.preventDefault();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    });
   }
 
   async function loadMenuSettings() {
@@ -918,7 +969,10 @@
       .eq('id', state.ctx.club.id)
       .maybeSingle();
     if (error) {
-      if (error.code === '42703') return;
+      if (error.code === '42703') {
+        setMenuStatus('Ejecuta 033_public_menu.sql en Supabase para activar el menú tablet.', true);
+        return;
+      }
       throw error;
     }
     state.menuSettings = {
@@ -928,36 +982,50 @@
     if ($('inv-menu-enabled')) $('inv-menu-enabled').checked = state.menuSettings.enabled;
     if ($('inv-menu-slug')) $('inv-menu-slug').value = state.menuSettings.slug;
     updateMenuUrlPreview();
+    bindMenuUi();
   }
 
   async function saveMenuSettings() {
+    if (!state.ctx?.club?.id) {
+      setMenuStatus('Sesión del club no cargada. Recarga la página.', true);
+      return;
+    }
     const enabled = $('inv-menu-enabled')?.checked === true;
     const slug = ($('inv-menu-slug')?.value || '').trim().toLowerCase();
-    const status = $('inv-menu-status');
-    if (status) {
-      status.textContent = 'Guardando menú…';
-      status.className = 'msg';
+    if (enabled && !slug) {
+      setMenuStatus('Escribe una ruta del menú (ej. tfp) para activarlo.', true);
+      return;
     }
+    if (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      setMenuStatus('Ruta inválida: solo minúsculas, números y guiones.', true);
+      return;
+    }
+
+    setMenuStatus('Guardando menú…', false);
     const { error } = await sb().rpc('club_update_public_menu_settings', {
       p_enabled: enabled,
       p_slug: slug,
     });
     if (error) {
-      if (status) {
-        status.textContent =
-          error.message?.includes('club_update_public_menu_settings') ||
-          error.code === 'PGRST202'
-            ? 'Ejecuta la migración 033_public_menu.sql en Supabase.'
-            : error.message || 'No se pudo guardar.';
-        status.className = 'msg msg--error';
-      }
+      const needsMigration =
+        error.code === 'PGRST202' ||
+        error.code === '42883' ||
+        /club_update_public_menu_settings/i.test(error.message || '');
+      setMenuStatus(
+        needsMigration
+          ? 'Ejecuta la migración 033_public_menu.sql en Supabase y vuelve a intentar.'
+          : error.message || 'No se pudo guardar.',
+        true,
+      );
       return;
     }
     state.menuSettings = { enabled, slug };
-    if (status) {
-      status.textContent = 'Menú público guardado.';
-      status.className = 'msg msg--ok';
-    }
+    setMenuStatus(
+      enabled
+        ? `Menú guardado. Enlace: ${buildPublicMenuUrl(slug)}`
+        : 'Menú desactivado.',
+      false,
+    );
     updateMenuUrlPreview();
   }
 
@@ -2729,6 +2797,8 @@
   }
 
   function bindInventory() {
+    bindMenuUi();
+    $('inv-product-category')?.addEventListener('change', syncProductStrainRowVisibility);
     $('inv-filter-category')?.addEventListener('change', async () => {
       state.filterCategoryId = ($('inv-filter-category')?.value || '').trim();
       renderInvCategoryChips();
@@ -2870,6 +2940,7 @@
     }
 
     try {
+      bindMenuUi();
       await loadMenuSettings();
       await loadCategories();
       await loadInventoryAccessFlags(ctx);
