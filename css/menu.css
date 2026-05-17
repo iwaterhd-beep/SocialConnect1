@@ -1,47 +1,67 @@
+/* Menú público tablet — carta visual tipo “showcase” */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap');
+
 .menu-page {
   margin: 0;
   min-height: 100dvh;
-  background: linear-gradient(165deg, #0f1419 0%, #1a2332 45%, #12181f 100%);
-  color: #e8edf2;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(64, 145, 108, 0.35), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(168, 85, 247, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(251, 191, 36, 0.1), transparent 45%),
+    linear-gradient(168deg, #0a0e12 0%, #121a22 40%, #0d1117 100%);
+  color: #f4f7fa;
+  font-family: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 .menu-header {
   position: sticky;
   top: 0;
-  z-index: 20;
-  padding: 1rem 1.25rem 0.75rem;
-  background: rgba(15, 20, 25, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 30;
+  padding: 1.1rem 1.25rem 0.85rem;
+  background: linear-gradient(180deg, rgba(10, 14, 18, 0.97) 0%, rgba(10, 14, 18, 0.85) 100%);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .menu-header__brand {
   margin: 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  opacity: 0.55;
+  color: #74c69d;
 }
 
 .menu-header__title {
-  margin: 0.2rem 0 0;
-  font-size: clamp(1.35rem, 4vw, 1.75rem);
-  font-weight: 700;
+  margin: 0.15rem 0 0;
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 0%, #b7e4c7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .menu-header__status {
   margin: 0.35rem 0 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .menu-cat-nav {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem 0.25rem;
+  gap: 0.55rem;
+  padding: 0.5rem 1rem 0.75rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  position: sticky;
+  top: 5.5rem;
+  z-index: 25;
+  background: linear-gradient(180deg, rgba(10, 14, 18, 0.9), rgba(10, 14, 18, 0.65));
+  backdrop-filter: blur(12px);
 }
 
 .menu-cat-nav::-webkit-scrollbar {
@@ -50,115 +70,264 @@
 
 .menu-cat-nav__btn {
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.75);
   border-radius: 999px;
-  padding: 0.45rem 0.95rem;
-  font-size: 0.9rem;
+  padding: 0.55rem 1.15rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-cat-nav__btn:active {
+  transform: scale(0.97);
 }
 
 .menu-cat-nav__btn.is-active {
-  background: #2d6a4f;
-  border-color: #40916c;
+  background: linear-gradient(135deg, #2d6a4f 0%, #52b788 100%);
+  border-color: rgba(149, 213, 178, 0.5);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(45, 106, 79, 0.45);
 }
 
 .menu-main {
-  padding: 0.5rem 1rem 2rem;
-  max-width: 52rem;
+  padding: 0.25rem 1rem 2.5rem;
+  max-width: 72rem;
   margin: 0 auto;
 }
 
 .menu-section {
-  margin-top: 1.25rem;
-  scroll-margin-top: 7rem;
+  margin-top: 1.75rem;
+  scroll-margin-top: 8.5rem;
+}
+
+.menu-section__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .menu-section__title {
-  margin: 0 0 0.65rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #95d5b2;
-  letter-spacing: 0.04em;
+  margin: 0;
+  font-size: clamp(1.15rem, 3vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: #fff;
+}
+
+.menu-section__line {
+  flex: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(82, 183, 136, 0.8), transparent);
 }
 
 .menu-grid {
   display: grid;
-  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
 }
 
-.menu-item {
+/* Tarjeta producto */
+.menu-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 9.5rem;
+  padding: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.menu-card:active {
+  transform: scale(0.98);
+}
+
+.menu-card__glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 70%;
+  opacity: 0.55;
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.menu-card__emoji-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  justify-content: center;
+  min-height: 5.5rem;
+  padding: 1rem 0.75rem 0.5rem;
 }
 
-.menu-item__name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  min-width: 0;
-}
-
-.menu-item__emoji {
-  font-size: 1.35rem;
+.menu-card__emoji {
+  font-size: clamp(2.75rem, 10vw, 3.5rem);
   line-height: 1;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+  z-index: 1;
 }
 
-.menu-item__strain {
-  flex: 0 0 auto;
-  font-size: 0.7rem;
+.menu-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.85rem 0.65rem;
+  text-align: center;
+  z-index: 1;
+}
+
+.menu-card__name {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.8vw, 1.08rem);
   font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
+
+.menu-card__strain {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+}
+
+.menu-card__strain--sativa {
+  background: rgba(255, 200, 87, 0.25);
+  color: #ffe08a;
+  border: 1px solid rgba(255, 200, 87, 0.35);
+}
+
+.menu-card__strain--indica {
+  background: rgba(167, 139, 250, 0.28);
+  color: #ddd6fe;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+}
+
+.menu-card__price {
+  margin: 0;
+  padding: 0.65rem 0.85rem 0.85rem;
+  font-size: clamp(1.05rem, 3.2vw, 1.2rem);
+  font-weight: 800;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.22);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.menu-card__price small {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.75;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.2rem 0.45rem;
-  border-radius: 6px;
+  margin-bottom: 0.1rem;
 }
 
-.menu-item__strain--sativa {
-  background: rgba(255, 183, 77, 0.2);
-  color: #ffc971;
+/* Paletas por tarjeta (rotación) */
+.menu-card--t0 {
+  background: linear-gradient(145deg, #1b4332 0%, #2d6a4f 45%, #40916c 100%);
+}
+.menu-card--t0 .menu-card__glow {
+  background: #95d5b2;
 }
 
-.menu-item__strain--indica {
-  background: rgba(129, 140, 248, 0.22);
-  color: #a5b4fc;
+.menu-card--t1 {
+  background: linear-gradient(145deg, #5c3d1e 0%, #b5651d 40%, #e9a319 100%);
+}
+.menu-card--t1 .menu-card__glow {
+  background: #ffd166;
 }
 
-.menu-item__price {
-  flex: 0 0 auto;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #d8f3dc;
-  white-space: nowrap;
+.menu-card--t2 {
+  background: linear-gradient(145deg, #3d2463 0%, #7b2cbf 50%, #c77dff 100%);
+}
+.menu-card--t2 .menu-card__glow {
+  background: #e0aaff;
+}
+
+.menu-card--t3 {
+  background: linear-gradient(145deg, #0d3b4c 0%, #0077b6 50%, #48cae4 100%);
+}
+.menu-card--t3 .menu-card__glow {
+  background: #90e0ef;
+}
+
+.menu-card--t4 {
+  background: linear-gradient(145deg, #5c1020 0%, #c9184a 45%, #ff758f 100%);
+}
+.menu-card--t4 .menu-card__glow {
+  background: #ff8fa3;
+}
+
+.menu-card--t5 {
+  background: linear-gradient(145deg, #1a3a2a 0%, #386641 40%, #a7c957 100%);
+}
+.menu-card--t5 .menu-card__glow {
+  background: #cfe1b9;
 }
 
 .menu-empty,
 .menu-loading,
 .menu-error {
   text-align: center;
-  padding: 2.5rem 1rem;
-  opacity: 0.85;
+  padding: 3rem 1.25rem;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .menu-footer {
-  padding: 1rem 1.25rem 1.5rem;
+  padding: 1.25rem 1.25rem 2rem;
   text-align: center;
-  opacity: 0.45;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.35);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 520px) {
   .menu-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .menu-card {
+    min-height: 10.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.1rem;
+  }
+
+  .menu-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+@media (min-width: 1100px) {
+  .menu-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

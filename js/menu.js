@@ -22,6 +22,20 @@
     return '';
   }
 
+  function splitPriceLabel(label) {
+    const t = (label || '').trim();
+    if (!t || t === '—') return { main: '—', sub: '' };
+    const parts = t.split(/\s+/);
+    if (parts.length > 1 && /^€/.test(parts[parts.length - 1])) {
+      return { main: parts.slice(0, -1).join(' '), sub: parts[parts.length - 1] };
+    }
+    if (t.includes('/')) {
+      const i = t.lastIndexOf(' ');
+      if (i > 0) return { main: t.slice(0, i).trim(), sub: t.slice(i).trim() };
+    }
+    return { main: t, sub: '' };
+  }
+
   /** Valor numérico para ordenar (sin precio → al final). */
   function menuPriceSortValue(p) {
     if (p.price_sort != null && p.price_sort !== '') {
@@ -114,44 +128,62 @@
       section.className = 'menu-section';
       section.id = 'menu-cat-' + i;
 
+      const head = document.createElement('div');
+      head.className = 'menu-section__head';
       const h = document.createElement('h2');
       h.className = 'menu-section__title';
       h.textContent = cat.name;
-      section.appendChild(h);
+      const line = document.createElement('div');
+      line.className = 'menu-section__line';
+      head.appendChild(h);
+      head.appendChild(line);
+      section.appendChild(head);
 
       const grid = document.createElement('div');
       grid.className = 'menu-grid';
 
-      sortMenuProductsByPrice(cat.products).forEach((p) => {
-        const row = document.createElement('article');
-        row.className = 'menu-item';
+      sortMenuProductsByPrice(cat.products).forEach((p, pi) => {
+        const card = document.createElement('article');
+        card.className = 'menu-card menu-card--t' + (pi % 6);
 
-        const nameWrap = document.createElement('div');
-        nameWrap.className = 'menu-item__name';
-        if (p.emoji) {
-          const em = document.createElement('span');
-          em.className = 'menu-item__emoji';
-          em.textContent = p.emoji;
-          nameWrap.appendChild(em);
-        }
-        const nm = document.createElement('span');
+        const glow = document.createElement('div');
+        glow.className = 'menu-card__glow';
+        card.appendChild(glow);
+
+        const emojiWrap = document.createElement('div');
+        emojiWrap.className = 'menu-card__emoji-wrap';
+        const em = document.createElement('span');
+        em.className = 'menu-card__emoji';
+        em.textContent = (p.emoji || '').trim() || '🌿';
+        emojiWrap.appendChild(em);
+        card.appendChild(emojiWrap);
+
+        const body = document.createElement('div');
+        body.className = 'menu-card__body';
+        const nm = document.createElement('h3');
+        nm.className = 'menu-card__name';
         nm.textContent = p.name;
-        nameWrap.appendChild(nm);
+        body.appendChild(nm);
 
         if (p.strain) {
           const st = document.createElement('span');
-          st.className = 'menu-item__strain menu-item__strain--' + p.strain;
+          st.className = 'menu-card__strain menu-card__strain--' + p.strain;
           st.textContent = strainLabel(p.strain);
-          nameWrap.appendChild(st);
+          body.appendChild(st);
         }
+        card.appendChild(body);
 
-        const price = document.createElement('span');
-        price.className = 'menu-item__price';
-        price.textContent = p.price_label || '—';
+        const priceParts = splitPriceLabel(p.price_label);
+        const price = document.createElement('p');
+        price.className = 'menu-card__price';
+        if (priceParts.sub) {
+          price.innerHTML = `<small>Precio</small>${escapeHtml(priceParts.main)} <span>${escapeHtml(priceParts.sub)}</span>`;
+        } else {
+          price.innerHTML = `<small>Precio</small>${escapeHtml(priceParts.main)}`;
+        }
+        card.appendChild(price);
 
-        row.appendChild(nameWrap);
-        row.appendChild(price);
-        grid.appendChild(row);
+        grid.appendChild(card);
       });
 
       section.appendChild(grid);
