@@ -431,7 +431,7 @@
       ledgerWrap.hidden = true;
     }
     const ledgerTbody = $('member-wallet-ledger-tbody');
-    if (ledgerTbody) ledgerTbody.innerHTML = '<tr><td colspan="5">Sin datos.</td></tr>';
+    if (ledgerTbody) ledgerTbody.innerHTML = '<tr><td colspan="6">Sin datos.</td></tr>';
     const ledgerEmpty = $('member-wallet-ledger-empty');
     if (ledgerEmpty) {
       ledgerEmpty.classList.add('is-hidden');
@@ -905,6 +905,63 @@
     return 'Ajuste';
   }
 
+  function paymentMethodLabel(method) {
+    return String(method || 'cash').toLowerCase() === 'wallet' ? 'Monedero' : 'Efectivo';
+  }
+
+  async function getClubOpenShiftId() {
+    if (!ctx?.club?.id) return null;
+    const { data, error } = await sb()
+      .from('shifts')
+      .select('id')
+      .eq('club_id', ctx.club.id)
+      .is('closed_at', null)
+      .maybeSingle();
+    if (error) return null;
+    return data?.id || null;
+  }
+
+  async function rpcMemberWalletAdjust(memberId, delta, notes, shiftId, affectsCash) {
+    const payload = {
+      p_member_id: memberId,
+      p_delta_eur: delta,
+      p_notes: notes,
+      p_shift_id: affectsCash && shiftId ? shiftId : null,
+      p_affects_cash: !!affectsCash,
+    };
+    let res = await sb().rpc('club_member_wallet_adjust', payload);
+    if (
+      res.error &&
+      affectsCash &&
+      (res.error.code === 'PGRST202' ||
+        res.error.code === '42883' ||
+        /p_shift_id|p_affects_cash/i.test(res.error.message || ''))
+    ) {
+      return {
+        error: {
+          message: 'Ejecuta la migración 029_wallet_cash_shift.sql en Supabase para caja y monedero.',
+        },
+        data: null,
+      };
+    }
+    if (
+      res.error &&
+      (res.error.code === 'PGRST202' ||
+        res.error.code === '42883' ||
+        /club_member_wallet_adjust/i.test(res.error.message || ''))
+    ) {
+      if (affectsCash) {
+        return { error: { message: 'Ejecuta la migración 028_member_wallet.sql en Supabase.' }, data: null };
+      }
+      res = await sb().rpc('club_member_wallet_adjust', {
+        p_member_id: memberId,
+        p_delta_eur: delta,
+        p_notes: notes,
+      });
+    }
+    return res;
+  }
+
   function formatWalletLedgerAmount(amt) {
     const n = Number(amt);
     if (Number.isNaN(n)) return '—';
@@ -935,7 +992,7 @@
 
     const { data, error } = await sb()
       .from('club_member_wallet_ledger')
-      .select('created_at, amount_eur, balance_after_eur, kind, notes')
+      .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes')
       .eq('member_id', memberId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -947,7 +1004,7 @@
         String(error.message || '').toLowerCase().includes('club_member_wallet_ledger')
           ? 'Ejecuta la migración 028_member_wallet.sql en Supabase.'
           : error.message || 'No se pudo cargar el historial.';
-      tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(msg)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6">${escapeHtml(msg)}</td></tr>`;
       return;
     }
 
@@ -969,13 +1026,19 @@
     rows.forEach((r) => {
       const amt = Number(r.amount_eur);
       const bal = Number(r.balance_after_eur);
+      const cash = Number(r.cash_eur);
       const amtClass = !Number.isNaN(amt) && amt < 0 ? ' member-wallet-ledger-amt--neg' : '';
       const balClass = !Number.isNaN(bal) && bal < 0 ? ' member-wallet-ledger-bal--neg' : '';
+      const cashTxt =
+        r.cash_eur != null && !Number.isNaN(cash) && Math.abs(cash) > 0.0001
+          ? formatWalletLedgerAmount(cash)
+          : '—';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
         <td>${escapeHtml(walletLedgerKindLabel(r.kind))}</td>
         <td class="member-wallet-ledger-amt${amtClass}">${escapeHtml(formatWalletLedgerAmount(amt))}</td>
+        <td>${escapeHtml(cashTxt)}</td>
         <td class="member-wallet-ledger-bal${balClass}">${escapeHtml(formatMoney(Number.isNaN(bal) ? 0 : bal))}</td>
         <td>${escapeHtml((r.notes || '').slice(0, 80))}</td>
       `;
@@ -993,11 +1056,7 @@
     }
     const delta = Math.round((newBal - memberWalletLoadedBalance) * 100) / 100;
     if (Math.abs(delta) < 0.0001) return { ok: true };
-    const { error } = await sb().rpc('club_member_wallet_adjust', {
-      p_member_id: memberId,
-      p_delta_eur: delta,
-      p_notes: 'Ajuste desde ficha socio',
-    });
+    const { error } = await rpcMemberWalletAdjust(memberId, delta, 'Ajuste desde ficha socio', null, false);
     if (error) {
       if (error.code === 'PGRST202' || error.code === '42883') {
         return { ok: false, message: 'Ejecuta la migración 028_member_wallet.sql en Supabase.' };
@@ -1022,18 +1081,22 @@
     }
     const delta = sign < 0 ? -amt : amt;
     const defaultNote = sign < 0 ? 'Retirada desde perfil' : 'Recarga desde perfil';
+    const affectsCash = $('member-wallet-adjust-cash')?.checked === true;
+    const shiftId = affectsCash ? await getClubOpenShiftId() : null;
+    if (affectsCash && !shiftId) {
+      setMemberWalletAdjustStatus('Abre un turno de caja para movimientos en efectivo.', true);
+      return;
+    }
     setMemberWalletAdjustStatus('Aplicando…', false);
-    const { data, error } = await sb().rpc('club_member_wallet_adjust', {
-      p_member_id: selectedMemberId,
-      p_delta_eur: delta,
-      p_notes: notes || defaultNote,
-    });
+    const { data, error } = await rpcMemberWalletAdjust(
+      selectedMemberId,
+      delta,
+      notes || defaultNote,
+      shiftId,
+      affectsCash,
+    );
     if (error) {
-      if (error.code === 'PGRST202' || error.code === '42883') {
-        setMemberWalletAdjustStatus('Ejecuta la migración 028_member_wallet.sql en Supabase.', true);
-      } else {
-        setMemberWalletAdjustStatus(error.message || 'No se pudo aplicar.', true);
-      }
+      setMemberWalletAdjustStatus(error.message || 'No se pudo aplicar.', true);
       return;
     }
     const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
@@ -1041,9 +1104,12 @@
     if ($('member-wallet-adjust-notes')) $('member-wallet-adjust-notes').value = '';
     const verb = sign < 0 ? 'Retirados' : 'Ingresados';
     setMemberWalletAdjustStatus(
-      `${verb} ${formatMoney(amt)}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
+      `${verb} ${formatMoney(amt)}${affectsCash ? ' (en caja del turno)' : ''}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
       false,
     );
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -1379,7 +1445,7 @@
         financeVentasCategoryId = val;
         if ($('finance-sales-category')) $('finance-sales-category').value = val;
         renderFinanceVentasCategoryControls();
-        void refreshFinanceVentasTpv();
+        void refreshFinance();
       });
       row.appendChild(b);
     };
@@ -1410,7 +1476,7 @@
         financeVentasRange = next;
         renderFinanceVentasRangeChips();
         if (next !== 'custom') {
-          void refreshFinanceVentasTpv();
+          void refreshFinance();
         }
       });
     });
@@ -1447,13 +1513,31 @@
     const d30 = startOfDay(now);
     d30.setDate(d30.getDate() - 30);
 
-    const { data: rows, error } = await sb()
+    let { data: rows, error } = await sb()
       .from('tpv_dispenses')
-      .select('price_charged_eur, created_at')
+      .select('price_charged_eur, created_at, payment_method')
       .eq('club_id', clubId)
       .gte('created_at', d30.toISOString())
       .order('created_at', { ascending: false })
       .limit(500);
+
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('payment_method'))
+    ) {
+      const retry = await sb()
+        .from('tpv_dispenses')
+        .select('price_charged_eur, created_at')
+        .eq('club_id', clubId)
+        .gte('created_at', d30.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(500);
+      rows = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       if (
@@ -1474,11 +1558,18 @@
     let sumToday = 0;
     let sum7 = 0;
     let sum30 = 0;
+    let cashToday = 0;
+    let walletToday = 0;
 
     list.forEach((r) => {
       const t = new Date(r.created_at).getTime();
       const p = Number(r.price_charged_eur) || 0;
-      if (t >= d0.getTime()) sumToday += p;
+      const isWallet = String(r.payment_method || 'cash').toLowerCase() === 'wallet';
+      if (t >= d0.getTime()) {
+        sumToday += p;
+        if (isWallet) walletToday += p;
+        else cashToday += p;
+      }
       if (t >= d7.getTime()) sum7 += p;
       sum30 += p;
     });
@@ -1486,6 +1577,28 @@
     $('finance-kpi-today').textContent = formatMoney(sumToday);
     $('finance-kpi-7d').textContent = formatMoney(sum7);
     $('finance-kpi-30d').textContent = formatMoney(sum30);
+
+    let walletCashToday = 0;
+    const { data: ledgerRows } = await sb()
+      .from('club_member_wallet_ledger')
+      .select('cash_eur, created_at')
+      .eq('club_id', clubId)
+      .eq('kind', 'adjustment')
+      .gte('created_at', d0.toISOString());
+    if (ledgerRows) {
+      ledgerRows.forEach((r) => {
+        walletCashToday += Number(r.cash_eur) || 0;
+      });
+    }
+    const detailEl = $('finance-kpi-detail');
+    if (detailEl) {
+      const cashLine = `Hoy en TPV: ${formatMoney(cashToday)} efectivo · ${formatMoney(walletToday)} monedero.`;
+      const recLine =
+        Math.abs(walletCashToday) > 0.005
+          ? ` Recargas/retiradas en caja hoy: ${walletCashToday >= 0 ? '+' : ''}${formatMoney(walletCashToday)}.`
+          : '';
+      detailEl.textContent = cashLine + recLine;
+    }
     return true;
   }
 
@@ -1521,7 +1634,7 @@
     try {
       productFilterIds = await resolveFinanceVentasProductFilterIds();
     } catch (prodErr) {
-      ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(prodErr.message)}</td></tr>`;
+      ventasBody.innerHTML = `<tr><td colspan="5">${escapeHtml(prodErr.message)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
       if (emptyEl) emptyEl.hidden = true;
       return;
@@ -1537,7 +1650,7 @@
 
     let query = sb()
       .from('tpv_dispenses')
-      .select('price_charged_eur, created_at, product_id, member_id')
+      .select('price_charged_eur, created_at, product_id, member_id, payment_method')
       .eq('club_id', ctx.club.id)
       .order('created_at', { ascending: false });
 
@@ -1546,9 +1659,29 @@
     if (productFilterIds) query = query.in('product_id', productFilterIds);
     query = query.limit(financeVentasRange === 'all' ? 5000 : 2000);
 
-    const { data: rows, error } = await query;
+    let { data: rows, error } = await query;
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('payment_method'))
+    ) {
+      let q2 = sb()
+        .from('tpv_dispenses')
+        .select('price_charged_eur, created_at, product_id, member_id')
+        .eq('club_id', ctx.club.id)
+        .order('created_at', { ascending: false });
+      if (bounds.from) q2 = q2.gte('created_at', bounds.from.toISOString());
+      if (bounds.to) q2 = q2.lte('created_at', bounds.to.toISOString());
+      if (productFilterIds) q2 = q2.in('product_id', productFilterIds);
+      q2 = q2.limit(financeVentasRange === 'all' ? 5000 : 2000);
+      const retry = await q2;
+      rows = retry.data;
+      error = retry.error;
+    }
     if (error) {
-      ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`;
+      ventasBody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
       if (emptyEl) emptyEl.hidden = true;
       return;
@@ -1586,8 +1719,13 @@
     if (emptyEl) emptyEl.hidden = true;
 
     let total = 0;
+    let totalCash = 0;
+    let totalWallet = 0;
     list.forEach((r) => {
-      total += Number(r.price_charged_eur) || 0;
+      const p = Number(r.price_charged_eur) || 0;
+      total += p;
+      if (String(r.payment_method || 'cash').toLowerCase() === 'wallet') totalWallet += p;
+      else totalCash += p;
       const pr = prodMap[r.product_id] || {};
       const em = (pr.emoji || '').trim();
       const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
@@ -1598,6 +1736,7 @@
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
         <td>${escapeHtml(prodLabel)}</td>
         <td>${escapeHtml(socio)}</td>
+        <td>${escapeHtml(paymentMethodLabel(r.payment_method))}</td>
         <td>${escapeHtml(formatMoney(r.price_charged_eur))}</td>
       `;
       ventasBody.appendChild(tr);
@@ -1606,7 +1745,83 @@
     if (summaryEl) {
       const limit = financeVentasRange === 'all' ? 5000 : 2000;
       const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
-      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasFilterSummaryParts()} · total ${formatMoney(total)}${truncated}`;
+      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasFilterSummaryParts()} · total ${formatMoney(total)} (${formatMoney(totalCash)} efectivo · ${formatMoney(totalWallet)} monedero)${truncated}`;
+    }
+  }
+
+  async function refreshFinanceWalletMovements() {
+    const tbody = $('finance-wallet-tbody');
+    const summaryEl = $('finance-wallet-summary');
+    const emptyEl = $('finance-wallet-empty');
+    if (!tbody || !ctx) return;
+
+    const bounds = getFinanceVentasBounds();
+    let query = sb()
+      .from('club_member_wallet_ledger')
+      .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes, member_id')
+      .eq('club_id', ctx.club.id)
+      .eq('kind', 'adjustment')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
+    if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
+
+    const { data: rows, error } = await query;
+    if (error) {
+      const msg =
+        error.code === '42P01' ||
+        String(error.message || '').toLowerCase().includes('club_member_wallet_ledger')
+          ? 'Ejecuta la migración 028_member_wallet.sql en Supabase.'
+          : error.message || 'Error cargando monedero.';
+      tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(msg)}</td></tr>`;
+      if (summaryEl) summaryEl.textContent = '';
+      return;
+    }
+
+    const list = rows || [];
+    const mids = [...new Set(list.map((r) => r.member_id).filter(Boolean))];
+    let memMap = {};
+    if (mids.length) {
+      const { data: mm } = await sb().from('club_members').select('id, display_name').in('id', mids);
+      if (mm) memMap = Object.fromEntries(mm.map((x) => [x.id, x]));
+    }
+
+    tbody.innerHTML = '';
+    if (!list.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      if (summaryEl) summaryEl.textContent = `Sin ajustes de monedero en ${financeVentasRangeLabel()}.`;
+      return;
+    }
+    if (emptyEl) emptyEl.hidden = true;
+
+    let sumWallet = 0;
+    let sumCash = 0;
+    list.forEach((r) => {
+      const amt = Number(r.amount_eur) || 0;
+      const cash = Number(r.cash_eur) || 0;
+      sumWallet += amt;
+      sumCash += cash;
+      const mb = r.member_id ? memMap[r.member_id] : null;
+      const tipo =
+        amt >= 0 ? (Math.abs(cash) > 0.005 ? 'Recarga (efectivo)' : 'Ingreso monedero') : Math.abs(cash) > 0.005
+          ? 'Retirada (efectivo)'
+          : 'Retirada monedero';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(mb ? mb.display_name : '—')}</td>
+        <td>${escapeHtml(tipo)}</td>
+        <td>${escapeHtml(formatWalletLedgerAmount(amt))}</td>
+        <td>${escapeHtml(Math.abs(cash) > 0.005 ? formatWalletLedgerAmount(cash) : '—')}</td>
+        <td>${escapeHtml(formatMoney(Number(r.balance_after_eur) || 0))}</td>
+        <td>${escapeHtml((r.notes || '').slice(0, 60))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (summaryEl) {
+      summaryEl.textContent = `${list.length} movimiento(s) · monedero neto ${formatWalletLedgerAmount(sumWallet)} · impacto caja ${formatWalletLedgerAmount(sumCash)}`;
     }
   }
 
@@ -1859,6 +2074,7 @@
     if (!kpiOk) return;
 
     await refreshFinanceInventoryCostAdmin();
+    await refreshFinanceWalletMovements();
     await refreshFinanceVentasTpv();
     await refreshFinanceShiftClosures();
     await refreshFinanceStockAdjustments();

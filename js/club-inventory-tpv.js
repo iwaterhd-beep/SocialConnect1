@@ -583,6 +583,137 @@
     document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
       el.disabled = !on;
     });
+    ['tpv-wallet-funds-amount', 'tpv-wallet-funds-notes', 'tpv-wallet-funds-add', 'tpv-wallet-funds-sub', 'tpv-wallet-funds-cash'].forEach(
+      (id) => {
+        const el = $(id);
+        if (el) el.disabled = !on;
+      },
+    );
+  }
+
+  function setTpvWalletFundsStatus(text, isError) {
+    const el = $('tpv-wallet-funds-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'msg tpv-wallet-funds-status' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
+  }
+
+  async function rpcMemberWalletAdjust(memberId, delta, notes, shiftId, affectsCash) {
+    const payload = {
+      p_member_id: memberId,
+      p_delta_eur: delta,
+      p_notes: notes,
+      p_shift_id: affectsCash && shiftId ? shiftId : null,
+      p_affects_cash: !!affectsCash,
+    };
+    let res = await sb().rpc('club_member_wallet_adjust', payload);
+    if (
+      res.error &&
+      affectsCash &&
+      (res.error.code === 'PGRST202' ||
+        res.error.code === '42883' ||
+        /p_shift_id|p_affects_cash/i.test(res.error.message || ''))
+    ) {
+      return {
+        error: {
+          message: 'Ejecuta la migración 029_wallet_cash_shift.sql en Supabase para caja y monedero.',
+        },
+        data: null,
+      };
+    }
+    if (
+      res.error &&
+      (res.error.code === 'PGRST202' ||
+        res.error.code === '42883' ||
+        /club_member_wallet_adjust/i.test(res.error.message || ''))
+    ) {
+      if (affectsCash) {
+        return {
+          error: { message: 'Ejecuta la migración 028_member_wallet.sql en Supabase.' },
+          data: null,
+        };
+      }
+      res = await sb().rpc('club_member_wallet_adjust', {
+        p_member_id: memberId,
+        p_delta_eur: delta,
+        p_notes: notes,
+      });
+    }
+    return res;
+  }
+
+  function updateTpvWalletFundsUi() {
+    const wrap = $('tpv-wallet-funds');
+    const balLine = $('tpv-wallet-funds-balance');
+    if (!wrap) return;
+    const memberId = ($('tpv-selected-member')?.value || '').trim();
+    if (!memberId) {
+      wrap.classList.add('is-hidden');
+      wrap.hidden = true;
+      setTpvWalletFundsStatus('', false);
+      return;
+    }
+    wrap.classList.remove('is-hidden');
+    wrap.hidden = false;
+    const balance = getTpvMemberWalletBalance();
+    if (balLine) {
+      if (balance != null) {
+        balLine.textContent = `Saldo actual: ${formatMoney(balance)}`;
+        balLine.classList.toggle('tpv-wallet-funds-balance--neg', balance < 0);
+      } else {
+        balLine.textContent = 'Saldo: — (migración 028 en Supabase)';
+        balLine.classList.remove('tpv-wallet-funds-balance--neg');
+      }
+    }
+  }
+
+  async function applyTpvWalletFunds(sign) {
+    const memberId = ($('tpv-selected-member')?.value || '').trim();
+    if (!memberId) {
+      setTpvWalletFundsStatus('Selecciona un socio primero.', true);
+      return;
+    }
+    const raw = ($('tpv-wallet-funds-amount')?.value || '').trim().replace(',', '.');
+    const amt = raw === '' ? NaN : Number(raw);
+    if (Number.isNaN(amt) || amt <= 0) {
+      setTpvWalletFundsStatus('Indica un importe mayor que cero.', true);
+      return;
+    }
+    const affectsCash = $('tpv-wallet-funds-cash')?.checked === true;
+    const shiftId = state.tpvOpenShiftId || null;
+    if (affectsCash && !shiftId) {
+      setTpvWalletFundsStatus('Abre un turno de caja para movimientos en efectivo.', true);
+      return;
+    }
+    const delta = sign < 0 ? -amt : amt;
+    const notesRaw = ($('tpv-wallet-funds-notes')?.value || '').trim();
+    const defaultNote = sign < 0 ? 'Retirada desde TPV' : 'Recarga desde TPV';
+    setTpvWalletFundsStatus('Aplicando…', false);
+    const { data, error } = await rpcMemberWalletAdjust(
+      memberId,
+      delta,
+      notesRaw || defaultNote,
+      shiftId,
+      affectsCash,
+    );
+    if (error) {
+      setTpvWalletFundsStatus(error.message || 'No se pudo actualizar el monedero.', true);
+      return;
+    }
+    const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
+    if ($('tpv-wallet-funds-amount')) $('tpv-wallet-funds-amount').value = '';
+    if ($('tpv-wallet-funds-notes')) $('tpv-wallet-funds-notes').value = '';
+    const verb = sign < 0 ? 'Retirados' : 'Ingresados';
+    setTpvWalletFundsStatus(
+      `${verb} ${formatMoney(amt)}${affectsCash ? ' (en caja del turno)' : ''}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
+      false,
+    );
+    await loadMembersForTpv();
+    updateTpvWalletFundsUi();
+    updateTpvWalletUi();
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
   }
 
   function getTpvPaymentMethod() {
@@ -614,6 +745,7 @@
     const balEl = $('tpv-wallet-balance');
     const prevEl = $('tpv-wallet-preview');
     if (!balEl || !prevEl) return;
+    updateTpvWalletFundsUi();
 
     const isWallet = getTpvPaymentMethod() === 'wallet';
     const memberId = ($('tpv-selected-member')?.value || '').trim();
@@ -2500,6 +2632,12 @@
     $('tpv-notes')?.addEventListener('input', () => scheduleAutoTpvLine());
     document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
       el.addEventListener('change', () => updateTpvWalletUi());
+    });
+    $('tpv-wallet-funds-add')?.addEventListener('click', () => {
+      void applyTpvWalletFunds(1);
+    });
+    $('tpv-wallet-funds-sub')?.addEventListener('click', () => {
+      void applyTpvWalletFunds(-1);
     });
     $('tpv-submit')?.addEventListener('click', () => submitTpv());
     $('tpv-clear-cart')?.addEventListener('click', () => {

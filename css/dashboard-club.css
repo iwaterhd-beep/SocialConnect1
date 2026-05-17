@@ -3004,6 +3004,21 @@ body.club-dark .tpv-wallet-funds {
   min-width: 0;
 }
 
+.member-wallet-adjust-cash-toggle,
+.tpv-wallet-funds-cash-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0.5rem 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.finance-kpi-detail {
+  line-height: 1.45;
+}
+
 body.club-dark .tpv-pay-method__opt {
   background: rgba(30, 41, 59, 0.9);
   border-color: rgba(148, 163, 184, 0.2);

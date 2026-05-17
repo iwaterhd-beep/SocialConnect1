@@ -534,10 +534,30 @@
     return { dispenses: data || [], hasPaymentMethod };
   }
 
+  async function fetchShiftWalletCashNet(shiftId) {
+    if (!shiftId) return 0;
+    const { data, error } = await sb()
+      .from('club_member_wallet_ledger')
+      .select('cash_eur')
+      .eq('shift_id', shiftId);
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('cash_eur'))
+    ) {
+      return 0;
+    }
+    if (error) throw error;
+    return (data || []).reduce((acc, r) => acc + (Number(r.cash_eur) || 0), 0);
+  }
+
   async function fetchShiftCashExpected(shiftId) {
-    const [shiftRes, dispRes] = await Promise.all([
+    const [shiftRes, dispRes, walletCashNet] = await Promise.all([
       sb().from('shifts').select('opening_float_eur').eq('id', shiftId).maybeSingle(),
       fetchShiftDispenses(shiftId),
+      fetchShiftWalletCashNet(shiftId),
     ]);
     const opening =
       shiftRes.data && shiftRes.data.opening_float_eur != null
@@ -548,15 +568,17 @@
       opening,
       cashSales,
       walletSales,
-      expectedCash: opening + cashSales,
+      walletCashNet,
+      expectedCash: opening + cashSales + walletCashNet,
       hasPaymentMethod: dispRes.hasPaymentMethod,
     };
   }
 
   async function buildShiftSummaryHtml(clubId, shiftId) {
-    const [shiftRes, dispRes, evRes, prodRes] = await Promise.all([
+    const [shiftRes, dispRes, walletCashNet, evRes, prodRes] = await Promise.all([
       sb().from('shifts').select('*').eq('id', shiftId).maybeSingle(),
       fetchShiftDispenses(shiftId),
+      fetchShiftWalletCashNet(shiftId),
       sb()
         .from('shift_stock_events')
         .select('product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at')
@@ -612,7 +634,8 @@
       .join('');
 
     const opening = shift && shift.opening_float_eur != null ? Number(shift.opening_float_eur) : 0;
-    const expectedCash = opening + cashSales;
+    const walletCash = Number(walletCashNet) || 0;
+    const expectedCash = opening + cashSales + walletCash;
     const closingCash =
       shift && shift.closing_cash_total_eur != null ? Number(shift.closing_cash_total_eur) : null;
     const floatFwd =
@@ -670,7 +693,12 @@
             ? `<p style="margin:0.35rem 0 0">Ventas con monedero (no entran en caja): <strong>${escapeHtml(formatMoneyEUR(walletSales))}</strong></p>`
             : ''
         }
-        <p style="margin:0.35rem 0 0">Efectivo esperado en caja (cambio + efectivo): <strong>${escapeHtml(formatMoneyEUR(expectedCash))}</strong></p>
+        ${
+          Math.abs(walletCash) > 0.005
+            ? `<p style="margin:0.35rem 0 0">Recargas / retiradas monedero en efectivo: <strong>${escapeHtml(walletCash >= 0 ? `+${formatMoneyEUR(walletCash)}` : formatMoneyEUR(walletCash))}</strong></p>`
+            : ''
+        }
+        <p style="margin:0.35rem 0 0">Efectivo esperado en caja (cambio + ventas efectivo + monedero en efectivo): <strong>${escapeHtml(formatMoneyEUR(expectedCash))}</strong></p>
         <p style="margin:0.35rem 0 0">Efectivo contado al cerrar: <strong>${closingCash !== null ? escapeHtml(formatMoneyEUR(closingCash)) : '—'}</strong></p>
         ${
           cashDiff !== null
@@ -805,6 +833,7 @@
       let cashSales = 0;
       let opening = 0;
       let walletSales = 0;
+      let walletCashNet = 0;
       try {
         if (shiftId) {
           const info = await fetchShiftCashExpected(shiftId);
@@ -812,6 +841,7 @@
           cashSales = info.cashSales;
           expectedCash = info.expectedCash;
           walletSales = info.walletSales || 0;
+          walletCashNet = info.walletCashNet || 0;
         }
       } catch (e) {
         const hintEl = $('wiz-cash-expected');
@@ -825,9 +855,13 @@
       if (hintEl) {
         const walletLine =
           walletSales > 0.005
-            ? ` Monedero en TPV: ${formatMoneyEUR(walletSales)} (no en caja).`
+            ? ` Ventas con monedero: ${formatMoneyEUR(walletSales)} (no en caja).`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} (cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}).${walletLine}`;
+        const walletCashLine =
+          Math.abs(walletCashNet) > 0.005
+            ? ` Recargas/retiradas en efectivo: ${walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(walletCashNet)}.`
+            : '';
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} (cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}).${walletLine}`;
       }
       const onCashInput = () => updateWizardArqueoDiff(expectedCash);
       $('wiz-close-cash')?.addEventListener('input', onCashInput);

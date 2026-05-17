@@ -300,6 +300,10 @@
         <p class="hint member-wallet-adjust__lede" style="margin-top: 0">
           Ingresa o retira saldo. El monedero puede quedar en negativo (crédito).
         </p>
+        <label class="member-wallet-adjust-cash-toggle">
+          <input type="checkbox" id="member-wallet-adjust-cash" checked />
+          Movimiento en efectivo (afecta la caja del turno abierto)
+        </label>
         <div class="member-wallet-adjust__row">
           <input
             class="input"
@@ -327,13 +331,14 @@
               <tr>
                 <th>Fecha</th>
                 <th>Tipo</th>
-                <th>Importe</th>
+                <th>Monedero</th>
+                <th>Caja</th>
                 <th>Saldo</th>
                 <th>Nota</th>
               </tr>
             </thead>
             <tbody id="member-wallet-ledger-tbody">
-              <tr><td colspan="5">Sin datos.</td></tr>
+              <tr><td colspan="6">Sin datos.</td></tr>
             </tbody>
           </table>
         </div>

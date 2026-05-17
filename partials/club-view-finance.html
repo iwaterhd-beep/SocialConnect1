@@ -2,8 +2,8 @@
 <section class="card-section" aria-labelledby="finance-title">
   <h2 id="finance-title">Finanzas</h2>
   <p class="hint" style="margin-top: 0">
-    Resumen de <strong>ingresos registrados en TPV</strong> (precio cobrado por venta). Sin importar datos externos;
-    solo lo que genera esta app.
+    Resumen de <strong>ventas TPV</strong> (efectivo y monedero) y <strong>movimientos de monedero</strong> (recargas/retiradas).
+    Las recargas marcadas en efectivo entran en el arqueo del turno.
   </p>
   <div class="finance-kpis" id="finance-kpis">
     <div class="finance-kpi">
@@ -19,6 +19,7 @@
       <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
     </div>
   </div>
+  <p id="finance-kpi-detail" class="hint finance-kpi-detail" style="margin-top: 0.5rem"></p>
   <section id="finance-admin-inventory-cost" class="finance-admin-inventory-cost is-hidden" hidden aria-labelledby="finance-inv-cost-title">
     <h3 id="finance-inv-cost-title" class="finance-admin-inventory-cost__title">Valor inventario (admin)</h3>
     <p class="hint" style="margin-top: 0">
@@ -89,6 +90,31 @@
   </div>
 </section>
 
+<section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-wallet-title">
+  <h2 id="finance-wallet-title">Monedero (recargas y retiradas)</h2>
+  <p class="hint" style="margin-top: 0">
+    Ajustes de saldo de socios. Si marcaste <strong>en efectivo</strong>, el importe entra en el arqueo del turno.
+  </p>
+  <p id="finance-wallet-summary" class="hint" style="margin-top: 0.75rem"></p>
+  <p id="finance-wallet-empty" class="hint" style="margin-top: 0" hidden>Sin movimientos de monedero en este periodo.</p>
+  <div class="table-wrap" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Socio</th>
+          <th>Tipo</th>
+          <th>Monedero</th>
+          <th>Caja</th>
+          <th>Saldo</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody id="finance-wallet-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
 <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="finance-ventas-title">
   <h2 id="finance-ventas-title">Ventas TPV</h2>
   <p class="hint" style="margin-top: 0">
@@ -138,6 +164,7 @@
           <th>Fecha</th>
           <th>Producto</th>
           <th>Socio</th>
+          <th>Cobro</th>
           <th>Importe</th>
         </tr>
       </thead>
