@@ -69,6 +69,31 @@
                 </div>
                 <p id="tpv-member-chip" class="tpv-ticket-chip tpv-member-chip"></p>
               </div>
+              <div id="tpv-wallet-funds" class="tpv-wallet-funds is-hidden" hidden>
+                <p id="tpv-wallet-funds-balance" class="hint tpv-wallet-funds-balance"></p>
+                <p class="hint tpv-wallet-funds__hint">Ingresar o retirar saldo del monedero (no es una venta).</p>
+                <div class="tpv-wallet-funds__row">
+                  <input
+                    class="input input--ticket"
+                    id="tpv-wallet-funds-amount"
+                    type="number"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="Importe €"
+                  />
+                  <input
+                    class="input input--ticket"
+                    id="tpv-wallet-funds-notes"
+                    type="text"
+                    placeholder="Motivo (opc.)"
+                    autocomplete="off"
+                  />
+                  <button type="button" class="btn btn--small" id="tpv-wallet-funds-add">+ Ingresar</button>
+                  <button type="button" class="btn btn--ghost btn--small" id="tpv-wallet-funds-sub">− Retirar</button>
+                </div>
+                <p id="tpv-wallet-funds-status" class="msg tpv-wallet-funds-status" role="status"></p>
+              </div>
             </div>
           </section>
 

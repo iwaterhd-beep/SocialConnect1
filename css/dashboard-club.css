@@ -2906,6 +2906,52 @@ body.club-dark .club-view-stage {
   line-height: 1.4;
 }
 
+.tpv-wallet-funds {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(15, 23, 42, 0.12);
+}
+
+.tpv-wallet-funds__hint {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tpv-wallet-funds-balance {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tpv-wallet-funds-balance--neg {
+  color: #b45309;
+}
+
+.tpv-wallet-funds__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.tpv-wallet-funds__row .input {
+  flex: 1 1 5.5rem;
+  min-width: 0;
+}
+
+.tpv-wallet-funds__row .input[id='tpv-wallet-funds-notes'] {
+  flex: 1 1 7rem;
+}
+
+.tpv-wallet-funds-status {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+}
+
+body.club-dark .tpv-wallet-funds {
+  border-top-color: rgba(148, 163, 184, 0.2);
+}
+
 .tpv-wallet-balance--neg,
 .tpv-wallet-preview--neg {
   color: #b45309;
