@@ -2963,6 +2963,17 @@ body.club-dark .tpv-wallet-funds {
   font-weight: 700;
 }
 
+.member-wallet-cell--btn {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.member-wallet-cell--btn:hover {
+  color: #0d9488;
+}
+
 .member-profile-kpi--wallet .member-profile-kpi__value--neg {
   color: #b45309;
 }

@@ -296,14 +296,23 @@
         </div>
       </div>
       <div id="member-wallet-adjust" class="member-wallet-adjust is-hidden" hidden>
-        <h3 class="member-wallet-adjust__title">Recargar / ajustar monedero</h3>
-        <p class="hint" style="margin-top: 0">
-          Importe positivo = ingreso al monedero. Negativo = retirada. El saldo puede quedar en negativo.
+        <h3 class="member-wallet-adjust__title">Monedero del socio</h3>
+        <p class="hint member-wallet-adjust__lede" style="margin-top: 0">
+          Ingresa o retira saldo. El monedero puede quedar en negativo (crédito).
         </p>
         <div class="member-wallet-adjust__row">
-          <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" placeholder="Ej. 20 o -5" />
+          <input
+            class="input"
+            id="member-wallet-adjust-amount"
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            min="0.01"
+            placeholder="Importe €"
+          />
           <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo (opcional)" />
-          <button type="button" class="btn btn--small" id="member-wallet-adjust-btn">Aplicar</button>
+          <button type="button" class="btn btn--small" id="member-wallet-adjust-add">+ Ingresar</button>
+          <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
         </div>
         <p id="member-wallet-adjust-status" class="msg" role="status"></p>
       </div>

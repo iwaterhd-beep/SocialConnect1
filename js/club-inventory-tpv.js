@@ -583,12 +583,6 @@
     document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
       el.disabled = !on;
     });
-    ['tpv-wallet-funds-amount', 'tpv-wallet-funds-notes', 'tpv-wallet-funds-add', 'tpv-wallet-funds-sub'].forEach(
-      (id) => {
-        const el = $(id);
-        if (el) el.disabled = !on;
-      },
-    );
   }
 
   function getTpvPaymentMethod() {
@@ -616,87 +610,10 @@
     return Number.isNaN(n) ? null : n;
   }
 
-  function setTpvWalletFundsStatus(text, isError) {
-    const el = $('tpv-wallet-funds-status');
-    if (!el) return;
-    el.textContent = text || '';
-    el.className = 'msg tpv-wallet-funds-status' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
-  }
-
-  function updateTpvWalletFundsUi() {
-    const wrap = $('tpv-wallet-funds');
-    const balLine = $('tpv-wallet-funds-balance');
-    if (!wrap) return;
-    const memberId = ($('tpv-selected-member')?.value || '').trim();
-    if (!memberId) {
-      wrap.classList.add('is-hidden');
-      wrap.hidden = true;
-      setTpvWalletFundsStatus('', false);
-      return;
-    }
-    wrap.classList.remove('is-hidden');
-    wrap.hidden = false;
-    const balance = getTpvMemberWalletBalance();
-    if (balLine) {
-      if (balance != null) {
-        balLine.textContent = `Saldo actual: ${formatMoney(balance)}`;
-        balLine.classList.toggle('tpv-wallet-funds-balance--neg', balance < 0);
-      } else {
-        balLine.textContent = 'Saldo: — (migración 028 en Supabase)';
-        balLine.classList.remove('tpv-wallet-funds-balance--neg');
-      }
-    }
-  }
-
-  async function applyTpvWalletFunds(sign) {
-    const memberId = ($('tpv-selected-member')?.value || '').trim();
-    if (!memberId) {
-      setTpvWalletFundsStatus('Selecciona un socio primero.', true);
-      return;
-    }
-    const raw = ($('tpv-wallet-funds-amount')?.value || '').trim().replace(',', '.');
-    const amt = raw === '' ? NaN : Number(raw);
-    if (Number.isNaN(amt) || amt <= 0) {
-      setTpvWalletFundsStatus('Indica un importe mayor que cero.', true);
-      return;
-    }
-    const delta = sign < 0 ? -amt : amt;
-    const notesRaw = ($('tpv-wallet-funds-notes')?.value || '').trim();
-    const defaultNote = sign < 0 ? 'Retirada desde TPV' : 'Recarga desde TPV';
-    setTpvWalletFundsStatus('Aplicando…', false);
-    const { data, error } = await sb().rpc('club_member_wallet_adjust', {
-      p_member_id: memberId,
-      p_delta_eur: delta,
-      p_notes: notesRaw || defaultNote,
-    });
-    if (error) {
-      if (error.code === 'PGRST202' || error.code === '42883') {
-        setTpvWalletFundsStatus('Ejecuta la migración 028_member_wallet.sql en Supabase.', true);
-      } else {
-        setTpvWalletFundsStatus(error.message || 'No se pudo actualizar el monedero.', true);
-      }
-      return;
-    }
-    const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
-    const m = (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, memberId));
-    if (m && newBal != null) m.wallet_balance_eur = newBal;
-    if ($('tpv-wallet-funds-amount')) $('tpv-wallet-funds-amount').value = '';
-    if ($('tpv-wallet-funds-notes')) $('tpv-wallet-funds-notes').value = '';
-    const verb = sign < 0 ? 'Retirados' : 'Ingresados';
-    setTpvWalletFundsStatus(
-      `${verb} ${formatMoney(amt)}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
-      false,
-    );
-    await loadMembersForTpv();
-    updateTpvWalletFundsUi();
-    updateTpvWalletUi();
-  }
-
   function updateTpvWalletUi() {
     const balEl = $('tpv-wallet-balance');
     const prevEl = $('tpv-wallet-preview');
     if (!balEl || !prevEl) return;
-    updateTpvWalletFundsUi();
 
     const isWallet = getTpvPaymentMethod() === 'wallet';
     const memberId = ($('tpv-selected-member')?.value || '').trim();
@@ -2583,12 +2500,6 @@
     $('tpv-notes')?.addEventListener('input', () => scheduleAutoTpvLine());
     document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
       el.addEventListener('change', () => updateTpvWalletUi());
-    });
-    $('tpv-wallet-funds-add')?.addEventListener('click', () => {
-      void applyTpvWalletFunds(1);
-    });
-    $('tpv-wallet-funds-sub')?.addEventListener('click', () => {
-      void applyTpvWalletFunds(-1);
     });
     $('tpv-submit')?.addEventListener('click', () => submitTpv());
     $('tpv-clear-cart')?.addEventListener('click', () => {

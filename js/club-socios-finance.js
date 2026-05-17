@@ -797,7 +797,7 @@
         <td>${escapeHtml(m.display_name)}</td>
         <td>${escapeHtml(dni)}</td>
         <td>${memberTypePillHtml(m)}</td>
-        <td class="member-wallet-cell${walletNeg}">${escapeHtml(wallet)}</td>
+        <td class="member-wallet-cell member-wallet-cell--btn${walletNeg}" data-profile-member="${m.id}" title="Abrir perfil y monedero">${escapeHtml(wallet)}</td>
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
@@ -805,8 +805,10 @@
           <button type="button" class="btn btn--ghost btn--small" data-edit-member="${m.id}">Editar</button>
         </td>
       `;
-      tr.querySelector('[data-profile-member]')?.addEventListener('click', () => {
-        showMemberProfile(m.id);
+      tr.querySelectorAll('[data-profile-member]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          showMemberProfile(m.id);
+        });
       });
       tr.querySelector('[data-edit-member]')?.addEventListener('click', () => {
         void editMemberFromRow(m.id);
@@ -1006,7 +1008,7 @@
     return { ok: true };
   }
 
-  async function applyMemberWalletAdjust() {
+  async function applyMemberWalletAdjust(sign) {
     if (!selectedMemberId) {
       setMemberWalletAdjustStatus('Abre el perfil de un socio primero.', true);
       return;
@@ -1014,15 +1016,17 @@
     const amtRaw = ($('member-wallet-adjust-amount')?.value || '').trim().replace(',', '.');
     const notes = ($('member-wallet-adjust-notes')?.value || '').trim();
     const amt = amtRaw === '' ? NaN : Number(amtRaw);
-    if (Number.isNaN(amt) || Math.abs(amt) < 0.0001) {
-      setMemberWalletAdjustStatus('Indica un importe distinto de cero (positivo = recarga).', true);
+    if (Number.isNaN(amt) || amt <= 0) {
+      setMemberWalletAdjustStatus('Indica un importe mayor que cero.', true);
       return;
     }
+    const delta = sign < 0 ? -amt : amt;
+    const defaultNote = sign < 0 ? 'Retirada desde perfil' : 'Recarga desde perfil';
     setMemberWalletAdjustStatus('Aplicando…', false);
-    const { error } = await sb().rpc('club_member_wallet_adjust', {
+    const { data, error } = await sb().rpc('club_member_wallet_adjust', {
       p_member_id: selectedMemberId,
-      p_delta_eur: amt,
-      p_notes: notes || 'Ajuste manual',
+      p_delta_eur: delta,
+      p_notes: notes || defaultNote,
     });
     if (error) {
       if (error.code === 'PGRST202' || error.code === '42883') {
@@ -1032,9 +1036,14 @@
       }
       return;
     }
+    const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
     if ($('member-wallet-adjust-amount')) $('member-wallet-adjust-amount').value = '';
     if ($('member-wallet-adjust-notes')) $('member-wallet-adjust-notes').value = '';
-    setMemberWalletAdjustStatus('Monedero actualizado.', false);
+    const verb = sign < 0 ? 'Retirados' : 'Ingresados';
+    setMemberWalletAdjustStatus(
+      `${verb} ${formatMoney(amt)}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
+      false,
+    );
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -2375,8 +2384,11 @@
     membersUiBound = true;
 
     $('member-save')?.addEventListener('click', () => saveMember());
-    $('member-wallet-adjust-btn')?.addEventListener('click', () => {
-      void applyMemberWalletAdjust();
+    $('member-wallet-adjust-add')?.addEventListener('click', () => {
+      void applyMemberWalletAdjust(1);
+    });
+    $('member-wallet-adjust-sub')?.addEventListener('click', () => {
+      void applyMemberWalletAdjust(-1);
     });
     $('member-cancel')?.addEventListener('click', () => {
       clearMemberForm();
