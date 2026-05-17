@@ -1289,8 +1289,18 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   object-fit: cover;
 }
 
-.inv-product-image__img.is-hidden {
+.inv-product-image__img.is-hidden,
+.inv-product-image__video.is-hidden {
   display: none !important;
+}
+
+.inv-product-image__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0f172a;
 }
 
 .inv-product-image__placeholder {

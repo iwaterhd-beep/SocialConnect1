@@ -132,7 +132,7 @@
         </div>
       </div>
       <div class="form__row" id="inv-row-product-image">
-        <label>Foto para menú tablet</label>
+        <label>Foto o vídeo para menú tablet</label>
         <div class="inv-product-image">
           <div class="inv-product-image__preview" id="inv-product-image-preview-wrap">
             <img
@@ -142,22 +142,32 @@
               width="120"
               height="120"
             />
-            <span id="inv-product-image-placeholder" class="inv-product-image__placeholder">Sin foto</span>
+            <video
+              id="inv-product-image-preview-video"
+              class="inv-product-image__video is-hidden"
+              muted
+              playsinline
+              controls
+              preload="metadata"
+            ></video>
+            <span id="inv-product-image-placeholder" class="inv-product-image__placeholder">Sin archivo</span>
           </div>
           <div class="inv-product-image__actions">
             <input
               type="file"
               id="inv-product-image-file"
               class="visually-hidden"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
             />
-            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-pick">Elegir imagen</button>
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-pick">Elegir archivo</button>
             <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-clear" hidden>
-              Quitar foto
+              Quitar
             </button>
           </div>
         </div>
-        <p class="hint hint--small" style="margin-top: 0.35rem">JPG, PNG o WebP · máx. 2 MB · visible en la carta pública</p>
+        <p class="hint hint--small" style="margin-top: 0.35rem">
+          Imagen: JPG, PNG o WebP (máx. 2 MB) · Vídeo: MP4, WebM o MOV (máx. 15 MB)
+        </p>
       </div>
       <div class="form__row">
         <label>Tipo de venta</label>

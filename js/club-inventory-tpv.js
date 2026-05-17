@@ -5,7 +5,9 @@
   const sb = () => window.scSupabase;
   const MEMBER_AVATAR_BUCKET = 'club_member_docs';
   const PRODUCT_IMAGE_BUCKET = 'club_product_images';
-  const PRODUCT_IMAGE_MAX_BYTES = 2097152;
+  const PRODUCT_MEDIA_MAX_IMAGE_BYTES = 2097152;
+  const PRODUCT_MEDIA_MAX_VIDEO_BYTES = 15728640;
+  const PRODUCT_VIDEO_MIME = /^video\/(mp4|webm|quicktime|x-m4v)$/i;
 
   const PRODUCT_SELECT_FULL =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain, menu_price_eur, image_path';
@@ -72,7 +74,28 @@
   };
   const EMOJI_RECENT_KEY = 'sc_inv_recent_emojis';
 
-  function imageExtFromFile(f) {
+  function isProductVideoFile(f) {
+    if (!f) return false;
+    if (PRODUCT_VIDEO_MIME.test(f.type || '')) return true;
+    return /\.(mp4|webm|mov|m4v)$/i.test(f.name || '');
+  }
+
+  function isProductVideoPath(path) {
+    return /\.(mp4|webm|mov|m4v)$/i.test((path || '').trim());
+  }
+
+  function isAllowedProductMediaFile(f) {
+    if (!f) return false;
+    if (/^image\/(jpeg|png|webp)$/i.test(f.type || '')) return true;
+    if (isProductVideoFile(f)) return true;
+    return /\.(jpe?g|png|webp|mp4|webm|mov|m4v)$/i.test(f.name || '');
+  }
+
+  function maxBytesForProductMedia(file) {
+    return isProductVideoFile(file) ? PRODUCT_MEDIA_MAX_VIDEO_BYTES : PRODUCT_MEDIA_MAX_IMAGE_BYTES;
+  }
+
+  function mediaExtFromFile(f) {
     const n = f.name || '';
     const i = n.lastIndexOf('.');
     if (i >= 0) {
@@ -84,7 +107,47 @@
     }
     if (f.type === 'image/png') return 'png';
     if (f.type === 'image/webp') return 'webp';
-    return 'jpg';
+    if (f.type === 'video/webm') return 'webm';
+    if (f.type === 'video/quicktime') return 'mov';
+    if (/video\/mp4|video\/x-m4v/i.test(f.type || '')) return 'mp4';
+    return isProductVideoFile(f) ? 'mp4' : 'jpg';
+  }
+
+  function hideProductMediaPreviewElements() {
+    const img = $('inv-product-image-preview');
+    const video = $('inv-product-image-preview-video');
+    if (img) {
+      img.classList.add('is-hidden');
+      img.removeAttribute('src');
+    }
+    if (video) {
+      video.pause();
+      video.classList.add('is-hidden');
+      video.removeAttribute('src');
+      if (typeof video.load === 'function') video.load();
+    }
+  }
+
+  function showProductMediaPreview(url, isVideo) {
+    const img = $('inv-product-image-preview');
+    const video = $('inv-product-image-preview-video');
+    const placeholder = $('inv-product-image-placeholder');
+    const clearBtn = $('inv-product-image-clear');
+    hideProductMediaPreviewElements();
+    if (isVideo && video) {
+      video.src = url;
+      video.muted = true;
+      video.loop = false;
+      video.playsInline = true;
+      video.controls = true;
+      video.classList.remove('is-hidden');
+      void video.play().catch(() => {});
+    } else if (img) {
+      img.src = url;
+      img.classList.remove('is-hidden');
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (clearBtn) clearBtn.hidden = false;
   }
 
   function revokeProductImageObjectUrl() {
@@ -111,35 +174,30 @@
   }
 
   async function refreshProductImagePreview() {
-    const img = $('inv-product-image-preview');
     const placeholder = $('inv-product-image-placeholder');
     const clearBtn = $('inv-product-image-clear');
-    if (!img || !placeholder) return;
-
-    revokeProductImageObjectUrl();
-    img.classList.add('is-hidden');
-    img.removeAttribute('src');
+    if (!placeholder) return;
 
     if (state.pendingProductImage) {
+      revokeProductImageObjectUrl();
       state.productImageObjectUrl = URL.createObjectURL(state.pendingProductImage);
-      img.src = state.productImageObjectUrl;
-      img.classList.remove('is-hidden');
-      placeholder.style.display = 'none';
-      if (clearBtn) clearBtn.hidden = false;
+      showProductMediaPreview(
+        state.productImageObjectUrl,
+        isProductVideoFile(state.pendingProductImage),
+      );
       return;
     }
 
     if (!state.productImageRemove && state.productLoadedImagePath) {
       const url = productImagePublicUrl(state.productLoadedImagePath);
       if (url) {
-        img.src = url;
-        img.classList.remove('is-hidden');
-        placeholder.style.display = 'none';
-        if (clearBtn) clearBtn.hidden = false;
+        showProductMediaPreview(url, isProductVideoPath(state.productLoadedImagePath));
         return;
       }
     }
 
+    revokeProductImageObjectUrl();
+    hideProductMediaPreviewElements();
     placeholder.style.display = '';
     if (clearBtn) {
       clearBtn.hidden = !state.productLoadedImagePath && !state.pendingProductImage;
@@ -174,7 +232,7 @@
           state.hasProductImageColumn = false;
           return { ok: true };
         }
-        return { ok: false, message: error.message || 'No se pudo quitar la foto.' };
+        return { ok: false, message: error.message || 'No se pudo quitar el archivo.' };
       }
       state.productLoadedImagePath = '';
       state.productImageRemove = false;
@@ -184,13 +242,20 @@
     if (!state.pendingProductImage) return { ok: true };
 
     const file = state.pendingProductImage;
-    if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
-      return { ok: false, message: 'La imagen supera 2 MB.' };
+    const maxBytes = maxBytesForProductMedia(file);
+    if (file.size > maxBytes) {
+      return {
+        ok: false,
+        message: isProductVideoFile(file)
+          ? 'El vídeo supera 15 MB.'
+          : 'La imagen supera 2 MB.',
+      };
     }
-    const ext = imageExtFromFile(file);
+    const ext = mediaExtFromFile(file);
     const objectPath = `${state.ctx.club.id}/${productId}.${ext}`;
+    const defaultType = isProductVideoFile(file) ? 'video/mp4' : 'image/jpeg';
     const { error: upErr } = await sb().storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
-      contentType: file.type || 'image/jpeg',
+      contentType: file.type || defaultType,
       upsert: true,
     });
     if (upErr) {
@@ -199,8 +264,8 @@
       return {
         ok: false,
         message: needsMigration
-          ? 'Ejecuta la migración 037_product_menu_images.sql en Supabase.'
-          : upErr.message || 'No se pudo subir la imagen.',
+          ? 'Ejecuta las migraciones 037 y 038 en Supabase.'
+          : upErr.message || 'No se pudo subir el archivo.',
       };
     }
 
@@ -218,7 +283,7 @@
         state.hasProductImageColumn = false;
         return { ok: true };
       }
-      return { ok: false, message: dbErr.message || 'No se pudo guardar la ruta de la imagen.' };
+      return { ok: false, message: dbErr.message || 'No se pudo guardar la ruta del archivo.' };
     }
 
     state.productLoadedImagePath = objectPath;
@@ -235,12 +300,21 @@
     $('inv-product-image-file')?.addEventListener('change', () => {
       const file = $('inv-product-image-file')?.files?.[0];
       if (!file) return;
-      if (!/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
-        setMsg('inv-status', 'Formato no válido. Usa JPG, PNG o WebP.', true);
+      if (!isAllowedProductMediaFile(file)) {
+        setMsg(
+          'inv-status',
+          'Formato no válido. Imagen: JPG, PNG o WebP. Vídeo: MP4, WebM o MOV.',
+          true,
+        );
         return;
       }
-      if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
-        setMsg('inv-status', 'La imagen supera 2 MB.', true);
+      const maxBytes = maxBytesForProductMedia(file);
+      if (file.size > maxBytes) {
+        setMsg(
+          'inv-status',
+          isProductVideoFile(file) ? 'El vídeo supera 15 MB.' : 'La imagen supera 2 MB.',
+          true,
+        );
         return;
       }
       state.pendingProductImage = file;
@@ -2214,7 +2288,7 @@
         setMsg(
           'inv-status',
           (id ? 'Producto actualizado' : 'Producto creado') +
-            ', pero la foto no se guardó: ' +
+            ', pero el archivo no se guardó: ' +
             (imgRes.message || 'error'),
           true,
         );

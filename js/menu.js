@@ -24,6 +24,10 @@
     return `${base}/storage/v1/object/public/club_product_images/${p.split('/').map(encodeURIComponent).join('/')}`;
   }
 
+  function isMenuVideoPath(path) {
+    return /\.(mp4|webm|mov|m4v)$/i.test((path || '').trim());
+  }
+
   function strainLabel(strain) {
     if (strain === 'sativa') return 'Sativa';
     if (strain === 'indica') return 'Indica';
@@ -158,16 +162,53 @@
 
         const emojiWrap = document.createElement('div');
         emojiWrap.className = 'menu-card__emoji-wrap';
-        const imageUrl = productImagePublicUrl(p.image_path);
-        if (imageUrl) {
+        const mediaUrl = productImagePublicUrl(p.image_path);
+        if (mediaUrl) {
           emojiWrap.classList.add('menu-card__emoji-wrap--photo');
-          const photo = document.createElement('img');
-          photo.className = 'menu-card__photo';
-          photo.src = imageUrl;
-          photo.alt = p.name || '';
-          photo.loading = 'lazy';
-          photo.decoding = 'async';
-          emojiWrap.appendChild(photo);
+          if (isMenuVideoPath(p.image_path)) {
+            emojiWrap.classList.remove('menu-card__emoji-wrap--photo');
+            emojiWrap.classList.add('menu-card__emoji-wrap--video');
+            const vid = document.createElement('video');
+            vid.className = 'menu-card__video';
+            vid.src = mediaUrl;
+            vid.muted = true;
+            vid.loop = false;
+            vid.playsInline = true;
+            vid.controls = true;
+            vid.setAttribute('preload', 'auto');
+            vid.setAttribute('aria-label', p.name || 'Vídeo del producto');
+            vid.addEventListener('ended', () => {
+              vid.pause();
+            });
+            if (typeof IntersectionObserver !== 'undefined') {
+              const io = new IntersectionObserver(
+                (entries) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      if (vid.paused && vid.currentTime < 0.05) {
+                        void vid.play().catch(() => {});
+                      }
+                    } else {
+                      vid.pause();
+                    }
+                  });
+                },
+                { threshold: 0.55 },
+              );
+              io.observe(vid);
+            } else {
+              void vid.play().catch(() => {});
+            }
+            emojiWrap.appendChild(vid);
+          } else {
+            const photo = document.createElement('img');
+            photo.className = 'menu-card__photo';
+            photo.src = mediaUrl;
+            photo.alt = p.name || '';
+            photo.loading = 'lazy';
+            photo.decoding = 'async';
+            emojiWrap.appendChild(photo);
+          }
         } else {
           const em = document.createElement('span');
           em.className = 'menu-card__emoji';
