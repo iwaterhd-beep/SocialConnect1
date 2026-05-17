@@ -22,6 +22,29 @@
     return '';
   }
 
+  /** Valor numérico para ordenar (sin precio → al final). */
+  function menuPriceSortValue(p) {
+    if (p.price_sort != null && p.price_sort !== '') {
+      const n = Number(p.price_sort);
+      if (!Number.isNaN(n)) return n;
+    }
+    const label = (p.price_label || '').trim();
+    if (!label || label === '—') return Number.POSITIVE_INFINITY;
+    const m = label.replace(',', '.').match(/([\d.]+)/);
+    return m ? parseFloat(m[1]) : Number.POSITIVE_INFINITY;
+  }
+
+  function sortMenuProductsByPrice(products) {
+    return (products || []).slice().sort((a, b) => {
+      const pa = menuPriceSortValue(a);
+      const pb = menuPriceSortValue(b);
+      if (pa !== pb) return pa - pb;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'es', {
+        sensitivity: 'base',
+      });
+    });
+  }
+
   function resolveMenuSlug() {
     const params = new URLSearchParams(window.location.search);
     const q = (params.get('club') || params.get('slug') || '').trim().toLowerCase();
@@ -99,7 +122,7 @@
       const grid = document.createElement('div');
       grid.className = 'menu-grid';
 
-      (cat.products || []).forEach((p) => {
+      sortMenuProductsByPrice(cat.products).forEach((p) => {
         const row = document.createElement('article');
         row.className = 'menu-item';
 
