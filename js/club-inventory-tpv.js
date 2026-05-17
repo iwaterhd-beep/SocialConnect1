@@ -6,7 +6,7 @@
   const MEMBER_AVATAR_BUCKET = 'club_member_docs';
 
   const PRODUCT_SELECT_FULL =
-    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur';
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain';
   const PRODUCT_SELECT_FULL_NO_PURCHASE_COST =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, retail_price_eur';
   const PRODUCT_SELECT_FULL_NO_RETAIL_PRICE =
@@ -54,6 +54,9 @@
     hasRetailPriceColumn: true,
     /** Listados activos: false si la BD no tiene columna is_archived (migración 024). */
     hasArchivedColumn: true,
+    hasCannabisStrainColumn: true,
+    hasCategoryMenuStrainColumn: true,
+    menuSettings: { enabled: false, slug: '' },
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
@@ -880,19 +883,110 @@
     scheduleAutoTpvLine();
   }
 
-  async function loadCategories() {
+  function categoryShowsStrain(catId) {
+    if (!catId) return false;
+    const c = state.categories.find((x) => x.id === catId);
+    return Boolean(c && c.menu_show_strain);
+  }
+
+  function syncProductStrainRowVisibility() {
+    const row = $('inv-product-strain-row');
+    if (!row) return;
+    const catId = ($('inv-product-category')?.value || '').trim();
+    const show = state.hasCannabisStrainColumn && categoryShowsStrain(catId);
+    row.hidden = !show;
+  }
+
+  function updateMenuUrlPreview() {
+    const slug = ($('inv-menu-slug')?.value || '').trim().toLowerCase();
+    const preview = $('inv-menu-url-preview');
+    const link = $('inv-menu-open-link');
+    const base = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}`;
+    const root = base.includes('dashboard-club') ? base.replace(/dashboard-club\.html.*$/, '') : base.replace(/\/?$/, '/');
+    const url = slug ? `${root}menu/?club=${encodeURIComponent(slug)}` : '—';
+    if (preview) preview.textContent = slug ? url : 'Indica una ruta para generar el enlace.';
+    if (link) {
+      link.href = slug ? url : '#';
+      link.classList.toggle('is-disabled', !slug);
+    }
+  }
+
+  async function loadMenuSettings() {
     const { data, error } = await sb()
+      .from('clubs')
+      .select('menu_enabled, menu_slug')
+      .eq('id', state.ctx.club.id)
+      .maybeSingle();
+    if (error) {
+      if (error.code === '42703') return;
+      throw error;
+    }
+    state.menuSettings = {
+      enabled: Boolean(data?.menu_enabled),
+      slug: (data?.menu_slug || '').trim(),
+    };
+    if ($('inv-menu-enabled')) $('inv-menu-enabled').checked = state.menuSettings.enabled;
+    if ($('inv-menu-slug')) $('inv-menu-slug').value = state.menuSettings.slug;
+    updateMenuUrlPreview();
+  }
+
+  async function saveMenuSettings() {
+    const enabled = $('inv-menu-enabled')?.checked === true;
+    const slug = ($('inv-menu-slug')?.value || '').trim().toLowerCase();
+    const status = $('inv-menu-status');
+    if (status) {
+      status.textContent = 'Guardando menú…';
+      status.className = 'msg';
+    }
+    const { error } = await sb().rpc('club_update_public_menu_settings', {
+      p_enabled: enabled,
+      p_slug: slug,
+    });
+    if (error) {
+      if (status) {
+        status.textContent =
+          error.message?.includes('club_update_public_menu_settings') ||
+          error.code === 'PGRST202'
+            ? 'Ejecuta la migración 033_public_menu.sql en Supabase.'
+            : error.message || 'No se pudo guardar.';
+        status.className = 'msg msg--error';
+      }
+      return;
+    }
+    state.menuSettings = { enabled, slug };
+    if (status) {
+      status.textContent = 'Menú público guardado.';
+      status.className = 'msg msg--ok';
+    }
+    updateMenuUrlPreview();
+  }
+
+  async function loadCategories() {
+    let { data, error } = await sb()
       .from('inventory_categories')
-      .select('id, name, sort_order')
+      .select('id, name, sort_order, menu_show_strain')
       .eq('club_id', state.ctx.club.id)
       .order('sort_order', { ascending: true })
       .order('name', { ascending: true });
+    if (error && error.code === '42703') {
+      state.hasCategoryMenuStrainColumn = false;
+      ({ data, error } = await sb()
+        .from('inventory_categories')
+        .select('id, name, sort_order')
+        .eq('club_id', state.ctx.club.id)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }));
+    }
     if (error) throw error;
-    state.categories = data || [];
+    state.categories = (data || []).map((c) => ({
+      ...c,
+      menu_show_strain: Boolean(c.menu_show_strain),
+    }));
     renderCategoryList();
     fillCategorySelects();
     renderTpvCategoryChips();
     renderInvCategoryChips();
+    syncProductStrainRowVisibility();
   }
 
   function fillCategorySelects() {
@@ -920,26 +1014,61 @@
     ul.innerHTML = '';
     state.categories.forEach((c) => {
       const li = document.createElement('li');
-      li.className = 'inv-cat-list__item';
+      li.className = 'inv-cat-list__item inv-cat-list__item--edit';
+      const strainChk =
+        state.hasCategoryMenuStrainColumn
+          ? `<label class="checkbox-label inv-cat-strain-label">
+          <input type="checkbox" class="inv-cat-strain-cb" data-cat-id="${c.id}"${c.menu_show_strain ? ' checked' : ''} />
+          Sativa/Indica
+        </label>`
+          : '';
       li.innerHTML = `
-        <span>${escapeHtml(c.name)}</span>
-        <button type="button" class="btn btn--ghost btn--small" data-cat-id="${c.id}">Eliminar</button>
+        <input type="text" class="input input--small inv-cat-edit-name" data-cat-id="${c.id}" value="${escapeHtml(c.name)}" style="flex:1;min-width:0" />
+        ${strainChk}
+        <button type="button" class="btn btn--ghost btn--small" data-cat-save="${c.id}">Guardar</button>
+        <button type="button" class="btn btn--ghost btn--small" data-cat-del="${c.id}">Eliminar</button>
       `;
-      li.querySelector('button').addEventListener('click', async () => {
-        if (!confirm('¿Eliminar esta categoría? Los productos quedarán sin categoría.')) return;
-        setMsg('inv-status', 'Eliminando…', false);
-        const { error } = await sb().from('inventory_categories').delete().eq('id', c.id);
-        if (error) {
-          setMsg('inv-status', error.message || 'No se pudo eliminar.', true);
-          return;
-        }
-        setMsg('inv-status', 'Categoría eliminada.', false);
-        await loadCategories();
-        await loadProducts();
-        await refreshStockUi();
-      });
+      li.querySelector('[data-cat-save]')?.addEventListener('click', () => void saveCategoryRow(c.id));
+      li.querySelector('[data-cat-del]')?.addEventListener('click', () => void deleteCategory(c.id));
       ul.appendChild(li);
     });
+  }
+
+  async function saveCategoryRow(catId) {
+    const li = document.querySelector(`[data-cat-save="${catId}"]`)?.closest('.inv-cat-list__item');
+    const name = (li?.querySelector('.inv-cat-edit-name')?.value || '').trim();
+    if (!name) {
+      setMsg('inv-status', 'El nombre de la categoría no puede estar vacío.', true);
+      return;
+    }
+    const strainCb = li?.querySelector('.inv-cat-strain-cb');
+    const row = { name };
+    if (state.hasCategoryMenuStrainColumn && strainCb) {
+      row.menu_show_strain = strainCb.checked;
+    }
+    setMsg('inv-status', 'Guardando categoría…', false);
+    const { error } = await sb().from('inventory_categories').update(row).eq('id', catId);
+    if (error) {
+      setMsg('inv-status', error.message || 'No se pudo guardar.', true);
+      return;
+    }
+    setMsg('inv-status', 'Categoría actualizada.', false);
+    await loadCategories();
+    await loadProducts();
+  }
+
+  async function deleteCategory(catId) {
+    if (!confirm('¿Eliminar esta categoría? Los productos quedarán sin categoría.')) return;
+    setMsg('inv-status', 'Eliminando…', false);
+    const { error } = await sb().from('inventory_categories').delete().eq('id', catId);
+    if (error) {
+      setMsg('inv-status', error.message || 'No se pudo eliminar.', true);
+      return;
+    }
+    setMsg('inv-status', 'Categoría eliminada.', false);
+    await loadCategories();
+    await loadProducts();
+    await refreshStockUi();
   }
 
   async function loadProducts() {
@@ -958,6 +1087,19 @@
 
     if (colErr && state.hasProductExtras) {
       let msg = (error.message || '').toLowerCase();
+      if (msg.includes('cannabis_strain')) {
+        state.hasCannabisStrainColumn = false;
+        const rCs = await inventoryProductListQuery(
+          PRODUCT_SELECT_FULL.replace(', cannabis_strain', ''),
+        );
+        if (!rCs.error) {
+          data = rCs.data;
+          error = null;
+        } else {
+          error = rCs.error;
+          msg = (error.message || '').toLowerCase();
+        }
+      }
       if (msg.includes('purchase_cost_eur')) {
         state.hasPurchaseCostColumn = false;
         const rPc = await inventoryProductListQuery(PRODUCT_SELECT_FULL_NO_PURCHASE_COST);
@@ -1472,7 +1614,9 @@
     if ($('inv-product-price-per-g')) $('inv-product-price-per-g').value = '';
     if ($('inv-product-purchase-cost')) $('inv-product-purchase-cost').value = '';
     if ($('inv-product-retail-price')) $('inv-product-retail-price').value = '';
+    if ($('inv-product-strain')) $('inv-product-strain').value = '';
     setInvSaleUnitUi('grams');
+    syncProductStrainRowVisibility();
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Crear producto';
   }
 
@@ -1523,6 +1667,11 @@
         rp.value = '';
       }
     }
+    if ($('inv-product-strain')) {
+      $('inv-product-strain').value =
+        p.cannabis_strain === 'indica' ? 'indica' : p.cannabis_strain === 'sativa' ? 'sativa' : '';
+    }
+    syncProductStrainRowVisibility();
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Actualizar producto';
     setMsg('inv-status', 'Editando producto. Guarda para aplicar cambios.', false);
     $('inv-product-name')?.focus();
@@ -1625,6 +1774,14 @@
       : {};
 
     const row = { ...baseRow, ...extraRow };
+    if (state.hasCannabisStrainColumn) {
+      if (categoryShowsStrain(categoryId)) {
+        const s = ($('inv-product-strain')?.value || '').trim();
+        row.cannabis_strain = s === 'sativa' || s === 'indica' ? s : null;
+      } else {
+        row.cannabis_strain = null;
+      }
+    }
 
     async function trySave(insert) {
       if (insert) {
@@ -1699,14 +1856,20 @@
       return;
     }
     setMsg('inv-status', 'Añadiendo categoría…', false);
-    const { error } = await sb().from('inventory_categories').insert([
-      { club_id: state.ctx.club.id, name, sort_order: state.categories.length },
-    ]);
+    const showStrain = $('inv-cat-menu-strain')?.checked === true;
+    const row = {
+      club_id: state.ctx.club.id,
+      name,
+      sort_order: state.categories.length,
+    };
+    if (state.hasCategoryMenuStrainColumn) row.menu_show_strain = showStrain;
+    const { error } = await sb().from('inventory_categories').insert([row]);
     if (error) {
       setMsg('inv-status', error.message || 'No se pudo crear.', true);
       return;
     }
     $('inv-cat-name').value = '';
+    if ($('inv-cat-menu-strain')) $('inv-cat-menu-strain').checked = false;
     setMsg('inv-status', 'Categoría añadida.', false);
     showToast('Categoría añadida');
     closeInvCatModal();
@@ -2707,6 +2870,7 @@
     }
 
     try {
+      await loadMenuSettings();
       await loadCategories();
       await loadInventoryAccessFlags(ctx);
       applyInventoryEditAccess();

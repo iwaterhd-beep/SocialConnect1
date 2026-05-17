@@ -1,4 +1,33 @@
 <div class="club-view-stage">
+<section class="card-section menu-admin-card" aria-labelledby="inv-menu-title">
+  <h2 id="inv-menu-title">Menú en tablet</h2>
+  <p class="hint" style="margin-top: 0">
+    Carta pública para socios: solo <strong>producto</strong> y <strong>precio</strong> (con stock). Enlace:
+    <code>socialconnectcs.com/menu/?club=tu-club</code>
+  </p>
+  <div class="form__row" style="margin-top: 0.75rem">
+    <label class="checkbox-label">
+      <input type="checkbox" id="inv-menu-enabled" />
+      Menú público activo
+    </label>
+  </div>
+  <div class="grid grid--2" style="margin-top: 0.5rem">
+    <div class="form__row" style="margin-bottom: 0">
+      <label for="inv-menu-slug">Ruta del menú</label>
+      <input class="input" id="inv-menu-slug" placeholder="mi-club" autocomplete="off" />
+      <p class="hint hint--small" style="margin-top: 0.35rem">Solo minúsculas, números y guiones.</p>
+    </div>
+    <div class="form__row" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end">
+      <p id="inv-menu-url-preview" class="hint" style="margin: 0 0 0.5rem">—</p>
+      <div class="row-actions">
+        <button type="button" class="btn btn--small" id="inv-menu-save">Guardar menú</button>
+        <a class="btn btn--ghost btn--small" id="inv-menu-open-link" href="#" target="_blank" rel="noopener">Abrir menú</a>
+      </div>
+    </div>
+  </div>
+  <p id="inv-menu-status" class="msg" role="status" aria-live="polite"></p>
+</section>
+
 <section class="card-section" style="margin-top: 1.25rem" aria-labelledby="inv-list-title">
   <div class="member-csv-toolbar">
     <h2 id="inv-list-title">Productos</h2>
@@ -53,6 +82,12 @@
           <button type="button" class="btn btn--small" id="inv-cat-add">Crear categoría</button>
         </div>
       </div>
+      <div class="form__row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="inv-cat-menu-strain" />
+          Sativa / Indica en menú (activar en categoría Weed)
+        </label>
+      </div>
       <ul id="inv-cat-list" class="inv-cat-list" aria-label="Lista de categorías"></ul>
     </div>
     <div class="row-actions">
@@ -104,6 +139,14 @@
         <label for="inv-product-category">Categoría</label>
         <select class="select" id="inv-product-category">
           <option value="">Sin categoría</option>
+        </select>
+      </div>
+      <div class="form__row" id="inv-product-strain-row" hidden>
+        <label for="inv-product-strain">Tipo (menú)</label>
+        <select class="select" id="inv-product-strain">
+          <option value="">—</option>
+          <option value="sativa">Sativa</option>
+          <option value="indica">Indica</option>
         </select>
       </div>
       <div class="grid grid--2">

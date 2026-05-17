@@ -15,6 +15,7 @@ Ejecuta **una por una**, en este orden:
 11. … (018–030 según lo que aún no tengas en el proyecto)
 12. **`supabase/migrations/031_shift_stock_count_events.sql`** — contajes manuales siempre ligados al turno; devuelve JSON con descuadre. Si falla por tipo de retorno, el script ya incluye `DROP FUNCTION` antes de crear.
 13. **`supabase/migrations/032_wallet_ledger_product_notes.sql`** — notas del monedero con nombre de producto en ventas TPV.
+14. **`supabase/migrations/033_public_menu.sql`** — menú tablet público `/menu/?club=slug` y sativa/indica en categoría weed.
 
 ---
 

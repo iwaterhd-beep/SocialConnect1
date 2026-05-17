@@ -1246,6 +1246,19 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   font-size: 0.88rem;
 }
 
+.inv-cat-list__item--edit {
+  flex-wrap: wrap;
+}
+
+.inv-cat-strain-label {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.menu-admin-card {
+  margin-top: 1.25rem;
+}
+
 .inv-prod-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

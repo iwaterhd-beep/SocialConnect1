@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1419" />
+    <title>Menú — Social Connect</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/menu.css?v=1" />
+  </head>
+  <body class="menu-page">
+    <header class="menu-header">
+      <p class="menu-header__brand">Social Connect</p>
+      <h1 id="menu-club-name" class="menu-header__title">Menú</h1>
+      <p id="menu-status" class="menu-header__status hint" role="status">Cargando…</p>
+    </header>
+
+    <nav id="menu-cat-nav" class="menu-cat-nav" aria-label="Categorías" hidden></nav>
+
+    <main id="menu-main" class="menu-main" aria-live="polite">
+      <p class="menu-loading">Cargando carta…</p>
+    </main>
+
+    <footer class="menu-footer">
+      <p class="hint">Precios orientativos · disponibilidad según stock del club</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/menu.js?v=1"></script>
+  </body>
+</html>
