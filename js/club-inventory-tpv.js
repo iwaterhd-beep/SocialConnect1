@@ -930,9 +930,8 @@
       preview.textContent = url || 'Escribe una ruta (ej. tfp) y guarda para activar el enlace.';
     }
     if (link) {
-      link.href = url || 'javascript:void(0)';
+      link.disabled = !url;
       link.setAttribute('aria-disabled', url ? 'false' : 'true');
-      link.classList.toggle('btn--disabled', !url);
     }
   }
 
