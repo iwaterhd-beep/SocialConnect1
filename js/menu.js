@@ -16,6 +16,14 @@
       .replace(/"/g, '&quot;');
   }
 
+  function productImagePublicUrl(path) {
+    const p = (path || '').trim();
+    if (!p) return '';
+    const base = (window.SC_CONFIG?.url || '').replace(/\/$/, '');
+    if (!base) return '';
+    return `${base}/storage/v1/object/public/club_product_images/${p.split('/').map(encodeURIComponent).join('/')}`;
+  }
+
   function strainLabel(strain) {
     if (strain === 'sativa') return 'Sativa';
     if (strain === 'indica') return 'Indica';
@@ -150,10 +158,22 @@
 
         const emojiWrap = document.createElement('div');
         emojiWrap.className = 'menu-card__emoji-wrap';
-        const em = document.createElement('span');
-        em.className = 'menu-card__emoji';
-        em.textContent = (p.emoji || '').trim() || '🌿';
-        emojiWrap.appendChild(em);
+        const imageUrl = productImagePublicUrl(p.image_path);
+        if (imageUrl) {
+          emojiWrap.classList.add('menu-card__emoji-wrap--photo');
+          const photo = document.createElement('img');
+          photo.className = 'menu-card__photo';
+          photo.src = imageUrl;
+          photo.alt = p.name || '';
+          photo.loading = 'lazy';
+          photo.decoding = 'async';
+          emojiWrap.appendChild(photo);
+        } else {
+          const em = document.createElement('span');
+          em.className = 'menu-card__emoji';
+          em.textContent = (p.emoji || '').trim() || '🌿';
+          emojiWrap.appendChild(em);
+        }
         card.appendChild(emojiWrap);
 
         const body = document.createElement('div');

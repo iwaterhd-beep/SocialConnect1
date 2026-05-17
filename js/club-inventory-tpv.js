@@ -4,9 +4,11 @@
 (function () {
   const sb = () => window.scSupabase;
   const MEMBER_AVATAR_BUCKET = 'club_member_docs';
+  const PRODUCT_IMAGE_BUCKET = 'club_product_images';
+  const PRODUCT_IMAGE_MAX_BYTES = 2097152;
 
   const PRODUCT_SELECT_FULL =
-    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain, menu_price_eur';
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain, menu_price_eur, image_path';
   const PRODUCT_SELECT_FULL_NO_PURCHASE_COST =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, retail_price_eur';
   const PRODUCT_SELECT_FULL_NO_RETAIL_PRICE =
@@ -56,6 +58,11 @@
     hasArchivedColumn: true,
     hasCannabisStrainColumn: true,
     hasMenuPriceColumn: true,
+    hasProductImageColumn: true,
+    pendingProductImage: null,
+    productImageRemove: false,
+    productLoadedImagePath: '',
+    productImageObjectUrl: null,
     hasCategoryMenuStrainColumn: true,
     menuSettings: { enabled: false, slug: '' },
     menuUiBound: false,
@@ -64,6 +71,190 @@
     adjustDirection: 'add',
   };
   const EMOJI_RECENT_KEY = 'sc_inv_recent_emojis';
+
+  function imageExtFromFile(f) {
+    const n = f.name || '';
+    const i = n.lastIndexOf('.');
+    if (i >= 0) {
+      const e = n
+        .slice(i + 1)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+      if (e) return e.slice(0, 8);
+    }
+    if (f.type === 'image/png') return 'png';
+    if (f.type === 'image/webp') return 'webp';
+    return 'jpg';
+  }
+
+  function revokeProductImageObjectUrl() {
+    if (state.productImageObjectUrl) {
+      URL.revokeObjectURL(state.productImageObjectUrl);
+      state.productImageObjectUrl = null;
+    }
+  }
+
+  function productImagePublicUrl(path) {
+    const p = (path || '').trim();
+    if (!p) return '';
+    const { data } = sb().storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(p);
+    return data?.publicUrl || '';
+  }
+
+  function resetProductImageUiState() {
+    state.pendingProductImage = null;
+    state.productImageRemove = false;
+    state.productLoadedImagePath = '';
+    revokeProductImageObjectUrl();
+    const fileEl = $('inv-product-image-file');
+    if (fileEl) fileEl.value = '';
+  }
+
+  async function refreshProductImagePreview() {
+    const img = $('inv-product-image-preview');
+    const placeholder = $('inv-product-image-placeholder');
+    const clearBtn = $('inv-product-image-clear');
+    if (!img || !placeholder) return;
+
+    revokeProductImageObjectUrl();
+    img.classList.add('is-hidden');
+    img.removeAttribute('src');
+
+    if (state.pendingProductImage) {
+      state.productImageObjectUrl = URL.createObjectURL(state.pendingProductImage);
+      img.src = state.productImageObjectUrl;
+      img.classList.remove('is-hidden');
+      placeholder.style.display = 'none';
+      if (clearBtn) clearBtn.hidden = false;
+      return;
+    }
+
+    if (!state.productImageRemove && state.productLoadedImagePath) {
+      const url = productImagePublicUrl(state.productLoadedImagePath);
+      if (url) {
+        img.src = url;
+        img.classList.remove('is-hidden');
+        placeholder.style.display = 'none';
+        if (clearBtn) clearBtn.hidden = false;
+        return;
+      }
+    }
+
+    placeholder.style.display = '';
+    if (clearBtn) {
+      clearBtn.hidden = !state.productLoadedImagePath && !state.pendingProductImage;
+    }
+  }
+
+  async function removeProductImageAtPath(path) {
+    const p = (path || '').trim();
+    if (!p) return { ok: true };
+    const { error } = await sb().storage.from(PRODUCT_IMAGE_BUCKET).remove([p]);
+    if (error && !String(error.message || '').toLowerCase().includes('not found')) {
+      return { ok: false, message: error.message || 'No se pudo borrar la imagen.' };
+    }
+    return { ok: true };
+  }
+
+  async function applyProductImageChanges(productId) {
+    if (!state.hasProductImageColumn || !state.ctx?.club?.id) return { ok: true };
+
+    if (state.productImageRemove) {
+      const old = state.productLoadedImagePath;
+      if (old) {
+        const rem = await removeProductImageAtPath(old);
+        if (!rem.ok) return rem;
+      }
+      const { error } = await sb()
+        .from('inventory_products')
+        .update({ image_path: '' })
+        .eq('id', productId);
+      if (error) {
+        if ((error.message || '').toLowerCase().includes('image_path')) {
+          state.hasProductImageColumn = false;
+          return { ok: true };
+        }
+        return { ok: false, message: error.message || 'No se pudo quitar la foto.' };
+      }
+      state.productLoadedImagePath = '';
+      state.productImageRemove = false;
+      return { ok: true };
+    }
+
+    if (!state.pendingProductImage) return { ok: true };
+
+    const file = state.pendingProductImage;
+    if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+      return { ok: false, message: 'La imagen supera 2 MB.' };
+    }
+    const ext = imageExtFromFile(file);
+    const objectPath = `${state.ctx.club.id}/${productId}.${ext}`;
+    const { error: upErr } = await sb().storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
+      contentType: file.type || 'image/jpeg',
+      upsert: true,
+    });
+    if (upErr) {
+      const needsMigration =
+        /club_product_images|bucket/i.test(upErr.message || '') || upErr.message?.includes('not found');
+      return {
+        ok: false,
+        message: needsMigration
+          ? 'Ejecuta la migración 037_product_menu_images.sql en Supabase.'
+          : upErr.message || 'No se pudo subir la imagen.',
+      };
+    }
+
+    const old = state.productLoadedImagePath;
+    if (old && old !== objectPath) {
+      await removeProductImageAtPath(old);
+    }
+
+    const { error: dbErr } = await sb()
+      .from('inventory_products')
+      .update({ image_path: objectPath })
+      .eq('id', productId);
+    if (dbErr) {
+      if ((dbErr.message || '').toLowerCase().includes('image_path')) {
+        state.hasProductImageColumn = false;
+        return { ok: true };
+      }
+      return { ok: false, message: dbErr.message || 'No se pudo guardar la ruta de la imagen.' };
+    }
+
+    state.productLoadedImagePath = objectPath;
+    state.pendingProductImage = null;
+    const fileEl = $('inv-product-image-file');
+    if (fileEl) fileEl.value = '';
+    return { ok: true };
+  }
+
+  function bindProductImageUi() {
+    $('inv-product-image-pick')?.addEventListener('click', () => {
+      $('inv-product-image-file')?.click();
+    });
+    $('inv-product-image-file')?.addEventListener('change', () => {
+      const file = $('inv-product-image-file')?.files?.[0];
+      if (!file) return;
+      if (!/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
+        setMsg('inv-status', 'Formato no válido. Usa JPG, PNG o WebP.', true);
+        return;
+      }
+      if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+        setMsg('inv-status', 'La imagen supera 2 MB.', true);
+        return;
+      }
+      state.pendingProductImage = file;
+      state.productImageRemove = false;
+      void refreshProductImagePreview();
+    });
+    $('inv-product-image-clear')?.addEventListener('click', () => {
+      state.pendingProductImage = null;
+      state.productImageRemove = true;
+      const fileEl = $('inv-product-image-file');
+      if (fileEl) fileEl.value = '';
+      void refreshProductImagePreview();
+    });
+  }
 
   function inventoryProductListQuery(selectColumns) {
     let q = sb()
@@ -1202,11 +1393,23 @@
 
     if (colErr && state.hasProductExtras) {
       let msg = (error.message || '').toLowerCase();
+      if (msg.includes('image_path')) {
+        state.hasProductImageColumn = false;
+        let selImg = PRODUCT_SELECT_FULL.replace(', image_path', '');
+        const rImg = await inventoryProductListQuery(selImg);
+        if (!rImg.error) {
+          data = rImg.data;
+          error = null;
+        } else {
+          error = rImg.error;
+          msg = (error.message || '').toLowerCase();
+        }
+      }
       if (msg.includes('menu_price_eur')) {
         state.hasMenuPriceColumn = false;
-        const rMp = await inventoryProductListQuery(
-          PRODUCT_SELECT_FULL.replace(', menu_price_eur', '').replace(', cannabis_strain', ', cannabis_strain'),
-        );
+        let selMp = PRODUCT_SELECT_FULL.replace(', menu_price_eur', '');
+        if (!state.hasProductImageColumn) selMp = selMp.replace(', image_path', '');
+        const rMp = await inventoryProductListQuery(selMp);
         if (!rMp.error) {
           data = rMp.data;
           error = null;
@@ -1219,6 +1422,7 @@
         state.hasCannabisStrainColumn = false;
         let sel = PRODUCT_SELECT_FULL.replace(', cannabis_strain', '');
         if (!state.hasMenuPriceColumn) sel = sel.replace(', menu_price_eur', '');
+        if (!state.hasProductImageColumn) sel = sel.replace(', image_path', '');
         const rCs = await inventoryProductListQuery(sel);
         if (!rCs.error) {
           data = rCs.data;
@@ -1744,6 +1948,8 @@
     if ($('inv-product-retail-price')) $('inv-product-retail-price').value = '';
     if ($('inv-product-menu-price')) $('inv-product-menu-price').value = '';
     if ($('inv-product-strain')) $('inv-product-strain').value = '';
+    resetProductImageUiState();
+    void refreshProductImagePreview();
     setInvSaleUnitUi('grams');
     syncProductStrainRowVisibility();
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Crear producto';
@@ -1808,6 +2014,9 @@
       $('inv-product-strain').value =
         p.cannabis_strain === 'indica' ? 'indica' : p.cannabis_strain === 'sativa' ? 'sativa' : '';
     }
+    resetProductImageUiState();
+    state.productLoadedImagePath = (p.image_path || '').trim();
+    void refreshProductImagePreview();
     syncProductStrainRowVisibility();
     if ($('inv-product-save')) $('inv-product-save').textContent = 'Actualizar producto';
     setMsg('inv-status', 'Editando producto. Guarda para aplicar cambios.', false);
@@ -1943,9 +2152,9 @@
 
     async function trySave(insert) {
       if (insert) {
-        return sb().from('inventory_products').insert([row]);
+        return sb().from('inventory_products').insert([row]).select('id').single();
       }
-      return sb().from('inventory_products').update(row).eq('id', id);
+      return sb().from('inventory_products').update(row).eq('id', id).select('id').single();
     }
 
     let res = await trySave(!id);
@@ -1996,6 +2205,23 @@
     if (res.error) {
       setMsg('inv-status', res.error.message || 'Error al guardar.', true);
       return;
+    }
+
+    const savedId = id || res.data?.id;
+    if (savedId && (state.pendingProductImage || state.productImageRemove)) {
+      const imgRes = await applyProductImageChanges(savedId);
+      if (!imgRes.ok) {
+        setMsg(
+          'inv-status',
+          (id ? 'Producto actualizado' : 'Producto creado') +
+            ', pero la foto no se guardó: ' +
+            (imgRes.message || 'error'),
+          true,
+        );
+        await loadProducts();
+        await refreshStockUi();
+        return;
+      }
     }
 
     setMsg('inv-status', id ? 'Producto actualizado.' : 'Producto creado.', false);
@@ -2894,6 +3120,7 @@
 
   function bindInventory() {
     bindMenuUi();
+    bindProductImageUi();
     $('inv-product-category')?.addEventListener('change', syncProductStrainRowVisibility);
     $('inv-filter-category')?.addEventListener('change', async () => {
       state.filterCategoryId = ($('inv-filter-category')?.value || '').trim();

@@ -131,6 +131,34 @@
           <input class="input" id="inv-product-name" placeholder="Nombre del artículo" />
         </div>
       </div>
+      <div class="form__row" id="inv-row-product-image">
+        <label>Foto para menú tablet</label>
+        <div class="inv-product-image">
+          <div class="inv-product-image__preview" id="inv-product-image-preview-wrap">
+            <img
+              id="inv-product-image-preview"
+              class="inv-product-image__img is-hidden"
+              alt=""
+              width="120"
+              height="120"
+            />
+            <span id="inv-product-image-placeholder" class="inv-product-image__placeholder">Sin foto</span>
+          </div>
+          <div class="inv-product-image__actions">
+            <input
+              type="file"
+              id="inv-product-image-file"
+              class="visually-hidden"
+              accept="image/jpeg,image/png,image/webp"
+            />
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-pick">Elegir imagen</button>
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-clear" hidden>
+              Quitar foto
+            </button>
+          </div>
+        </div>
+        <p class="hint hint--small" style="margin-top: 0.35rem">JPG, PNG o WebP · máx. 2 MB · visible en la carta pública</p>
+      </div>
       <div class="form__row">
         <label>Tipo de venta</label>
         <div class="member-type-seg" role="group" aria-label="Tipo de venta">
