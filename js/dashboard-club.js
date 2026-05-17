@@ -513,7 +513,7 @@
     let hasPaymentMethod = true;
     let { data, error } = await sb()
       .from('tpv_dispenses')
-      .select('product_id, grams_dispensed, price_charged_eur, payment_method')
+      .select('id, product_id, grams_dispensed, price_charged_eur, payment_method')
       .eq('shift_id', shiftId);
     if (
       error &&
@@ -525,7 +525,7 @@
       hasPaymentMethod = false;
       const retry = await sb()
         .from('tpv_dispenses')
-        .select('product_id, grams_dispensed, price_charged_eur')
+        .select('id, product_id, grams_dispensed, price_charged_eur')
         .eq('shift_id', shiftId);
       data = retry.data;
       error = retry.error;
@@ -534,31 +534,96 @@
     return { dispenses: data || [], hasPaymentMethod };
   }
 
-  async function fetchShiftWalletCashNet(shiftId) {
-    if (!shiftId) return 0;
-    const { data, error } = await sb()
+  function walletLedgerKindLabel(kind) {
+    const k = String(kind || '').toLowerCase();
+    if (k === 'tpv_sale') return 'Venta TPV (monedero)';
+    if (k === 'tpv_void') return 'Anulación TPV';
+    return 'Ajuste monedero';
+  }
+
+  function formatWalletLedgerAmt(amt) {
+    const n = Number(amt);
+    if (Number.isNaN(n)) return '—';
+    const abs = formatMoneyEUR(Math.abs(n));
+    if (n > 0.0001) return `+${abs}`;
+    if (n < -0.0001) return `−${abs}`;
+    return formatMoneyEUR(0);
+  }
+
+  async function fetchShiftWalletLedger(shiftId, dispenseIds) {
+    if (!shiftId) return [];
+    const ids = (dispenseIds || []).filter(Boolean);
+    let q = sb()
       .from('club_member_wallet_ledger')
-      .select('cash_eur')
-      .eq('shift_id', shiftId);
+      .select(
+        'created_at, amount_eur, cash_eur, balance_after_eur, kind, notes, member_id, shift_id',
+      )
+      .order('created_at', { ascending: true });
+    if (ids.length) {
+      q = q.or(`shift_id.eq.${shiftId},tpv_dispense_id.in.(${ids.join(',')})`);
+    } else {
+      q = q.eq('shift_id', shiftId);
+    }
+    const { data, error } = await q;
     if (
       error &&
       (error.code === '42703' ||
-        String(error.message || '')
-          .toLowerCase()
-          .includes('cash_eur'))
+        String(error.message || '').toLowerCase().includes('shift_id') ||
+        String(error.message || '').toLowerCase().includes('cash_eur'))
     ) {
-      return 0;
+      const { data: d2, error: e2 } = await sb()
+        .from('club_member_wallet_ledger')
+        .select('created_at, amount_eur, balance_after_eur, kind, notes, member_id')
+        .eq('shift_id', shiftId)
+        .order('created_at', { ascending: true });
+      if (e2) return [];
+      return (d2 || []).map((r) => ({ ...r, cash_eur: 0 }));
     }
     if (error) throw error;
-    return (data || []).reduce((acc, r) => acc + (Number(r.cash_eur) || 0), 0);
+    const seen = new Set();
+    return (data || []).filter((r) => {
+      const key = `${r.created_at}|${r.amount_eur}|${r.kind}|${r.member_id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function summarizeShiftWalletLedger(rows) {
+    let cashNet = 0;
+    let walletMovement = 0;
+    let recargasCash = 0;
+    let retiradasCash = 0;
+    let ajustesSinCaja = 0;
+    (rows || []).forEach((r) => {
+      const amt = Number(r.amount_eur) || 0;
+      const cash = Number(r.cash_eur) || 0;
+      walletMovement += amt;
+      cashNet += cash;
+      if (r.kind === 'adjustment') {
+        if (Math.abs(cash) > 0.005) {
+          if (cash > 0) recargasCash += cash;
+          else retiradasCash += cash;
+        } else {
+          ajustesSinCaja += amt;
+        }
+      }
+    });
+    return { cashNet, walletMovement, recargasCash, retiradasCash, ajustesSinCaja };
+  }
+
+  async function fetchShiftWalletCashNet(shiftId, dispenseIds) {
+    const rows = await fetchShiftWalletLedger(shiftId, dispenseIds);
+    return summarizeShiftWalletLedger(rows).cashNet;
   }
 
   async function fetchShiftCashExpected(shiftId) {
-    const [shiftRes, dispRes, walletCashNet] = await Promise.all([
+    const [shiftRes, dispRes] = await Promise.all([
       sb().from('shifts').select('opening_float_eur').eq('id', shiftId).maybeSingle(),
       fetchShiftDispenses(shiftId),
-      fetchShiftWalletCashNet(shiftId),
     ]);
+    const dispenseIds = (dispRes.dispenses || []).map((d) => d.id).filter(Boolean);
+    const walletCashNet = await fetchShiftWalletCashNet(shiftId, dispenseIds);
     const opening =
       shiftRes.data && shiftRes.data.opening_float_eur != null
         ? Number(shiftRes.data.opening_float_eur)
@@ -571,14 +636,56 @@
       walletCashNet,
       expectedCash: opening + cashSales + walletCashNet,
       hasPaymentMethod: dispRes.hasPaymentMethod,
+      dispenseIds,
     };
   }
 
+  async function buildShiftWalletSectionHtml(shiftId, dispenses) {
+    const dispenseIds = (dispenses || []).map((d) => d.id).filter(Boolean);
+    const rows = await fetchShiftWalletLedger(shiftId, dispenseIds);
+    const sum = summarizeShiftWalletLedger(rows);
+    if (!rows.length) {
+      return `<p class="hint" style="margin:0">Sin movimientos de monedero en este turno.</p>`;
+    }
+    const mids = [...new Set(rows.map((r) => r.member_id).filter(Boolean))];
+    let memMap = {};
+    if (mids.length) {
+      const { data: mm } = await sb().from('club_members').select('id, display_name').in('id', mids);
+      if (mm) memMap = Object.fromEntries(mm.map((m) => [m.id, m.display_name]));
+    }
+    const tableRows = rows
+      .map((r) => {
+        const cash = Number(r.cash_eur) || 0;
+        const cashTxt =
+          Math.abs(cash) > 0.005 ? formatWalletLedgerAmt(cash) : '<span class="hint">—</span>';
+        return `<tr>
+          <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+          <td>${escapeHtml(memMap[r.member_id] || '—')}</td>
+          <td>${escapeHtml(walletLedgerKindLabel(r.kind))}</td>
+          <td>${escapeHtml(formatWalletLedgerAmt(r.amount_eur))}</td>
+          <td>${cashTxt}</td>
+          <td>${escapeHtml((r.notes || '').slice(0, 50))}</td>
+        </tr>`;
+      })
+      .join('');
+    return `
+      <p style="margin:0 0 0.5rem">Recargas en efectivo: <strong>${escapeHtml(formatMoneyEUR(sum.recargasCash))}</strong> · Retiradas en efectivo: <strong>${escapeHtml(formatMoneyEUR(Math.abs(sum.retiradasCash)))}</strong>${Math.abs(sum.ajustesSinCaja) > 0.005 ? ` · Ajustes sin caja: ${escapeHtml(formatWalletLedgerAmt(sum.ajustesSinCaja))}` : ''}</p>
+      <div class="table-wrap" style="margin-top:0.5rem">
+        <table class="table-compact shift-wallet-table">
+          <thead><tr><th>Fecha</th><th>Socio</th><th>Tipo</th><th>Monedero</th><th>Caja</th><th>Nota</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
   async function buildShiftSummaryHtml(clubId, shiftId) {
-    const [shiftRes, dispRes, walletCashNet, evRes, prodRes] = await Promise.all([
+    const dispRes = await fetchShiftDispenses(shiftId);
+    const dispenseIds = (dispRes.dispenses || []).map((d) => d.id).filter(Boolean);
+    const [shiftRes, walletCashNet, walletSectionHtml, evRes, prodRes] = await Promise.all([
       sb().from('shifts').select('*').eq('id', shiftId).maybeSingle(),
-      fetchShiftDispenses(shiftId),
-      fetchShiftWalletCashNet(shiftId),
+      fetchShiftWalletCashNet(shiftId, dispenseIds),
+      buildShiftWalletSectionHtml(shiftId, dispRes.dispenses),
       sb()
         .from('shift_stock_events')
         .select('product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at')
@@ -592,6 +699,7 @@
 
     const shift = shiftRes.data;
     const dispenses = dispRes.dispenses || [];
+    const walletSection = walletSectionHtml || '';
     const events = evRes.data || [];
     const products = prodRes.data || [];
     const prodMap = Object.fromEntries(products.map((p) => [p.id, p]));
@@ -708,6 +816,11 @@
         <p style="margin:0.35rem 0 0">Total ventas TPV (efectivo + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
         <p style="margin:0.35rem 0 0">Cambio dejado para el siguiente turno: <strong>${floatFwd !== null ? escapeHtml(formatMoneyEUR(floatFwd)) : '—'}</strong></p>
         ${denHtml ? `<p class="hint" style="margin:0.5rem 0 0">Desglose anotado:</p>${denHtml}` : ''}
+      </div>
+      <div class="shift-summary-section">
+        <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Monedero (este turno)</h4>
+        <p class="hint" style="margin:0 0 0.5rem">Ventas cobradas con monedero: <strong>${escapeHtml(formatMoneyEUR(walletSales))}</strong> (no suman a caja). Historial vinculado al turno:</p>
+        ${walletSection}
       </div>
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Lo más dispensado (por gramos)</h4>
@@ -834,6 +947,7 @@
       let opening = 0;
       let walletSales = 0;
       let walletCashNet = 0;
+      let walletRecargas = 0;
       try {
         if (shiftId) {
           const info = await fetchShiftCashExpected(shiftId);
@@ -842,6 +956,9 @@
           expectedCash = info.expectedCash;
           walletSales = info.walletSales || 0;
           walletCashNet = info.walletCashNet || 0;
+          const ledgerRows = await fetchShiftWalletLedger(shiftId, info.dispenseIds || []);
+          const wSum = summarizeShiftWalletLedger(ledgerRows);
+          walletRecargas = wSum.recargasCash;
         }
       } catch (e) {
         const hintEl = $('wiz-cash-expected');
@@ -859,9 +976,9 @@
             : '';
         const walletCashLine =
           Math.abs(walletCashNet) > 0.005
-            ? ` Recargas/retiradas en efectivo: ${walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(walletCashNet)}.`
+            ? ` Monedero en efectivo (neto): ${walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(walletCashNet)}.`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} (cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}).${walletLine}`;
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} = cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}${walletLine}`;
       }
       const onCashInput = () => updateWizardArqueoDiff(expectedCash);
       $('wiz-close-cash')?.addEventListener('input', onCashInput);

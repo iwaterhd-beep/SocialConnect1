@@ -3019,6 +3019,14 @@ body.club-dark .tpv-wallet-funds {
   line-height: 1.45;
 }
 
+.shift-wallet-table {
+  font-size: 0.78rem;
+}
+
+.shift-summary-section .shift-wallet-table td {
+  vertical-align: top;
+}
+
 body.club-dark .tpv-pay-method__opt {
   background: rgba(30, 41, 59, 0.9);
   border-color: rgba(148, 163, 184, 0.2);
