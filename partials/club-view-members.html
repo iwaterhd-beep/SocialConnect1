@@ -77,6 +77,20 @@
         placeholder="0"
       />
     </div>
+    <div class="form__row">
+      <label for="member-wallet-balance">Saldo monedero (€)</label>
+      <input
+        class="input"
+        id="member-wallet-balance"
+        type="number"
+        inputmode="decimal"
+        step="0.01"
+        placeholder="0"
+      />
+      <p class="hint hint--small" style="margin: 0.35rem 0 0">
+        Puede ser <strong>negativo</strong> (crédito). Se usa al cobrar en TPV con «Monedero».
+      </p>
+    </div>
   </div>
 
   <div class="form__row member-form-sc__type">
@@ -244,6 +258,7 @@
           <th>Nombre</th>
           <th>DNI</th>
           <th>Tipo</th>
+          <th>Monedero</th>
           <th>Teléfono</th>
           <th>Estado</th>
           <th></th>
@@ -274,7 +289,23 @@
             <span class="member-profile-kpi__label">Total gastado</span>
             <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
           </article>
+          <article class="member-profile-kpi member-profile-kpi--wallet">
+            <span class="member-profile-kpi__label">Monedero</span>
+            <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 €</strong>
+          </article>
         </div>
+      </div>
+      <div id="member-wallet-adjust" class="member-wallet-adjust is-hidden" hidden>
+        <h3 class="member-wallet-adjust__title">Recargar / ajustar monedero</h3>
+        <p class="hint" style="margin-top: 0">
+          Importe positivo = ingreso al monedero. Negativo = retirada. El saldo puede quedar en negativo.
+        </p>
+        <div class="member-wallet-adjust__row">
+          <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" placeholder="Ej. 20 o -5" />
+          <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo (opcional)" />
+          <button type="button" class="btn btn--small" id="member-wallet-adjust-btn">Aplicar</button>
+        </div>
+        <p id="member-wallet-adjust-status" class="msg" role="status"></p>
       </div>
       <p id="member-profile-summary" class="hint" style="margin-top: 0">Selecciona un socio para ver su detalle.</p>
       <div id="member-profile-meta" class="hint" style="margin-top: 0.5rem"></div>

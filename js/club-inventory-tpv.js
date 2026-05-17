@@ -580,6 +580,84 @@
     document.querySelectorAll('#tpv-cart-list [data-tpv-cart-del]').forEach((b) => {
       b.disabled = !on;
     });
+    document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
+      el.disabled = !on;
+    });
+  }
+
+  function getTpvPaymentMethod() {
+    const el = document.querySelector('input[name="tpv-payment-method"]:checked');
+    return el && el.value === 'wallet' ? 'wallet' : 'cash';
+  }
+
+  function getTpvCartTotalEur() {
+    const lines = state.tpvCart || [];
+    if (lines.length) {
+      return lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
+    }
+    const built = buildCurrentTpvLine();
+    if (!built.error && built.line) return Number(built.line.price_charged_eur) || 0;
+    const p = parseDecimal($('tpv-price')?.value);
+    return Number.isNaN(p) ? 0 : p;
+  }
+
+  function getTpvMemberWalletBalance() {
+    const id = ($('tpv-selected-member')?.value || '').trim();
+    if (!id) return null;
+    const m = (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, id));
+    if (!m || m.wallet_balance_eur == null || m.wallet_balance_eur === '') return null;
+    const n = Number(m.wallet_balance_eur);
+    return Number.isNaN(n) ? null : n;
+  }
+
+  function updateTpvWalletUi() {
+    const balEl = $('tpv-wallet-balance');
+    const prevEl = $('tpv-wallet-preview');
+    if (!balEl || !prevEl) return;
+
+    const isWallet = getTpvPaymentMethod() === 'wallet';
+    const memberId = ($('tpv-selected-member')?.value || '').trim();
+
+    if (!isWallet) {
+      balEl.classList.add('is-hidden');
+      balEl.hidden = true;
+      prevEl.classList.add('is-hidden');
+      prevEl.hidden = true;
+      return;
+    }
+
+    balEl.classList.remove('is-hidden');
+    balEl.hidden = false;
+
+    if (!memberId) {
+      balEl.textContent = 'Selecciona un socio para cobrar con monedero.';
+      balEl.classList.remove('tpv-wallet-balance--neg');
+      prevEl.classList.add('is-hidden');
+      prevEl.hidden = true;
+      return;
+    }
+
+    const balance = getTpvMemberWalletBalance();
+    const total = getTpvCartTotalEur();
+    const after = balance != null ? balance - total : null;
+
+    if (balance != null) {
+      balEl.textContent = `Saldo monedero: ${formatMoney(balance)}`;
+      balEl.classList.toggle('tpv-wallet-balance--neg', balance < 0);
+    } else {
+      balEl.textContent = 'Saldo monedero: — (aplica migración 028 en Supabase)';
+      balEl.classList.remove('tpv-wallet-balance--neg');
+    }
+
+    if (total > 0 && after != null && !Number.isNaN(after)) {
+      prevEl.classList.remove('is-hidden');
+      prevEl.hidden = false;
+      prevEl.textContent = `Tras cobrar (${formatMoney(total)}): ${formatMoney(after)}`;
+      prevEl.classList.toggle('tpv-wallet-preview--neg', after < 0);
+    } else {
+      prevEl.classList.add('is-hidden');
+      prevEl.hidden = true;
+    }
   }
 
   /** Precio €/g: explícito, o precio ÷ gramos sugeridos; si no hay gramos de referencia, el precio sugerido cuenta como €/g (TPV por peso). */
@@ -1567,18 +1645,22 @@
     }
     let query = sb()
       .from('club_members')
-      .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
+      .select(
+        'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+      )
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
       .order('display_name', { ascending: true });
     let { data, error } = await query;
     if (
       error &&
-      (error.code === '42703' || String(error.message || '').toLowerCase().includes('avatar_path'))
+      (error.code === '42703' ||
+        String(error.message || '').toLowerCase().includes('wallet_balance_eur') ||
+        String(error.message || '').toLowerCase().includes('avatar_path'))
     ) {
       const r0 = await sb()
         .from('club_members')
-        .select('id, display_name, member_code, member_type, member_type_valid_until')
+        .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
         .eq('club_id', state.ctx.club.id)
         .eq('is_active', true)
         .order('display_name', { ascending: true });
@@ -1617,6 +1699,7 @@
     }
     state.tpvMembers = data || [];
     syncTpvMemberFieldVipFromSelection();
+    updateTpvWalletUi();
   }
 
   window.scClubInventoryReloadMembers = async function () {
@@ -1789,6 +1872,7 @@
     }
     await renderTpvMemberChipDisplay(m);
     syncTpvMemberFieldVipFromSelection();
+    updateTpvWalletUi();
   }
 
   async function clearTpvMember() {
@@ -1801,6 +1885,7 @@
     }
     await renderTpvMemberChipDisplay(null);
     syncTpvMemberFieldVipFromSelection();
+    updateTpvWalletUi();
   }
 
   function makeTpvCartRowId() {
@@ -1945,6 +2030,7 @@
       wrap.appendChild(row);
     });
     toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
+    updateTpvWalletUi();
   }
 
   function addCurrentLineToCart() {
@@ -1952,6 +2038,7 @@
   }
 
   async function registerTpvDispenseLine(line, shiftId, memberId) {
+    const paymentMethod = getTpvPaymentMethod();
     const payloadWithMember = {
       p_product_id: line.product_id,
       p_grams_charged: line.grams_charged,
@@ -1960,6 +2047,7 @@
       p_shift_id: shiftId,
       p_notes: line.notes || '',
       p_member_id: memberId || null,
+      p_payment_method: paymentMethod,
     };
     let rpcRes = await sb().rpc('club_register_tpv_dispense', payloadWithMember);
     let { error } = rpcRes;
@@ -1967,8 +2055,19 @@
       error &&
       (error.code === 'PGRST202' ||
         error.code === '42883' ||
-        /p_member_id|function\s+public\.club_register_tpv_dispense/i.test(error.message || ''));
+        /p_member_id|p_payment_method|function\s+public\.club_register_tpv_dispense/i.test(
+          error.message || '',
+        ));
     if (maybeLegacyRpc) {
+      if (paymentMethod === 'wallet') {
+        return {
+          error: {
+            message:
+              'Monedero no disponible: ejecuta la migración 028_member_wallet.sql en Supabase.',
+          },
+          rpcRes,
+        };
+      }
       const payloadLegacy = {
         p_product_id: line.product_id,
         p_grams_charged: line.grams_charged,
@@ -1976,6 +2075,7 @@
         p_price_charged_eur: line.price_charged_eur,
         p_shift_id: shiftId,
         p_notes: line.notes || '',
+        p_member_id: memberId || null,
       };
       rpcRes = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
       error = rpcRes.error;
@@ -2044,6 +2144,10 @@
   async function submitTpv() {
     syncAutoTpvLine({ silent: true });
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
+    if (getTpvPaymentMethod() === 'wallet' && !memberRaw) {
+      setMsg('tpv-status', 'Para cobrar con monedero debes seleccionar un socio.', true);
+      return;
+    }
     let lines = (state.tpvCart || []).slice();
     if (!lines.length) {
       const built = buildCurrentTpvLine();
@@ -2113,6 +2217,8 @@
     updateTpvMarginHint();
     await loadProducts();
     await refreshStockUi();
+    await loadMembersForTpv();
+    updateTpvWalletUi();
     const visibleRows = await loadRecentDispenses(
       registeredIds.length ? registeredIds : lastRpcRes?.data || null,
     );
@@ -2137,8 +2243,11 @@
 
   async function deleteRecentDispense(row) {
     if (!row || !row.id) return;
+    const isWallet = String(row.payment_method || 'cash').toLowerCase() === 'wallet';
     const ok = confirm(
-      '¿Seguro que quieres eliminar esta venta? Se devolverá el stock dispensado y se restará el importe de la caja.',
+      isWallet
+        ? '¿Seguro que quieres eliminar esta venta? Se devolverá el stock y el importe al monedero del socio.'
+        : '¿Seguro que quieres eliminar esta venta? Se devolverá el stock y se restará el importe del efectivo del turno.',
     );
     if (!ok) return;
 
@@ -2153,7 +2262,9 @@
 
     setMsg(
       'tpv-status',
-      `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} y descontados ${formatMoney(row.price_charged_eur)}.`,
+      isWallet
+        ? `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g y devueltos ${formatMoney(row.price_charged_eur)} al monedero.`
+        : `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g y descontados ${formatMoney(row.price_charged_eur)} del efectivo del turno.`,
       false,
     );
     showToast('Venta eliminada');
@@ -2170,13 +2281,26 @@
     if (!tbody) return;
 
     let sel =
-      'id, created_at, grams_charged, grams_dispensed, price_charged_eur, notes, product_id, member_id, created_by';
+      'id, created_at, grams_charged, grams_dispensed, price_charged_eur, notes, product_id, member_id, created_by, payment_method';
     let { data, error } = await sb()
       .from('tpv_dispenses')
       .select(sel)
       .eq('club_id', state.ctx.club.id)
       .order('created_at', { ascending: false })
       .limit(5);
+
+    if (error && error.message?.includes('payment_method')) {
+      sel =
+        'id, created_at, grams_charged, grams_dispensed, price_charged_eur, notes, product_id, member_id, created_by';
+      const rPay = await sb()
+        .from('tpv_dispenses')
+        .select(sel)
+        .eq('club_id', state.ctx.club.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      data = rPay.data;
+      error = rPay.error;
+    }
 
     if (
       error &&
@@ -2369,8 +2493,14 @@
       updateTpvMarginHint();
       scheduleAutoTpvLine();
     });
-    $('tpv-price')?.addEventListener('input', () => updateTicketGramsFromPrice());
+    $('tpv-price')?.addEventListener('input', () => {
+      updateTicketGramsFromPrice();
+      updateTpvWalletUi();
+    });
     $('tpv-notes')?.addEventListener('input', () => scheduleAutoTpvLine());
+    document.querySelectorAll('input[name="tpv-payment-method"]').forEach((el) => {
+      el.addEventListener('change', () => updateTpvWalletUi());
+    });
     $('tpv-submit')?.addEventListener('click', () => submitTpv());
     $('tpv-clear-cart')?.addEventListener('click', () => {
       state.tpvCart = [];

@@ -1100,6 +1100,39 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   margin-top: 0;
 }
 
+.shift-cash-diff--ok {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.shift-cash-diff--warn {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.shift-arqueo-hint {
+  margin: 0.5rem 0 0.75rem;
+  font-weight: 600;
+}
+
+.shift-arqueo-hint--warn {
+  color: #b45309;
+}
+
+.shift-arqueo-diff {
+  margin: 0.35rem 0 0.75rem;
+}
+
+.shift-arqueo-diff--ok {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.shift-arqueo-diff--warn {
+  color: #b45309;
+  font-weight: 600;
+}
+
 .hint--small,
 .stock-tara-hint {
   font-size: 0.78rem;
@@ -2827,4 +2860,106 @@ body.club-dark .club-view-stage {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+/* ---------- Monedero socio ---------- */
+.tpv-pay-method {
+  margin-top: 0.65rem;
+}
+
+.tpv-pay-method__label {
+  display: block;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tpv-pay-method__seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tpv-pay-method__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tpv-pay-method__opt:has(input:checked) {
+  border-color: rgba(22, 163, 74, 0.45);
+  background: rgba(220, 252, 231, 0.95);
+  color: #14532d;
+}
+
+.tpv-wallet-balance,
+.tpv-wallet-preview {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.tpv-wallet-balance--neg,
+.tpv-wallet-preview--neg {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.member-wallet-cell--neg {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.member-profile-kpi--wallet .member-profile-kpi__value--neg {
+  color: #b45309;
+}
+
+.member-wallet-adjust {
+  margin: 1rem 0 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(13, 148, 136, 0.28);
+  background: rgba(13, 148, 136, 0.06);
+}
+
+.member-wallet-adjust__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.member-wallet-adjust__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.member-wallet-adjust__row .input {
+  flex: 1 1 7rem;
+  min-width: 0;
+}
+
+body.club-dark .tpv-pay-method__opt {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: var(--tx2);
+}
+
+body.club-dark .tpv-pay-method__opt:has(input:checked) {
+  background: rgba(22, 163, 74, 0.2);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #bbf7d0;
+}
+
+body.club-dark .member-wallet-adjust {
+  border-color: rgba(45, 212, 191, 0.22);
+  background: rgba(13, 148, 136, 0.1);
 }

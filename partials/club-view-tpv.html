@@ -117,6 +117,21 @@
               <label for="tpv-price">Precio (€)</label>
               <input class="input input--ticket" id="tpv-price" inputmode="decimal" placeholder="0,50" />
             </div>
+            <div class="tpv-pay-method" role="group" aria-labelledby="tpv-lbl-pay-method">
+              <span class="tpv-ticket-block__title tpv-pay-method__label" id="tpv-lbl-pay-method">Forma de cobro</span>
+              <div class="tpv-pay-method__seg">
+                <label class="tpv-pay-method__opt">
+                  <input type="radio" name="tpv-payment-method" value="cash" checked />
+                  Efectivo
+                </label>
+                <label class="tpv-pay-method__opt">
+                  <input type="radio" name="tpv-payment-method" value="wallet" />
+                  Monedero
+                </label>
+              </div>
+              <p id="tpv-wallet-balance" class="hint tpv-wallet-balance is-hidden" hidden></p>
+              <p id="tpv-wallet-preview" class="hint tpv-wallet-preview is-hidden" hidden></p>
+            </div>
           </section>
 
           <section class="tpv-ticket-block">

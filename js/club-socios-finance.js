@@ -52,6 +52,7 @@
   let memberAvatarObjectUrl = null;
   /** Tipo al abrir el formulario (para no borrar vip_rule_period_start del VIP automático al guardar). */
   let memberEditInitialType = 'standard';
+  let memberWalletLoadedBalance = 0;
 
   function extFromFile(f) {
     const n = f.name || '';
@@ -414,6 +415,16 @@
     if (meta) meta.textContent = '';
     if (c) c.textContent = '0';
     if (t) t.textContent = formatMoney(0);
+    const w = $('member-profile-kpi-wallet');
+    if (w) {
+      w.textContent = formatMoney(0);
+      w.classList.remove('member-profile-kpi__value--neg');
+    }
+    const adjustWrap = $('member-wallet-adjust');
+    if (adjustWrap) {
+      adjustWrap.classList.add('is-hidden');
+      adjustWrap.hidden = true;
+    }
     if (tbody) tbody.innerHTML = '<tr><td colspan="5">Sin datos.</td></tr>';
     const img = $('member-profile-avatar-img');
     const initials = $('member-profile-avatar-initials');
@@ -447,8 +458,14 @@
     const initials = $('member-profile-avatar-initials');
     const c = $('member-profile-kpi-count');
     const t = $('member-profile-kpi-total');
+    const w = $('member-profile-kpi-wallet');
     if (c) c.textContent = String(dispenseCount || 0);
     if (t) t.textContent = formatMoney(totalSpent || 0);
+    if (w) {
+      const bal = m?.wallet_balance_eur != null ? Number(m.wallet_balance_eur) : 0;
+      w.textContent = formatMoney(Number.isNaN(bal) ? 0 : bal);
+      w.classList.toggle('member-profile-kpi__value--neg', !Number.isNaN(bal) && bal < 0);
+    }
     if (!img || !initials) return;
 
     img.onload = null;
@@ -539,6 +556,16 @@
     $('member-code').value = row.member_code || '';
     $('member-enrollment-fee').value =
       row.enrollment_fee_eur != null && row.enrollment_fee_eur !== '' ? String(row.enrollment_fee_eur) : '';
+    if ($('member-wallet-balance')) {
+      $('member-wallet-balance').value =
+        row.wallet_balance_eur != null && row.wallet_balance_eur !== ''
+          ? String(row.wallet_balance_eur)
+          : '0';
+    }
+    memberWalletLoadedBalance =
+      row.wallet_balance_eur != null && !Number.isNaN(Number(row.wallet_balance_eur))
+        ? Number(row.wallet_balance_eur)
+        : 0;
     $('member-notes').value = row.notes || '';
     $('member-active').checked = !!row.is_active;
     setMemberTypeUi(row.member_type || 'standard');
@@ -587,6 +614,13 @@
     }`;
     meta.textContent = 'Cargando dispensaciones…';
     tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+    const adjustWrap = $('member-wallet-adjust');
+    if (adjustWrap) {
+      adjustWrap.classList.remove('is-hidden');
+      adjustWrap.hidden = false;
+    }
+    const adjustStatus = $('member-wallet-adjust-status');
+    if (adjustStatus) adjustStatus.textContent = '';
     await renderMemberProfileHero(m, 0, 0);
 
     let { data: allRows, error: allErr } = await sb()
@@ -692,6 +726,8 @@
     $('member-email').value = '';
     $('member-code').value = '';
     $('member-enrollment-fee').value = '';
+    if ($('member-wallet-balance')) $('member-wallet-balance').value = '0';
+    memberWalletLoadedBalance = 0;
     $('member-notes').value = '';
     $('member-active').checked = true;
     setMemberTypeUi('standard');
@@ -734,10 +770,17 @@
         m.dni != null && String(m.dni).trim() !== ''
           ? String(m.dni).trim()
           : '—';
+      const wallet =
+        m.wallet_balance_eur != null && !Number.isNaN(Number(m.wallet_balance_eur))
+          ? formatMoney(Number(m.wallet_balance_eur))
+          : '—';
+      const walletNeg =
+        m.wallet_balance_eur != null && Number(m.wallet_balance_eur) < 0 ? ' member-wallet-cell--neg' : '';
       tr.innerHTML = `
         <td>${escapeHtml(m.display_name)}</td>
         <td>${escapeHtml(dni)}</td>
         <td>${memberTypePillHtml(m)}</td>
+        <td class="member-wallet-cell${walletNeg}">${escapeHtml(wallet)}</td>
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
@@ -827,6 +870,73 @@
       pathUpdates[col] = objectPath;
     }
     return { ok: true, pathUpdates };
+  }
+
+  function setMemberWalletAdjustStatus(text, isError) {
+    const el = $('member-wallet-adjust-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
+  }
+
+  async function syncMemberWalletFromForm(memberId) {
+    const walletEl = $('member-wallet-balance');
+    if (!walletEl || !memberId) return { ok: true };
+    const raw = (walletEl.value || '').trim().replace(',', '.');
+    const newBal = raw === '' ? 0 : Number(raw);
+    if (Number.isNaN(newBal)) {
+      return { ok: false, message: 'Saldo de monedero no válido.' };
+    }
+    const delta = Math.round((newBal - memberWalletLoadedBalance) * 100) / 100;
+    if (Math.abs(delta) < 0.0001) return { ok: true };
+    const { error } = await sb().rpc('club_member_wallet_adjust', {
+      p_member_id: memberId,
+      p_delta_eur: delta,
+      p_notes: 'Ajuste desde ficha socio',
+    });
+    if (error) {
+      if (error.code === 'PGRST202' || error.code === '42883') {
+        return { ok: false, message: 'Ejecuta la migración 028_member_wallet.sql en Supabase.' };
+      }
+      return { ok: false, message: error.message || 'No se pudo actualizar el monedero.' };
+    }
+    memberWalletLoadedBalance = newBal;
+    return { ok: true };
+  }
+
+  async function applyMemberWalletAdjust() {
+    if (!selectedMemberId) {
+      setMemberWalletAdjustStatus('Abre el perfil de un socio primero.', true);
+      return;
+    }
+    const amtRaw = ($('member-wallet-adjust-amount')?.value || '').trim().replace(',', '.');
+    const notes = ($('member-wallet-adjust-notes')?.value || '').trim();
+    const amt = amtRaw === '' ? NaN : Number(amtRaw);
+    if (Number.isNaN(amt) || Math.abs(amt) < 0.0001) {
+      setMemberWalletAdjustStatus('Indica un importe distinto de cero (positivo = recarga).', true);
+      return;
+    }
+    setMemberWalletAdjustStatus('Aplicando…', false);
+    const { error } = await sb().rpc('club_member_wallet_adjust', {
+      p_member_id: selectedMemberId,
+      p_delta_eur: amt,
+      p_notes: notes || 'Ajuste manual',
+    });
+    if (error) {
+      if (error.code === 'PGRST202' || error.code === '42883') {
+        setMemberWalletAdjustStatus('Ejecuta la migración 028_member_wallet.sql en Supabase.', true);
+      } else {
+        setMemberWalletAdjustStatus(error.message || 'No se pudo aplicar.', true);
+      }
+      return;
+    }
+    if ($('member-wallet-adjust-amount')) $('member-wallet-adjust-amount').value = '';
+    if ($('member-wallet-adjust-notes')) $('member-wallet-adjust-notes').value = '';
+    setMemberWalletAdjustStatus('Monedero actualizado.', false);
+    await loadMembersTable();
+    if (typeof window.scClubInventoryReloadMembers === 'function') {
+      await window.scClubInventoryReloadMembers();
+    }
   }
 
   async function saveMember() {
@@ -963,6 +1073,21 @@
         });
         await refreshAvatarPreview();
         updateAllDocLabels();
+      }
+    }
+
+    if (memberId) {
+      const walletSync = await syncMemberWalletFromForm(memberId);
+      if (!walletSync.ok) {
+        setMemberMsg(
+          `${id ? 'Socio guardado' : 'Socio creado'}, pero el monedero no se actualizó: ${walletSync.message}`,
+          true,
+        );
+        await loadMembersTable();
+        if (typeof window.scClubInventoryReloadMembers === 'function') {
+          await window.scClubInventoryReloadMembers();
+        }
+        return;
       }
     }
 
@@ -2147,6 +2272,9 @@
     membersUiBound = true;
 
     $('member-save')?.addEventListener('click', () => saveMember());
+    $('member-wallet-adjust-btn')?.addEventListener('click', () => {
+      void applyMemberWalletAdjust();
+    });
     $('member-cancel')?.addEventListener('click', () => {
       clearMemberForm();
       setMemberMsg('', false);

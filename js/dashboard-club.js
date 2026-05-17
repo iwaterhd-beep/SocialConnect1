@@ -490,13 +490,73 @@
     return Object.keys(out).length ? out : null;
   }
 
+  function isDispenseWallet(d) {
+    return String(d?.payment_method || 'cash').toLowerCase() === 'wallet';
+  }
+
+  function summarizeShiftDispenseSales(dispenses) {
+    let cashSales = 0;
+    let walletSales = 0;
+    (dispenses || []).forEach((d) => {
+      const p = Number(d.price_charged_eur) || 0;
+      if (isDispenseWallet(d)) walletSales += p;
+      else cashSales += p;
+    });
+    return {
+      cashSales,
+      walletSales,
+      salesTotal: cashSales + walletSales,
+    };
+  }
+
+  async function fetchShiftDispenses(shiftId) {
+    let hasPaymentMethod = true;
+    let { data, error } = await sb()
+      .from('tpv_dispenses')
+      .select('product_id, grams_dispensed, price_charged_eur, payment_method')
+      .eq('shift_id', shiftId);
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('payment_method'))
+    ) {
+      hasPaymentMethod = false;
+      const retry = await sb()
+        .from('tpv_dispenses')
+        .select('product_id, grams_dispensed, price_charged_eur')
+        .eq('shift_id', shiftId);
+      data = retry.data;
+      error = retry.error;
+    }
+    if (error) throw error;
+    return { dispenses: data || [], hasPaymentMethod };
+  }
+
+  async function fetchShiftCashExpected(shiftId) {
+    const [shiftRes, dispRes] = await Promise.all([
+      sb().from('shifts').select('opening_float_eur').eq('id', shiftId).maybeSingle(),
+      fetchShiftDispenses(shiftId),
+    ]);
+    const opening =
+      shiftRes.data && shiftRes.data.opening_float_eur != null
+        ? Number(shiftRes.data.opening_float_eur)
+        : 0;
+    const { cashSales, walletSales } = summarizeShiftDispenseSales(dispRes.dispenses);
+    return {
+      opening,
+      cashSales,
+      walletSales,
+      expectedCash: opening + cashSales,
+      hasPaymentMethod: dispRes.hasPaymentMethod,
+    };
+  }
+
   async function buildShiftSummaryHtml(clubId, shiftId) {
     const [shiftRes, dispRes, evRes, prodRes] = await Promise.all([
       sb().from('shifts').select('*').eq('id', shiftId).maybeSingle(),
-      sb()
-        .from('tpv_dispenses')
-        .select('product_id, grams_dispensed, price_charged_eur')
-        .eq('shift_id', shiftId),
+      fetchShiftDispenses(shiftId),
       sb()
         .from('shift_stock_events')
         .select('product_id, stock_net_grams, previous_stock_grams, delta_grams, source, created_at')
@@ -509,7 +569,7 @@
     ]);
 
     const shift = shiftRes.data;
-    const dispenses = dispRes.data || [];
+    const dispenses = dispRes.dispenses || [];
     const events = evRes.data || [];
     const products = prodRes.data || [];
     const prodMap = Object.fromEntries(products.map((p) => [p.id, p]));
@@ -518,10 +578,9 @@
       countByProduct[ev.product_id] = ev;
     });
 
-    let salesTotal = 0;
+    const { cashSales, walletSales, salesTotal } = summarizeShiftDispenseSales(dispenses);
     const gramsByProduct = {};
     dispenses.forEach((d) => {
-      salesTotal += Number(d.price_charged_eur) || 0;
       const pid = d.product_id;
       const g = Number(d.grams_dispensed) || 0;
       gramsByProduct[pid] = (gramsByProduct[pid] || 0) + g;
@@ -553,12 +612,21 @@
       .join('');
 
     const opening = shift && shift.opening_float_eur != null ? Number(shift.opening_float_eur) : 0;
+    const expectedCash = opening + cashSales;
     const closingCash =
       shift && shift.closing_cash_total_eur != null ? Number(shift.closing_cash_total_eur) : null;
     const floatFwd =
       shift && shift.closing_float_forward_eur != null
         ? Number(shift.closing_float_forward_eur)
         : null;
+    const cashDiff =
+      closingCash !== null && !Number.isNaN(closingCash) ? closingCash - expectedCash : null;
+    const cashDiffClass =
+      cashDiff === null
+        ? ''
+        : Math.abs(cashDiff) < 0.005
+          ? 'shift-cash-diff--ok'
+          : 'shift-cash-diff--warn';
 
     let denHtml = '';
     if (shift && shift.closing_denominations && typeof shift.closing_denominations === 'object') {
@@ -596,8 +664,20 @@
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Caja</h4>
         <p style="margin:0">Cambio al abrir: <strong>${escapeHtml(formatMoneyEUR(opening))}</strong></p>
-        <p style="margin:0.35rem 0 0">Ventas registradas en TPV (este turno): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
+        <p style="margin:0.35rem 0 0">Ventas en efectivo (TPV): <strong>${escapeHtml(formatMoneyEUR(cashSales))}</strong></p>
+        ${
+          walletSales > 0.005
+            ? `<p style="margin:0.35rem 0 0">Ventas con monedero (no entran en caja): <strong>${escapeHtml(formatMoneyEUR(walletSales))}</strong></p>`
+            : ''
+        }
+        <p style="margin:0.35rem 0 0">Efectivo esperado en caja (cambio + efectivo): <strong>${escapeHtml(formatMoneyEUR(expectedCash))}</strong></p>
         <p style="margin:0.35rem 0 0">Efectivo contado al cerrar: <strong>${closingCash !== null ? escapeHtml(formatMoneyEUR(closingCash)) : '—'}</strong></p>
+        ${
+          cashDiff !== null
+            ? `<p style="margin:0.35rem 0 0" class="shift-cash-diff ${cashDiffClass}">Diferencia (contado − esperado): <strong>${escapeHtml(cashDiff >= 0 ? `+${formatMoneyEUR(cashDiff)}` : formatMoneyEUR(cashDiff))}</strong></p>`
+            : ''
+        }
+        <p style="margin:0.35rem 0 0">Total ventas TPV (efectivo + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
         <p style="margin:0.35rem 0 0">Cambio dejado para el siguiente turno: <strong>${floatFwd !== null ? escapeHtml(formatMoneyEUR(floatFwd)) : '—'}</strong></p>
         ${denHtml ? `<p class="hint" style="margin:0.5rem 0 0">Desglose anotado:</p>${denHtml}` : ''}
       </div>
@@ -674,14 +754,35 @@
     });
   }
 
+  function updateWizardArqueoDiff(expectedCash) {
+    const diffEl = $('wiz-cash-diff');
+    const counted = parseDecimalLoose($('wiz-close-cash')?.value);
+    if (!diffEl) return;
+    if (Number.isNaN(counted)) {
+      diffEl.textContent = '';
+      diffEl.className = 'hint shift-arqueo-diff';
+      return;
+    }
+    const diff = counted - expectedCash;
+    const ok = Math.abs(diff) < 0.005;
+    diffEl.className = ok
+      ? 'hint shift-arqueo-diff shift-arqueo-diff--ok'
+      : 'hint shift-arqueo-diff shift-arqueo-diff--warn';
+    diffEl.textContent = ok
+      ? 'Cuadra con el efectivo esperado según el TPV.'
+      : `Diferencia: ${diff >= 0 ? '+' : ''}${formatMoneyEUR(diff)} (contado − esperado).`;
+  }
+
   function renderWizardArqueo() {
     $('shift-wizard-title').textContent = 'Arqueo y cambio';
     $('shift-wizard-body').innerHTML = `
-      <p class="hint" style="margin-top:0">Indica el efectivo contado y el cambio que dejas para el siguiente turno. Opcionalmente desglosa billetes y monedas.</p>
+      <p class="hint" style="margin-top:0">Indica el efectivo contado y el cambio que dejas para el siguiente turno. Las ventas con <strong>monedero</strong> no suman al efectivo esperado. Opcionalmente desglosa billetes y monedas.</p>
+      <p id="wiz-cash-expected" class="hint shift-arqueo-hint">Calculando efectivo esperado…</p>
       <div class="form__row">
         <label for="wiz-close-cash">Total efectivo contado en caja (€)</label>
         <input class="input" id="wiz-close-cash" inputmode="decimal" placeholder="Ej. 240,50" autocomplete="off" />
       </div>
+      <p id="wiz-cash-diff" class="hint shift-arqueo-diff" role="status"></p>
       <div class="form__row">
         <label for="wiz-close-float">Cambio para el siguiente turno (€)</label>
         <input class="input" id="wiz-close-float" inputmode="decimal" placeholder="Ej. 80" autocomplete="off" />
@@ -697,6 +798,41 @@
     `;
     $('wiz-arqueo-back')?.addEventListener('click', () => renderWizardStockQuestion());
     $('wiz-final-close')?.addEventListener('click', () => void finalizeShiftClose());
+
+    const shiftId = shiftWizard.shiftId;
+    void (async () => {
+      let expectedCash = 0;
+      let cashSales = 0;
+      let opening = 0;
+      let walletSales = 0;
+      try {
+        if (shiftId) {
+          const info = await fetchShiftCashExpected(shiftId);
+          opening = info.opening;
+          cashSales = info.cashSales;
+          expectedCash = info.expectedCash;
+          walletSales = info.walletSales || 0;
+        }
+      } catch (e) {
+        const hintEl = $('wiz-cash-expected');
+        if (hintEl) {
+          hintEl.textContent = 'No se pudo calcular el efectivo esperado.';
+          hintEl.classList.add('shift-arqueo-hint--warn');
+        }
+        return;
+      }
+      const hintEl = $('wiz-cash-expected');
+      if (hintEl) {
+        const walletLine =
+          walletSales > 0.005
+            ? ` Monedero en TPV: ${formatMoneyEUR(walletSales)} (no en caja).`
+            : '';
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} (cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}).${walletLine}`;
+      }
+      const onCashInput = () => updateWizardArqueoDiff(expectedCash);
+      $('wiz-close-cash')?.addEventListener('input', onCashInput);
+      $('wiz-close-cash')?.addEventListener('change', onCashInput);
+    })();
   }
 
   async function finalizeShiftClose() {
