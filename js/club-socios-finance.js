@@ -425,6 +425,18 @@
       adjustWrap.classList.add('is-hidden');
       adjustWrap.hidden = true;
     }
+    const ledgerWrap = $('member-wallet-ledger-wrap');
+    if (ledgerWrap) {
+      ledgerWrap.classList.add('is-hidden');
+      ledgerWrap.hidden = true;
+    }
+    const ledgerTbody = $('member-wallet-ledger-tbody');
+    if (ledgerTbody) ledgerTbody.innerHTML = '<tr><td colspan="5">Sin datos.</td></tr>';
+    const ledgerEmpty = $('member-wallet-ledger-empty');
+    if (ledgerEmpty) {
+      ledgerEmpty.classList.add('is-hidden');
+      ledgerEmpty.hidden = true;
+    }
     if (tbody) tbody.innerHTML = '<tr><td colspan="5">Sin datos.</td></tr>';
     const img = $('member-profile-avatar-img');
     const initials = $('member-profile-avatar-initials');
@@ -622,6 +634,7 @@
     const adjustStatus = $('member-wallet-adjust-status');
     if (adjustStatus) adjustStatus.textContent = '';
     await renderMemberProfileHero(m, 0, 0);
+    const ledgerPromise = renderMemberWalletLedger(memberId);
 
     let { data: allRows, error: allErr } = await sb()
       .from('tpv_dispenses')
@@ -635,11 +648,13 @@
       meta.textContent = '';
       tbody.innerHTML =
         '<tr><td colspan="5">Ejecuta la migración 010_club_members_finance.sql para ver historial por socio.</td></tr>';
+      await ledgerPromise;
       return;
     }
     if (allErr) {
       meta.textContent = '';
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(allErr.message || 'Error cargando historial.')}</td></tr>`;
+      await ledgerPromise;
       return;
     }
 
@@ -663,6 +678,8 @@
     if (m.email) extra.push(`Email: ${m.email}`);
     meta.textContent = extra.join(' · ');
     await renderMemberProfileHero(m, rows.length, totalSpent);
+
+    await ledgerPromise;
 
     const recent = rows.slice(0, 100);
     tbody.innerHTML = '';
@@ -879,6 +896,91 @@
     el.className = 'msg' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
   }
 
+  function walletLedgerKindLabel(kind) {
+    const k = String(kind || '').toLowerCase();
+    if (k === 'tpv_sale') return 'Venta TPV';
+    if (k === 'tpv_void') return 'Anulación TPV';
+    return 'Ajuste';
+  }
+
+  function formatWalletLedgerAmount(amt) {
+    const n = Number(amt);
+    if (Number.isNaN(n)) return '—';
+    const abs = formatMoney(Math.abs(n));
+    if (n > 0.0001) return `+${abs}`;
+    if (n < -0.0001) return `−${abs}`;
+    return formatMoney(0);
+  }
+
+  async function renderMemberWalletLedger(memberId) {
+    const wrap = $('member-wallet-ledger-wrap');
+    const tbody = $('member-wallet-ledger-tbody');
+    const emptyEl = $('member-wallet-ledger-empty');
+    const tableWrap = wrap?.querySelector('.member-wallet-ledger__table');
+    if (!wrap || !tbody) return;
+
+    wrap.classList.remove('is-hidden');
+    wrap.hidden = false;
+    tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+    if (emptyEl) {
+      emptyEl.classList.add('is-hidden');
+      emptyEl.hidden = true;
+    }
+    if (tableWrap) {
+      tableWrap.classList.remove('is-hidden');
+      tableWrap.hidden = false;
+    }
+
+    const { data, error } = await sb()
+      .from('club_member_wallet_ledger')
+      .select('created_at, amount_eur, balance_after_eur, kind, notes')
+      .eq('member_id', memberId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      const msg =
+        error.code === 'PGRST205' ||
+        error.code === '42P01' ||
+        String(error.message || '').toLowerCase().includes('club_member_wallet_ledger')
+          ? 'Ejecuta la migración 028_member_wallet.sql en Supabase.'
+          : error.message || 'No se pudo cargar el historial.';
+      tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(msg)}</td></tr>`;
+      return;
+    }
+
+    const rows = data || [];
+    if (!rows.length) {
+      tbody.innerHTML = '';
+      if (tableWrap) {
+        tableWrap.classList.add('is-hidden');
+        tableWrap.hidden = true;
+      }
+      if (emptyEl) {
+        emptyEl.classList.remove('is-hidden');
+        emptyEl.hidden = false;
+      }
+      return;
+    }
+
+    tbody.innerHTML = '';
+    rows.forEach((r) => {
+      const amt = Number(r.amount_eur);
+      const bal = Number(r.balance_after_eur);
+      const amtClass = !Number.isNaN(amt) && amt < 0 ? ' member-wallet-ledger-amt--neg' : '';
+      const balClass = !Number.isNaN(bal) && bal < 0 ? ' member-wallet-ledger-bal--neg' : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(walletLedgerKindLabel(r.kind))}</td>
+        <td class="member-wallet-ledger-amt${amtClass}">${escapeHtml(formatWalletLedgerAmount(amt))}</td>
+        <td class="member-wallet-ledger-bal${balClass}">${escapeHtml(formatMoney(Number.isNaN(bal) ? 0 : bal))}</td>
+        <td>${escapeHtml((r.notes || '').slice(0, 80))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
   async function syncMemberWalletFromForm(memberId) {
     const walletEl = $('member-wallet-balance');
     if (!walletEl || !memberId) return { ok: true };
@@ -937,6 +1039,7 @@
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
     }
+    await showMemberProfile(selectedMemberId);
   }
 
   async function saveMember() {

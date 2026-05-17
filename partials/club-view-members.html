@@ -307,6 +307,28 @@
         </div>
         <p id="member-wallet-adjust-status" class="msg" role="status"></p>
       </div>
+      <div id="member-wallet-ledger-wrap" class="member-wallet-ledger is-hidden" hidden>
+        <h3 class="member-wallet-ledger__title">Movimientos del monedero</h3>
+        <p id="member-wallet-ledger-empty" class="hint member-wallet-ledger__empty is-hidden" hidden>
+          Sin movimientos registrados.
+        </p>
+        <div class="table-wrap member-wallet-ledger__table">
+          <table class="table-compact">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Importe</th>
+                <th>Saldo</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody id="member-wallet-ledger-tbody">
+              <tr><td colspan="5">Sin datos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <p id="member-profile-summary" class="hint" style="margin-top: 0">Selecciona un socio para ver su detalle.</p>
       <div id="member-profile-meta" class="hint" style="margin-top: 0.5rem"></div>
       <div class="table-wrap" style="margin-top: 0.75rem">

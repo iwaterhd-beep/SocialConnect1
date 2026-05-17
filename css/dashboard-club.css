@@ -2963,3 +2963,23 @@ body.club-dark .member-wallet-adjust {
   border-color: rgba(45, 212, 191, 0.22);
   background: rgba(13, 148, 136, 0.1);
 }
+
+.member-wallet-ledger {
+  margin: 1rem 0 0.25rem;
+}
+
+.member-wallet-ledger__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.member-wallet-ledger__empty {
+  margin: 0;
+}
+
+.member-wallet-ledger-amt--neg,
+.member-wallet-ledger-bal--neg {
+  color: #b45309;
+  font-weight: 700;
+}
