@@ -17,6 +17,7 @@ Ejecuta **una por una**, en este orden:
 13. **`supabase/migrations/032_wallet_ledger_product_notes.sql`** — notas del monedero con nombre de producto en ventas TPV.
 14. **`supabase/migrations/033_public_menu.sql`** — menú tablet público `/menu/?club=slug` y sativa/indica en categoría weed.
 15. **`supabase/migrations/034_menu_sort_by_price.sql`** — productos del menú ordenados por precio (menor a mayor).
+16. **`supabase/migrations/035_menu_price_fallback.sql`** — muestra precio aunque solo esté en TPV / última venta.
 
 ---
 
