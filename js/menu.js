@@ -25,13 +25,11 @@
   function splitPriceLabel(label) {
     const t = (label || '').trim();
     if (!t || t === '—') return { main: '—', sub: '' };
-    const parts = t.split(/\s+/);
-    if (parts.length > 1 && /^€/.test(parts[parts.length - 1])) {
-      return { main: parts.slice(0, -1).join(' '), sub: parts[parts.length - 1] };
+    if (/€\/g\s*$/i.test(t)) {
+      return { main: t.replace(/\s*€\/g\s*$/i, '').trim(), sub: '€/g' };
     }
-    if (t.includes('/')) {
-      const i = t.lastIndexOf(' ');
-      if (i > 0) return { main: t.slice(0, i).trim(), sub: t.slice(i).trim() };
+    if (/€\s*$/i.test(t)) {
+      return { main: t.replace(/\s*€\s*$/i, '').trim(), sub: '€' };
     }
     return { main: t, sub: '' };
   }
