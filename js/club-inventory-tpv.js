@@ -244,6 +244,24 @@
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
   }
 
+  function unitShortForLine(line) {
+    return line && line.sale_unit === 'unit' ? 'ud' : 'g';
+  }
+
+  /** Nota para historial monedero / dispensación (producto, cantidad, precio). */
+  function buildTpvDispenseNote(line) {
+    const name = (line.product_name || '').trim() || 'Producto';
+    const em = (line.product_emoji || '').trim();
+    const label = em ? `${em} ${name}` : name;
+    const us = unitShortForLine(line);
+    const qty = line.grams_charged ?? line.grams_dispensed ?? 0;
+    const price = formatMoney(line.price_charged_eur);
+    const extra = (line.notes || '').trim();
+    let note = `${label} · ${formatNum(qty)} ${us} · ${price}`;
+    if (extra && extra !== note && !note.includes(extra)) note += ` — ${extra}`;
+    return note;
+  }
+
   function canManageInventoryEdits() {
     return Boolean(state.canEditInventory);
   }
@@ -2177,7 +2195,7 @@
       p_grams_dispensed: line.grams_dispensed,
       p_price_charged_eur: line.price_charged_eur,
       p_shift_id: shiftId,
-      p_notes: line.notes || '',
+      p_notes: buildTpvDispenseNote(line),
       p_member_id: memberId || null,
       p_payment_method: paymentMethod,
     };
@@ -2206,7 +2224,7 @@
         p_grams_dispensed: line.grams_dispensed,
         p_price_charged_eur: line.price_charged_eur,
         p_shift_id: shiftId,
-        p_notes: line.notes || '',
+        p_notes: buildTpvDispenseNote(line),
         p_member_id: memberId || null,
       };
       rpcRes = await sb().rpc('club_register_tpv_dispense', payloadLegacy);
@@ -2254,7 +2272,7 @@
       grams_charged: line.grams_charged,
       grams_dispensed: line.grams_dispensed,
       price_charged_eur: line.price_charged_eur,
-      notes: line.notes || '',
+      notes: buildTpvDispenseNote(line),
       created_by: userId,
       member_id: memberId || null,
     };

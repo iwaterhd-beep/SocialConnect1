@@ -905,6 +905,68 @@
     return 'Ajuste';
   }
 
+  function formatWalletProductLabel(prod) {
+    if (!prod) return '';
+    const em = (prod.emoji || '').trim();
+    const name = (prod.name || '').trim() || 'Producto';
+    return em ? `${em} ${name}` : name;
+  }
+
+  function walletLedgerNoteFromDispense(disp) {
+    if (!disp) return '';
+    const stored = (disp.notes || '').trim();
+    if (stored && !/^(venta tpv)$/i.test(stored)) return stored;
+    const prod = Array.isArray(disp.inventory_products)
+      ? disp.inventory_products[0]
+      : disp.inventory_products;
+    if (!prod) return stored;
+    const label = formatWalletProductLabel(prod);
+    const us = prod.sale_unit === 'unit' ? 'ud' : 'g';
+    const qty = disp.grams_charged ?? disp.grams_dispensed;
+    if (qty == null || qty === '') return label;
+    const x = Number(qty);
+    const qtyTxt = Number.isNaN(x)
+      ? String(qty)
+      : x.toLocaleString('es-ES', { maximumFractionDigits: 3 });
+    return `${label} · ${qtyTxt} ${us}`;
+  }
+
+  function walletLedgerNoteLabel(row) {
+    const notes = (row.notes || '').trim();
+    const generic = /^(venta tpv|anulación venta tpv|anulación tpv)$/i;
+    if (notes && !generic.test(notes)) return notes;
+    const disp = row._dispense || row.tpv_dispenses;
+    const dispRow = Array.isArray(disp) ? disp[0] : disp;
+    if (dispRow) {
+      const fromDisp = walletLedgerNoteFromDispense(dispRow);
+      if (fromDisp) {
+        if (String(row.kind || '').toLowerCase() === 'tpv_void') {
+          return fromDisp.startsWith('Anulación') ? fromDisp : `Anulación: ${fromDisp}`;
+        }
+        return fromDisp;
+      }
+    }
+    return notes || '—';
+  }
+
+  async function enrichWalletLedgerRows(rows) {
+    const list = rows || [];
+    const dispIds = [...new Set(list.map((r) => r.tpv_dispense_id).filter(Boolean))];
+    if (!dispIds.length) return list;
+    const { data: disps, error } = await sb()
+      .from('tpv_dispenses')
+      .select(
+        'id, grams_charged, grams_dispensed, notes, inventory_products ( name, emoji, sale_unit )',
+      )
+      .in('id', dispIds);
+    if (error || !disps) return list;
+    const dispMap = Object.fromEntries(disps.map((d) => [d.id, d]));
+    return list.map((r) => ({ ...r, _dispense: dispMap[r.tpv_dispense_id] || null }));
+  }
+
+  window.scClubWalletLedgerNoteLabel = walletLedgerNoteLabel;
+  window.scClubEnrichWalletLedgerRows = enrichWalletLedgerRows;
+
   function paymentMethodLabel(method) {
     return String(method || 'cash').toLowerCase() === 'wallet' ? 'Monedero' : 'Efectivo';
   }
@@ -992,7 +1054,7 @@
 
     const { data, error } = await sb()
       .from('club_member_wallet_ledger')
-      .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes')
+      .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes, tpv_dispense_id')
       .eq('member_id', memberId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -1008,7 +1070,7 @@
       return;
     }
 
-    const rows = data || [];
+    let rows = data || [];
     if (!rows.length) {
       tbody.innerHTML = '';
       if (tableWrap) {
@@ -1021,6 +1083,8 @@
       }
       return;
     }
+
+    rows = await enrichWalletLedgerRows(rows);
 
     tbody.innerHTML = '';
     rows.forEach((r) => {
@@ -1040,7 +1104,7 @@
         <td class="member-wallet-ledger-amt${amtClass}">${escapeHtml(formatWalletLedgerAmount(amt))}</td>
         <td>${escapeHtml(cashTxt)}</td>
         <td class="member-wallet-ledger-bal${balClass}">${escapeHtml(formatMoney(Number.isNaN(bal) ? 0 : bal))}</td>
-        <td>${escapeHtml((r.notes || '').slice(0, 80))}</td>
+        <td>${escapeHtml(walletLedgerNoteLabel(r).slice(0, 120))}</td>
       `;
       tbody.appendChild(tr);
     });

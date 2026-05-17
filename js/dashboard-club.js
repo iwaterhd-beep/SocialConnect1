@@ -609,7 +609,7 @@
     let q = sb()
       .from('club_member_wallet_ledger')
       .select(
-        'created_at, amount_eur, cash_eur, balance_after_eur, kind, notes, member_id, shift_id',
+        'created_at, amount_eur, cash_eur, balance_after_eur, kind, notes, member_id, shift_id, tpv_dispense_id',
       )
       .order('created_at', { ascending: true });
     if (ids.length) {
@@ -695,7 +695,10 @@
 
   async function buildShiftWalletSectionHtml(shiftId, dispenses) {
     const dispenseIds = (dispenses || []).map((d) => d.id).filter(Boolean);
-    const rows = await fetchShiftWalletLedger(shiftId, dispenseIds);
+    let rows = await fetchShiftWalletLedger(shiftId, dispenseIds);
+    if (typeof window.scClubEnrichWalletLedgerRows === 'function') {
+      rows = await window.scClubEnrichWalletLedgerRows(rows);
+    }
     const sum = summarizeShiftWalletLedger(rows);
     if (!rows.length) {
       return `<p class="hint" style="margin:0">Sin movimientos de monedero en este turno.</p>`;
@@ -717,7 +720,12 @@
           <td>${escapeHtml(walletLedgerKindLabel(r.kind))}</td>
           <td>${escapeHtml(formatWalletLedgerAmt(r.amount_eur))}</td>
           <td>${cashTxt}</td>
-          <td>${escapeHtml((r.notes || '').slice(0, 50))}</td>
+          <td>${escapeHtml(
+            (typeof window.scClubWalletLedgerNoteLabel === 'function'
+              ? window.scClubWalletLedgerNoteLabel(r)
+              : r.notes || '—'
+            ).slice(0, 80),
+          )}</td>
         </tr>`;
       })
       .join('');
