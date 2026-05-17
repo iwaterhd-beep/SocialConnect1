@@ -22,9 +22,13 @@
       <div class="row-actions">
         <button type="button" class="btn btn--small" id="inv-menu-save">Guardar menú</button>
         <button type="button" class="btn btn--ghost btn--small" id="inv-menu-open-link">Abrir menú</button>
+        <button type="button" class="btn btn--ghost btn--small" id="inv-menu-sync-prices">Rellenar precios</button>
       </div>
     </div>
   </div>
+  <p class="hint hint--small" style="margin-top: 0.5rem">
+    Si en el menú salen «—», pulsa <strong>Rellenar precios</strong> o en cada producto indica <strong>Precio en menú tablet</strong>.
+  </p>
   <p id="inv-menu-status" class="msg" role="status" aria-live="polite"></p>
 </section>
 
@@ -185,6 +189,18 @@
           <div class="form__row">
             <label for="inv-product-default-price">Precio sugerido TPV (€)</label>
             <input class="input" id="inv-product-default-price" inputmode="decimal" placeholder="Opcional" />
+          </div>
+          <div class="form__row" id="inv-row-menu-price">
+            <label for="inv-product-menu-price" id="inv-label-menu-price">Precio en menú tablet (€)</label>
+            <input
+              class="input"
+              id="inv-product-menu-price"
+              inputmode="decimal"
+              placeholder="Ej. 1,50 — bebidas por unidad"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              Lo que ven los socios en la carta. <strong>Unidad</strong>: €/ud · <strong>Gramos</strong>: €/g
+            </p>
           </div>
           <div class="form__row">
             <label for="inv-product-price-per-g" id="inv-label-rate">Precio por unidad (€/u)</label>

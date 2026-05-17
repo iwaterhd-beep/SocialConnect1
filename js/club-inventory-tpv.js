@@ -6,7 +6,7 @@
   const MEMBER_AVATAR_BUCKET = 'club_member_docs';
 
   const PRODUCT_SELECT_FULL =
-    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain';
+    'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, purchase_cost_eur, retail_price_eur, cannabis_strain, menu_price_eur';
   const PRODUCT_SELECT_FULL_NO_PURCHASE_COST =
     'id, name, emoji, bottle_weight_grams, stock_grams, category_id, sale_unit, stock_alert_grams, default_sale_grams, default_price_eur, default_price_per_gram_eur, retail_price_eur';
   const PRODUCT_SELECT_FULL_NO_RETAIL_PRICE =
@@ -55,6 +55,7 @@
     /** Listados activos: false si la BD no tiene columna is_archived (migración 024). */
     hasArchivedColumn: true,
     hasCannabisStrainColumn: true,
+    hasMenuPriceColumn: true,
     hasCategoryMenuStrainColumn: true,
     menuSettings: { enabled: false, slug: '' },
     menuUiBound: false,
@@ -815,6 +816,22 @@
   }
 
   /** Precio €/g: explícito, o precio ÷ gramos sugeridos; si no hay gramos de referencia, el precio sugerido cuenta como €/g (TPV por peso). */
+  function computeAutoMenuPrice(saleUnit, defPrice, defPerGram, defSale, retailPrice) {
+    if (saleUnit === 'unit') {
+      if (retailPrice != null && !Number.isNaN(retailPrice) && retailPrice >= 0) return retailPrice;
+      if (defPrice != null && !Number.isNaN(defPrice) && defPrice >= 0) return defPrice;
+      return null;
+    }
+    if (defPerGram != null && !Number.isNaN(defPerGram) && defPerGram >= 0) return defPerGram;
+    if (retailPrice != null && !Number.isNaN(retailPrice) && retailPrice >= 0) return retailPrice;
+    if (defPrice != null && !Number.isNaN(defPrice) && defPrice >= 0) {
+      const g = Number(defSale);
+      if (!Number.isNaN(g) && g > 0) return defPrice / g;
+      return defPrice;
+    }
+    return null;
+  }
+
   function getPricePerGramForProduct(p) {
     if (!p || !state.hasProductExtras) return null;
     const perG =
@@ -959,6 +976,37 @@
       e.preventDefault();
       window.open(url, '_blank', 'noopener,noreferrer');
     });
+    $('inv-menu-sync-prices')?.addEventListener('click', () => void syncMenuPrices());
+  }
+
+  async function syncMenuPrices() {
+    if (!state.ctx?.club?.id) {
+      setMenuStatus('Sesión del club no cargada.', true);
+      return;
+    }
+    setMenuStatus('Rellenando precios del menú…', false);
+    const { data, error } = await sb().rpc('club_sync_menu_prices', {
+      p_club_id: state.ctx.club.id,
+    });
+    if (error) {
+      const needsMigration =
+        error.code === 'PGRST202' ||
+        /club_sync_menu_prices|menu_price_eur/i.test(error.message || '');
+      setMenuStatus(
+        needsMigration
+          ? 'Ejecuta las migraciones 035 y 036 en Supabase.'
+          : error.message || 'No se pudo rellenar.',
+        true,
+      );
+      return;
+    }
+    const n = Number(data) || 0;
+    setMenuStatus(
+      n > 0
+        ? `Precios actualizados en ${n} producto(s). Recarga el menú en la tablet.`
+        : 'No había productos nuevos que rellenar (revisa precio TPV o ventas).',
+      false,
+    );
   }
 
   async function loadMenuSettings() {
@@ -1154,11 +1202,24 @@
 
     if (colErr && state.hasProductExtras) {
       let msg = (error.message || '').toLowerCase();
+      if (msg.includes('menu_price_eur')) {
+        state.hasMenuPriceColumn = false;
+        const rMp = await inventoryProductListQuery(
+          PRODUCT_SELECT_FULL.replace(', menu_price_eur', '').replace(', cannabis_strain', ', cannabis_strain'),
+        );
+        if (!rMp.error) {
+          data = rMp.data;
+          error = null;
+        } else {
+          error = rMp.error;
+          msg = (error.message || '').toLowerCase();
+        }
+      }
       if (msg.includes('cannabis_strain')) {
         state.hasCannabisStrainColumn = false;
-        const rCs = await inventoryProductListQuery(
-          PRODUCT_SELECT_FULL.replace(', cannabis_strain', ''),
-        );
+        let sel = PRODUCT_SELECT_FULL.replace(', cannabis_strain', '');
+        if (!state.hasMenuPriceColumn) sel = sel.replace(', menu_price_eur', '');
+        const rCs = await inventoryProductListQuery(sel);
         if (!rCs.error) {
           data = rCs.data;
           error = null;
@@ -1681,6 +1742,7 @@
     if ($('inv-product-price-per-g')) $('inv-product-price-per-g').value = '';
     if ($('inv-product-purchase-cost')) $('inv-product-purchase-cost').value = '';
     if ($('inv-product-retail-price')) $('inv-product-retail-price').value = '';
+    if ($('inv-product-menu-price')) $('inv-product-menu-price').value = '';
     if ($('inv-product-strain')) $('inv-product-strain').value = '';
     setInvSaleUnitUi('grams');
     syncProductStrainRowVisibility();
@@ -1732,6 +1794,14 @@
         rp.value = String(p.retail_price_eur).replace('.', ',');
       } else {
         rp.value = '';
+      }
+    }
+    const menuEl = $('inv-product-menu-price');
+    if (menuEl) {
+      if (p.menu_price_eur != null && !Number.isNaN(Number(p.menu_price_eur))) {
+        menuEl.value = String(p.menu_price_eur).replace('.', ',');
+      } else {
+        menuEl.value = '';
       }
     }
     if ($('inv-product-strain')) {
@@ -1840,7 +1910,28 @@
         }
       : {};
 
+    let menuPriceField = null;
+    const menuRaw = ($('inv-product-menu-price')?.value || '').trim();
+    if (menuRaw !== '') {
+      menuPriceField = parseDecimal(menuRaw);
+      if (Number.isNaN(menuPriceField) || menuPriceField < 0) {
+        setMsg('inv-status', 'Precio en menú no válido.', true);
+        return;
+      }
+    } else if (state.hasMenuPriceColumn) {
+      menuPriceField = computeAutoMenuPrice(
+        saleUnit,
+        defPrice,
+        defPerGram,
+        defSale,
+        retailPriceField,
+      );
+    }
+
     const row = { ...baseRow, ...extraRow };
+    if (state.hasMenuPriceColumn && menuPriceField != null) {
+      row.menu_price_eur = menuPriceField;
+    }
     if (state.hasCannabisStrainColumn) {
       if (categoryShowsStrain(categoryId)) {
         const s = ($('inv-product-strain')?.value || '').trim();
@@ -1878,6 +1969,12 @@
       }
       if (msg.includes('default_price_per_gram') && 'default_price_per_gram_eur' in row) {
         delete row.default_price_per_gram_eur;
+        res = await trySave(!id);
+        msg = (res.error?.message || '').toLowerCase();
+      }
+      if (msg.includes('menu_price_eur') && 'menu_price_eur' in row) {
+        delete row.menu_price_eur;
+        state.hasMenuPriceColumn = false;
         res = await trySave(!id);
       }
     }
