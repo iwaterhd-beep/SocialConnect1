@@ -23,9 +23,11 @@ body.has-club-topnav {
   height: 56px;
   display: flex;
   align-items: center;
-  background: rgba(15, 23, 42, 0.88);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.93) 0%, rgba(15, 23, 42, 0.88) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.18),
+    0 1px 0 rgba(52, 211, 153, 0.22) inset;
   backdrop-filter: blur(14px);
 }
 
@@ -149,17 +151,17 @@ body.has-club-topnav {
 .club-tabs {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.28rem;
+  gap: 0.35rem;
   margin: 0 0 1.5rem;
-  padding: 0.38rem;
-  background: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  padding: 0.42rem;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.62);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 12px 40px rgba(15, 23, 42, 0.07);
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 14px 40px rgba(15, 23, 42, 0.07);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -173,26 +175,27 @@ body.has-club-topnav {
   background: transparent;
   color: var(--tx3);
   border-radius: 999px;
-  padding: 0.62rem 1.15rem;
+  padding: 0.65rem 1.2rem;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .club-tab:hover {
   color: var(--tx);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.65);
 }
 
 .club-tab.is-active {
-  background: linear-gradient(135deg, #16a34a 0%, #0f766e 55%, #0d9488 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #0f766e 52%, #0d9488 100%);
   color: #fff;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 10px 28px rgba(22, 163, 74, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 10px 28px rgba(22, 163, 74, 0.38),
+    0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 /*
@@ -1256,7 +1259,7 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
 }
 
 .menu-admin-card {
-  margin-top: 1.25rem;
+  margin-top: 0;
 }
 
 .inv-product-image {
@@ -2678,12 +2681,88 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,
     0 20px 50px rgba(15, 23, 42, 0.06);
+  padding: 1.35rem clamp(1.05rem, 2.2vw, 1.55rem) 1.45rem;
 }
 
-.has-club-topnav .card-section h2 {
-  font-size: 1.08rem;
+/* Títulos de bloque coherentes en Inicio, TPV, Inventario, Stock, Socios, Finanzas */
+.has-club-topnav .card-section > h2,
+.has-club-topnav .tpv-shell__hdr h2,
+.has-club-topnav .member-csv-toolbar h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: clamp(1.06rem, 2.1vw, 1.24rem);
   font-weight: 800;
   letter-spacing: -0.02em;
+  margin-top: 0;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+  color: var(--tx);
+}
+
+.has-club-topnav .card-section > h2::before,
+.has-club-topnav .tpv-shell__hdr h2::before,
+.has-club-topnav .member-csv-toolbar h2::before {
+  content: '';
+  width: 4px;
+  height: 1.2em;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #22c55e, #0d9488);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+}
+
+.has-club-topnav .member-csv-toolbar {
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.has-club-topnav .member-csv-toolbar h2 {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.has-club-topnav .member-csv-toolbar h2::before {
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+}
+
+.has-club-topnav .input,
+.has-club-topnav .select {
+  border-radius: 11px;
+  border-color: rgba(148, 163, 184, 0.32);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.has-club-topnav .input:hover:not(:focus),
+.has-club-topnav .select:hover:not(:focus) {
+  border-color: rgba(22, 163, 74, 0.28);
+}
+
+.has-club-topnav .row-actions {
+  padding: 0.75rem;
+  gap: 0.65rem;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.has-club-topnav .inv-toolbar {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  margin-bottom: 1rem;
+}
+
+.has-club-topnav .finance-ventas-toolbar {
+  padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .has-club-topnav .table-wrap {
@@ -2818,6 +2897,39 @@ body.club-dark .has-club-topnav .card-section {
     0 20px 50px rgba(0, 0, 0, 0.28);
 }
 
+body.club-dark .has-club-topnav .card-section > h2,
+body.club-dark .has-club-topnav .tpv-shell__hdr h2,
+body.club-dark .has-club-topnav .member-csv-toolbar h2 {
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+  color: #f8fafc;
+}
+
+body.club-dark .has-club-topnav .member-csv-toolbar {
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+body.club-dark .has-club-topnav .row-actions {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+body.club-dark .has-club-topnav .inv-toolbar {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+body.club-dark .has-club-topnav .finance-ventas-toolbar {
+  background: rgba(15, 23, 42, 0.42);
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+body.club-dark .has-club-topnav .input,
+body.club-dark .has-club-topnav .select {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #f1f5f9;
+}
+
 body.club-dark .has-club-topnav .table-wrap {
   background: rgba(15, 23, 42, 0.4);
   border-color: rgba(148, 163, 184, 0.14);
@@ -2878,21 +2990,27 @@ body.club-dark .finance-kpi {
 }
 
 /* ---------- TPV / panel (mismo “stage” cristal que TPV) ---------- */
+.has-club-topnav .club-view-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
 .tpv-shell--stage,
 .club-view-stage {
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 18px 48px rgba(15, 23, 42, 0.06);
+    0 1px 0 rgba(255, 255, 255, 0.82) inset,
+    0 22px 56px rgba(15, 23, 42, 0.07);
 }
 
 .club-view-stage,
 .tpv-shell--stage {
-  padding: 1.35rem clamp(1rem, 2vw, 1.6rem) 1.5rem;
+  padding: 1.55rem clamp(1.05rem, 2vw, 1.75rem) 1.65rem;
 }
 
 .tpv-shell__hdr {

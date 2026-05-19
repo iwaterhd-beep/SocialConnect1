@@ -38,7 +38,7 @@
   font-size: clamp(1.6rem, 5vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #fff 0%, #b7e4c7 100%);
+  background: linear-gradient(125deg, #fff 0%, #d8f3dc 42%, #52b788 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
