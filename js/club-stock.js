@@ -68,9 +68,11 @@
   function buildLatestCountByProduct(events) {
     const map = {};
     (events || []).forEach((ev) => {
-      const cur = map[ev.product_id];
+      if (!ev || ev.product_id === undefined || ev.product_id === null) return;
+      const pid = String(ev.product_id);
+      const cur = map[pid];
       if (!cur || new Date(ev.created_at) >= new Date(cur.created_at)) {
-        map[ev.product_id] = ev;
+        map[pid] = ev;
       }
     });
     return map;
@@ -314,7 +316,7 @@
           : '';
       const placeholder = tare > 0 ? 'Total báscula (g)' : 'Ej. 10,5';
       const pendingValue = pending[p.id] ? ` value="${escapeHtml(pending[p.id])}"` : '';
-      const savedEv = state.lastCountByProduct[p.id];
+      const savedEv = state.lastCountByProduct[String(p.id)];
       const savedDelta = getShiftStockDelta(savedEv);
       const previewDelta = pending[p.id] ? previewManualDelta(p, pending[p.id]) : null;
       const descSaved =
