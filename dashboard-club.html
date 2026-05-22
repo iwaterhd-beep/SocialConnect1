@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="assets/img/logo-socialconnect.png?v=2" />
     <link rel="stylesheet" href="css/theme.css?v=27" />
     <link rel="stylesheet" href="css/dashboard-club.css?v=25" />
-    <link rel="stylesheet" href="css/sc-dashboard.css?v=14" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=15" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=7" />
   </head>
   <body class="club-app has-club-topnav">
@@ -18,15 +18,18 @@
       <aside class="app-sidebar" id="app-sidebar" aria-label="Navegación principal">
         <div class="app-sidebar__head">
           <div class="app-sidebar__brand">
-            <img
-              class="sc-logo sc-logo--sidebar"
-              src="assets/img/logo-socialconnect.png?v=2"
-              alt="SocialConnect"
-              width="520"
-              height="520"
-              decoding="async"
-            />
-            <span class="app-sidebar__club" id="club-topnav-club">—</span>
+            <span class="app-sidebar__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+              </svg>
+            </span>
+            <span class="app-sidebar__brand-text">
+              <span class="app-sidebar__wordmark">Social <span class="app-sidebar__accent">Connect</span></span>
+              <span class="app-sidebar__club" id="club-topnav-club">—</span>
+            </span>
           </div>
           <button type="button" class="app-sidebar__close" id="sidebar-close" aria-label="Cerrar menú">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

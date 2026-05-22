@@ -104,19 +104,11 @@ body.club-app.has-club-topnav {
 
 .app-sidebar__brand {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   text-decoration: none;
   color: inherit;
-}
-
-.app-sidebar__brand .app-sidebar__club {
-  max-width: none;
-  text-align: center;
-  font-size: 0.75rem;
-  padding: 0 2px;
 }
 
 .app-sidebar__mark {
@@ -935,14 +927,8 @@ body.club-dark.club-app .app-header__avatar {
 
   .club-app.sidebar-collapsed .app-sidebar__brand-text,
   .club-app.sidebar-collapsed .app-nav-item__label,
-  .club-app.sidebar-collapsed .app-sidebar__theme span:last-child,
-  .club-app.sidebar-collapsed .app-sidebar__club {
+  .club-app.sidebar-collapsed .app-sidebar__theme span:last-child {
     display: none;
-  }
-
-  .club-app.sidebar-collapsed .sc-logo--sidebar {
-    width: 40px;
-    border-radius: 8px;
   }
 
   .club-app.sidebar-collapsed .app-nav-item.club-tab {
