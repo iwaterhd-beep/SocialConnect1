@@ -332,12 +332,68 @@
     return !isMemberTierExpired(m);
   }
 
-  function syncMemberProfileModalVipClass(m) {
+  function syncMemberProfileVipClass(m) {
     const on = isActiveVipMember(m);
-    const modal = $('member-profile-modal');
-    const hero = document.querySelector('#member-profile-modal .member-profile-hero');
-    if (modal) modal.classList.toggle('is-vip-member', on);
+    const panel = $('member-panel-profile');
+    const hero = document.querySelector('#member-panel-profile .member-profile-hero');
+    if (panel) panel.classList.toggle('is-vip-member', on);
     if (hero) hero.classList.toggle('member-profile-hero--vip', on);
+  }
+
+  function getMemberNames(m) {
+    let first = (m?.first_name || '').trim();
+    let last = (m?.last_name || '').trim();
+    if (!first && !last && m?.display_name) {
+      const dn = String(m.display_name).trim();
+      const sp = dn.indexOf(' ');
+      if (sp > 0) {
+        first = dn.slice(0, sp).trim();
+        last = dn.slice(sp + 1).trim();
+      } else {
+        first = dn;
+      }
+    }
+    return { first, last };
+  }
+
+  function fillMemberViewSummary(m) {
+    const { first, last } = getMemberNames(m);
+    const title = $('member-profile-view-title');
+    if (title) title.textContent = m.display_name || 'Perfil del socio';
+    if ($('member-view-first-name')) $('member-view-first-name').textContent = first || '—';
+    if ($('member-view-last-name')) $('member-view-last-name').textContent = last || '—';
+    if ($('member-view-dni')) {
+      $('member-view-dni').textContent = m.dni != null && String(m.dni).trim() !== '' ? String(m.dni).trim() : '—';
+    }
+    if ($('member-view-code')) {
+      $('member-view-code').textContent =
+        m.member_code != null && String(m.member_code).trim() !== '' ? String(m.member_code).trim() : '—';
+    }
+    const typeEl = $('member-view-type');
+    if (typeEl) typeEl.innerHTML = memberTypePillHtml(m);
+    const statusEl = $('member-view-status');
+    if (statusEl) {
+      statusEl.textContent = m.is_active ? 'Activo' : 'Inactivo';
+      statusEl.classList.toggle('member-view-status--inactive', !m.is_active);
+    }
+  }
+
+  function setMemberUiMode(mode) {
+    const empty = $('member-panel-empty');
+    const profile = $('member-panel-profile');
+    const edit = $('member-panel-edit');
+    if (empty) {
+      empty.hidden = mode !== 'empty';
+      empty.classList.toggle('is-hidden', mode !== 'empty');
+    }
+    if (profile) {
+      profile.hidden = mode !== 'profile';
+      profile.classList.toggle('is-hidden', mode !== 'profile');
+    }
+    if (edit) {
+      edit.hidden = mode !== 'edit';
+      edit.classList.toggle('is-hidden', mode !== 'edit');
+    }
   }
 
   function memberTypeShortSuffix(m) {
@@ -406,13 +462,11 @@
   }
 
   function setMemberProfilePlaceholder(text) {
-    const sum = $('member-profile-summary');
     const meta = $('member-profile-meta');
     const tbody = $('member-dispenses-tbody');
     const c = $('member-profile-kpi-count');
     const t = $('member-profile-kpi-total');
-    if (sum) sum.textContent = text || '';
-    if (meta) meta.textContent = '';
+    if (meta) meta.textContent = text || '';
     if (c) c.textContent = '0';
     if (t) t.textContent = formatMoney(0);
     const w = $('member-profile-kpi-wallet');
@@ -451,7 +505,8 @@
       initials.textContent = '?';
       initials.setAttribute('aria-hidden', 'false');
     }
-    syncMemberProfileModalVipClass(null);
+    syncMemberProfileVipClass(null);
+    setMemberUiMode('empty');
   }
 
   function getInitialsFromDisplayName(name) {
@@ -519,22 +574,9 @@
     }
   }
 
-  function openMemberProfileModal() {
-    const modal = $('member-profile-modal');
-    if (!modal) return;
-    modal.classList.remove('is-hidden');
-    modal.setAttribute('aria-hidden', 'false');
-  }
-
-  function closeMemberProfileModal() {
-    const modal = $('member-profile-modal');
-    if (!modal) return;
-    modal.classList.add('is-hidden');
-    modal.setAttribute('aria-hidden', 'true');
-    syncMemberProfileModalVipClass(null);
-  }
-
   async function editMemberFromRow(memberId) {
+    selectedMemberId = memberId || '';
+    setMemberUiMode('edit');
     const { data: row, error: e2 } = await sb()
       .from('club_members')
       .select('*')
@@ -611,21 +653,18 @@
   async function showMemberProfile(memberId) {
     const m = membersCache.find((x) => x.id === memberId);
     if (!m) {
+      selectedMemberId = '';
       setMemberProfilePlaceholder('Selecciona un socio para ver su detalle.');
       return;
     }
     selectedMemberId = memberId;
-    openMemberProfileModal();
-    syncMemberProfileModalVipClass(m);
-    const sum = $('member-profile-summary');
+    setMemberUiMode('profile');
+    syncMemberProfileVipClass(m);
+    fillMemberViewSummary(m);
     const meta = $('member-profile-meta');
     const tbody = $('member-dispenses-tbody');
-    if (!sum || !meta || !tbody) return;
+    if (!meta || !tbody) return;
 
-    const type = memberTypeLabel(m.member_type || 'standard');
-    sum.textContent = `${m.display_name} · ${m.is_active ? 'Activo' : 'Inactivo'} · ${type}${
-      isMemberTierExpired(m) ? ' (caducado)' : ''
-    }`;
     meta.textContent = 'Cargando dispensaciones…';
     tbody.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     const adjustWrap = $('member-wallet-adjust');
@@ -674,15 +713,14 @@
       const te = memberTierDetailLine(m);
       if (te) extra.push(te);
     }
-    if (m.member_code) extra.push(`Código: ${m.member_code}`);
-    if (m.dni) extra.push(`DNI: ${m.dni}`);
     if (m.phone) extra.push(`Tel: ${m.phone}`);
     if (m.email) extra.push(`Email: ${m.email}`);
-    meta.textContent = extra.join(' · ');
+    meta.textContent = extra.length ? extra.join(' · ') : `${rows.length} dispensación(es) registrada(s).`;
     await renderMemberProfileHero(m, rows.length, totalSpent);
 
     await ledgerPromise;
 
+    renderMembersTable();
     const recent = rows.slice(0, 100);
     tbody.innerHTML = '';
     if (!recent.length) {
@@ -786,7 +824,7 @@
       .forEach((m) => {
       const tr = document.createElement('tr');
       if (isActiveVipMember(m)) tr.classList.add('member-row--vip');
-      if ($('member-edit-id')?.value === m.id) tr.classList.add('is-selected');
+      if (selectedMemberId === m.id) tr.classList.add('is-selected');
       const dni =
         m.dni != null && String(m.dni).trim() !== ''
           ? String(m.dni).trim()
@@ -805,21 +843,21 @@
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
-          <button type="button" class="btn btn--ghost btn--small" data-profile-member="${m.id}">Perfil</button>
           <button type="button" class="btn btn--ghost btn--small" data-edit-member="${m.id}">Editar</button>
         </td>
       `;
       tr.querySelectorAll('[data-profile-member]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          showMemberProfile(m.id);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          void showMemberProfile(m.id);
         });
       });
-      tr.querySelector('[data-edit-member]')?.addEventListener('click', () => {
+      tr.querySelector('[data-edit-member]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
         void editMemberFromRow(m.id);
       });
-      tr.addEventListener('click', (e) => {
-        if (e.target.closest('button, a, [data-profile-member]')) return;
-        void editMemberFromRow(m.id);
+      tr.addEventListener('click', () => {
+        void showMemberProfile(m.id);
       });
       tbody.appendChild(tr);
     });
@@ -1349,7 +1387,7 @@
           : 'Socio creado.',
       false,
     );
-    clearMemberForm();
+    selectedMemberId = memberId;
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -1357,6 +1395,7 @@
     if (typeof window.scClubRefreshHomeKpis === 'function') {
       void window.scClubRefreshHomeKpis();
     }
+    await showMemberProfile(memberId);
   }
 
   function startOfDay(d) {
@@ -2762,6 +2801,16 @@
     membersUiBound = true;
 
     $('member-save')?.addEventListener('click', () => saveMember());
+    $('members-new')?.addEventListener('click', () => {
+      selectedMemberId = '';
+      clearMemberForm();
+      setMemberMsg('', false);
+      setMemberUiMode('edit');
+      renderMembersTable();
+    });
+    $('member-profile-edit-btn')?.addEventListener('click', () => {
+      if (selectedMemberId) void editMemberFromRow(selectedMemberId);
+    });
     $('member-wallet-adjust-add')?.addEventListener('click', () => {
       void applyMemberWalletAdjust(1);
     });
@@ -2769,16 +2818,15 @@
       void applyMemberWalletAdjust(-1);
     });
     $('member-cancel')?.addEventListener('click', () => {
-      clearMemberForm();
+      const id = ($('member-edit-id')?.value || '').trim();
       setMemberMsg('', false);
-    });
-    document.querySelectorAll('[data-member-profile-close]').forEach((el) => {
-      el.addEventListener('click', () => closeMemberProfileModal());
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape') return;
-      const modal = $('member-profile-modal');
-      if (modal && !modal.classList.contains('is-hidden')) closeMemberProfileModal();
+      if (id) {
+        void showMemberProfile(id);
+        return;
+      }
+      selectedMemberId = '';
+      clearMemberForm();
+      setMemberProfilePlaceholder('');
     });
     $('members-search')?.addEventListener('input', () => {
       membersSearch = $('members-search')?.value || '';

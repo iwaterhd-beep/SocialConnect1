@@ -17,6 +17,9 @@
       <button type="button" class="btn btn--ghost btn--small" id="members-import-csv" title="Importar CSV">
         Importar
       </button>
+      <button type="button" class="btn btn--ghost btn--small" id="members-new" title="Alta manual">
+        Nuevo socio
+      </button>
       <button type="button" class="btn btn--ghost btn--small btn--danger" id="members-delete-all" title="Borrar todos">
         Borrar todos
       </button>
@@ -61,7 +64,125 @@
   </div>
 </section>
 
-<section class="card-section member-form-sc sc-members-detail" aria-labelledby="members-form-title">
+<section class="card-section sc-members-detail" aria-labelledby="members-detail-title">
+  <h2 id="members-detail-title" class="visually-hidden">Detalle del socio</h2>
+
+  <div id="member-panel-empty" class="member-panel-empty">
+    <p class="hint">Selecciona un socio de la lista para ver su perfil y dispensaciones.</p>
+  </div>
+
+  <div id="member-panel-profile" class="member-panel-profile is-hidden" hidden>
+    <div class="sc-section-head member-panel-profile__head">
+      <h2 id="member-profile-view-title">Perfil del socio</h2>
+      <button type="button" class="btn btn--small" id="member-profile-edit-btn">Editar socio</button>
+    </div>
+
+    <div class="member-profile-hero member-profile-hero--panel">
+      <div class="member-profile-hero__avatar">
+        <span id="member-profile-avatar-initials" class="member-profile-hero__avatar-initials" aria-hidden="false">?</span>
+        <img id="member-profile-avatar-img" class="member-profile-hero__avatar-img is-hidden" src="" alt="" />
+      </div>
+      <dl class="member-view-dl">
+        <div class="member-view-dl__row">
+          <dt>Nombre</dt>
+          <dd id="member-view-first-name">—</dd>
+        </div>
+        <div class="member-view-dl__row">
+          <dt>Apellidos</dt>
+          <dd id="member-view-last-name">—</dd>
+        </div>
+        <div class="member-view-dl__row">
+          <dt>DNI / NIE</dt>
+          <dd id="member-view-dni">—</dd>
+        </div>
+        <div class="member-view-dl__row">
+          <dt>Nº socio / código</dt>
+          <dd id="member-view-code">—</dd>
+        </div>
+        <div class="member-view-dl__row">
+          <dt>Tipo</dt>
+          <dd id="member-view-type">—</dd>
+        </div>
+        <div class="member-view-dl__row">
+          <dt>Estado</dt>
+          <dd id="member-view-status">—</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="member-profile-hero__kpis member-profile-hero__kpis--panel">
+      <article class="member-profile-kpi">
+        <span class="member-profile-kpi__label">Dispensaciones</span>
+        <strong id="member-profile-kpi-count" class="member-profile-kpi__value">0</strong>
+      </article>
+      <article class="member-profile-kpi">
+        <span class="member-profile-kpi__label">Total gastado</span>
+        <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
+      </article>
+      <article class="member-profile-kpi member-profile-kpi--wallet">
+        <span class="member-profile-kpi__label">Monedero</span>
+        <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 €</strong>
+      </article>
+    </div>
+
+    <div id="member-wallet-adjust" class="member-wallet-adjust is-hidden" hidden>
+      <h3 class="member-wallet-adjust__title">Monedero del socio</h3>
+      <label class="member-wallet-adjust-cash-toggle">
+        <input type="checkbox" id="member-wallet-adjust-cash" checked />
+        Movimiento en efectivo (afecta caja del turno)
+      </label>
+      <div class="member-wallet-adjust__row">
+        <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe €" />
+        <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo" />
+        <button type="button" class="btn btn--small" id="member-wallet-adjust-add">+ Ingresar</button>
+        <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
+      </div>
+      <p id="member-wallet-adjust-status" class="msg" role="status"></p>
+    </div>
+
+    <div id="member-wallet-ledger-wrap" class="member-wallet-ledger is-hidden" hidden>
+      <h3 class="member-wallet-ledger__title">Movimientos del monedero</h3>
+      <p id="member-wallet-ledger-empty" class="hint member-wallet-ledger__empty is-hidden" hidden>Sin movimientos.</p>
+      <div class="table-wrap member-wallet-ledger__table">
+        <table class="table-compact">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Monedero</th>
+              <th>Caja</th>
+              <th>Saldo</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody id="member-wallet-ledger-tbody">
+            <tr><td colspan="6">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3 class="member-panel-section-title">Dispensaciones</h3>
+    <p id="member-profile-meta" class="hint member-panel-dispenses-meta"></p>
+    <div class="table-wrap member-panel-dispenses-table">
+      <table class="table-compact">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Producto</th>
+            <th>G ticket / G real</th>
+            <th>Precio</th>
+            <th>Nota</th>
+          </tr>
+        </thead>
+        <tbody id="member-dispenses-tbody">
+          <tr><td colspan="5">Sin datos.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="member-panel-edit" class="member-panel-edit member-form-sc is-hidden" hidden aria-labelledby="members-form-title">
   <div class="member-form-sc__top sc-section-head">
     <div>
       <h2 id="members-form-title">Nuevo socio</h2>
@@ -208,90 +329,6 @@
   </div>
 
   <p id="member-status" class="msg" role="status" aria-live="polite"></p>
+  </div>
 </section>
-</div>
-
-<div id="member-profile-modal" class="shift-modal is-hidden" aria-hidden="true">
-  <div class="shift-modal__backdrop" data-member-profile-close="1"></div>
-  <section class="card-section shift-modal__panel shift-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="member-profile-title">
-    <h2 id="member-profile-title" class="shift-modal__title">Perfil del socio</h2>
-    <div class="shift-modal__body shift-modal__body--scroll">
-      <div class="member-profile-hero">
-        <div class="member-profile-hero__avatar">
-          <span id="member-profile-avatar-initials" class="member-profile-hero__avatar-initials" aria-hidden="false">?</span>
-          <img id="member-profile-avatar-img" class="member-profile-hero__avatar-img is-hidden" src="" alt="" />
-        </div>
-        <div class="member-profile-hero__kpis">
-          <article class="member-profile-kpi">
-            <span class="member-profile-kpi__label">Dispensaciones</span>
-            <strong id="member-profile-kpi-count" class="member-profile-kpi__value">0</strong>
-          </article>
-          <article class="member-profile-kpi">
-            <span class="member-profile-kpi__label">Total gastado</span>
-            <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
-          </article>
-          <article class="member-profile-kpi member-profile-kpi--wallet">
-            <span class="member-profile-kpi__label">Monedero</span>
-            <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 €</strong>
-          </article>
-        </div>
-      </div>
-      <div id="member-wallet-adjust" class="member-wallet-adjust is-hidden" hidden>
-        <h3 class="member-wallet-adjust__title">Monedero del socio</h3>
-        <label class="member-wallet-adjust-cash-toggle">
-          <input type="checkbox" id="member-wallet-adjust-cash" checked />
-          Movimiento en efectivo (afecta caja del turno)
-        </label>
-        <div class="member-wallet-adjust__row">
-          <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe €" />
-          <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo" />
-          <button type="button" class="btn btn--small" id="member-wallet-adjust-add">+ Ingresar</button>
-          <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
-        </div>
-        <p id="member-wallet-adjust-status" class="msg" role="status"></p>
-      </div>
-      <div id="member-wallet-ledger-wrap" class="member-wallet-ledger is-hidden" hidden>
-        <h3 class="member-wallet-ledger__title">Movimientos del monedero</h3>
-        <p id="member-wallet-ledger-empty" class="hint member-wallet-ledger__empty is-hidden" hidden>Sin movimientos.</p>
-        <div class="table-wrap member-wallet-ledger__table">
-          <table class="table-compact">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Monedero</th>
-                <th>Caja</th>
-                <th>Saldo</th>
-                <th>Nota</th>
-              </tr>
-            </thead>
-            <tbody id="member-wallet-ledger-tbody">
-              <tr><td colspan="6">Sin datos.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <p id="member-profile-summary" class="hint" style="margin-top: 0">Selecciona un socio para ver su detalle.</p>
-      <div id="member-profile-meta" class="hint" style="margin-top: 0.5rem"></div>
-      <div class="table-wrap" style="margin-top: 0.75rem">
-        <table class="table-compact">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Producto</th>
-              <th>G ticket / G real</th>
-              <th>Precio</th>
-              <th>Nota</th>
-            </tr>
-          </thead>
-          <tbody id="member-dispenses-tbody">
-            <tr><td colspan="5">Sin datos.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="row-actions">
-      <button type="button" class="btn btn--ghost" data-member-profile-close="1">Cerrar</button>
-    </div>
-  </section>
 </div>
