@@ -499,6 +499,12 @@
     if (!el) return;
     el.classList.add('is-hidden');
     el.setAttribute('aria-hidden', 'true');
+    setShiftWizardPanelWide(false);
+  }
+
+  function setShiftWizardPanelWide(wide) {
+    const panel = document.querySelector('#shift-wizard-modal .shift-modal__panel');
+    if (panel) panel.classList.toggle('shift-modal__panel--wide', wide);
   }
 
   function openSummaryModal(html) {
@@ -953,6 +959,7 @@
   window.scClubCloseShiftSummaryModal = closeSummaryModal;
 
   function renderWizardStockQuestion() {
+    setShiftWizardPanelWide(false);
     $('shift-wizard-title').textContent = 'Antes de cerrar';
     $('shift-wizard-body').innerHTML =
       '<p>¿Has completado el contaje de stock de este turno (contaje manual)?</p>';
@@ -967,6 +974,7 @@
   }
 
   function renderWizardDoubleConfirm(hadStockYes) {
+    setShiftWizardPanelWide(false);
     $('shift-wizard-title').textContent = 'Confirmar cierre';
     const msg = hadStockYes
       ? '<p>¿Seguro que quieres <strong>cerrar este turno</strong>? No podrás registrar ventas ni stock hasta abrir otro.</p><p class="hint" style="margin-top:0.75rem">Si compartes el dispositivo, el siguiente empleado puede iniciar sesión con su cuenta.</p>'
@@ -1009,21 +1017,24 @@
   }
 
   function renderWizardArqueo() {
+    setShiftWizardPanelWide(true);
     $('shift-wizard-title').textContent = 'Arqueo y cambio';
     $('shift-wizard-body').innerHTML = `
       <p class="hint" style="margin-top:0">Indica el efectivo contado y el cambio que dejas para el siguiente turno. Las ventas con <strong>monedero</strong> no suman al efectivo esperado. Opcionalmente desglosa billetes y monedas.</p>
       <p id="wiz-cash-expected" class="hint shift-arqueo-hint">Calculando efectivo esperado…</p>
-      <div class="form__row">
-        <label for="wiz-close-cash">Total efectivo contado en caja (€)</label>
-        <input class="input" id="wiz-close-cash" inputmode="decimal" placeholder="Ej. 240,50" autocomplete="off" />
+      <div class="shift-arqueo-main">
+        <div class="form__row">
+          <label for="wiz-close-cash">Total efectivo contado en caja (€)</label>
+          <input class="input" id="wiz-close-cash" inputmode="decimal" placeholder="Ej. 240,50" autocomplete="off" />
+        </div>
+        <div class="form__row">
+          <label for="wiz-close-float">Cambio para el siguiente turno (€)</label>
+          <input class="input" id="wiz-close-float" inputmode="decimal" placeholder="Ej. 80" autocomplete="off" />
+        </div>
       </div>
       <p id="wiz-cash-diff" class="hint shift-arqueo-diff" role="status"></p>
-      <div class="form__row">
-        <label for="wiz-close-float">Cambio para el siguiente turno (€)</label>
-        <input class="input" id="wiz-close-float" inputmode="decimal" placeholder="Ej. 80" autocomplete="off" />
-      </div>
-      <p class="hint" style="margin-top:0.5rem">Desglose (opcional — cantidad de cada tipo)</p>
-      <div class="grid grid--2" style="margin-top:0.5rem">
+      <p class="hint shift-arqueo-denoms-label">Desglose (opcional — cantidad de cada tipo)</p>
+      <div class="shift-arqueo-denoms">
         ${denomFieldsHtml()}
       </div>
     `;

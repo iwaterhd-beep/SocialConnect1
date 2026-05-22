@@ -1136,6 +1136,45 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   font-weight: 600;
 }
 
+.shift-arqueo-main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.shift-arqueo-main .form__row {
+  margin-bottom: 0;
+}
+
+.shift-arqueo-denoms-label {
+  margin: 0.75rem 0 0.5rem;
+}
+
+.shift-arqueo-denoms {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem 0.85rem;
+}
+
+.shift-arqueo-denoms .form__row {
+  margin-bottom: 0;
+}
+
+.shift-arqueo-denoms .form__row label {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 720px) {
+  .shift-arqueo-main {
+    grid-template-columns: 1fr;
+  }
+
+  .shift-arqueo-denoms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .hint--small,
 .stock-tara-hint {
   font-size: 0.78rem;
