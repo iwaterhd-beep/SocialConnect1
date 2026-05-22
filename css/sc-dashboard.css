@@ -1326,6 +1326,64 @@ body.club-dark.club-app .sc-stock-toolbar {
   margin: 0;
 }
 
+/* Finance — filtros por fecha centrados */
+.sc-finance-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sc-finance-toolbar--center {
+  align-items: center;
+}
+
+.sc-finance-toolbar--center .sc-finance-toolbar__chips,
+.sc-finance-toolbar--center #finance-ventas-range,
+.sc-finance-toolbar--center #finance-sales-cat-chips {
+  justify-content: center;
+  width: 100%;
+}
+
+.sc-finance-toolbar--center > .input[type='search'],
+.sc-finance-toolbar--center .finance-ventas-category {
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+.sc-finance-toolbar--center .sc-finance-toolbar__custom,
+.sc-finance-toolbar--center .finance-ventas-custom,
+.sc-finance-toolbar--center #finance-ventas-custom {
+  width: 100%;
+  max-width: 36rem;
+  margin-inline: auto;
+}
+
+.finance-ventas-toolbar.sc-finance-toolbar--center {
+  align-items: center;
+}
+
+.finance-ventas-toolbar.sc-finance-toolbar--center.sc-toolbar-inline {
+  justify-content: center;
+  align-items: center;
+}
+
+.sc-finance-sales__title {
+  text-align: center;
+}
+
+.club-app .has-club-topnav .sc-finance-toolbar {
+  padding: var(--space-3);
+  border-radius: 8px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+}
+
+body.club-dark.club-app .sc-finance-toolbar {
+  background: rgba(0, 0, 0, 0.15);
+}
+
 /* Inventory */
 .sc-inv-grid {
   grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)) !important;

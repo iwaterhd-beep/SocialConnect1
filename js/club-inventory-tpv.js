@@ -38,6 +38,7 @@
     categories: [],
     products: [],
     filterCategoryId: '',
+    filterStockLevel: '',
     invSearch: '',
     tpvSearch: '',
     tpvCatFilter: '',
@@ -419,12 +420,6 @@
       rowPc.hidden = !showPc;
       rowPc.classList.toggle('is-hidden', !showPc);
     }
-    const rowRp = $('inv-row-retail-price');
-    if (rowRp) {
-      const showRp = show && state.hasRetailPriceColumn;
-      rowRp.hidden = !showRp;
-      rowRp.classList.toggle('is-hidden', !showRp);
-    }
   }
 
   function openInvProductModal() {
@@ -721,24 +716,68 @@
     return unitKey(p) === 'unit' ? 'ud' : 'g';
   }
 
+  /** Precio de venta unificado (€/ud o €/g) a partir de los campos legacy del producto. */
+  function getProductSalePrice(p) {
+    if (!p) return null;
+    if (unitKey(p) === 'unit') {
+      const candidates = [p.retail_price_eur, p.menu_price_eur, p.default_price_eur];
+      for (const v of candidates) {
+        if (v != null && v !== '' && !Number.isNaN(Number(v))) return Number(v);
+      }
+      return null;
+    }
+    if (p.default_price_per_gram_eur != null && p.default_price_per_gram_eur !== '') {
+      const perG = Number(p.default_price_per_gram_eur);
+      if (!Number.isNaN(perG) && perG >= 0) return perG;
+    }
+    const rateCandidates = [p.retail_price_eur, p.menu_price_eur];
+    for (const v of rateCandidates) {
+      if (v != null && v !== '' && !Number.isNaN(Number(v))) return Number(v);
+    }
+    if (p.default_price_eur != null && p.default_price_eur !== '') {
+      const basePrice = Number(p.default_price_eur);
+      if (Number.isNaN(basePrice) || basePrice < 0) return null;
+      const baseG = Number(p.default_sale_grams);
+      if (!Number.isNaN(baseG) && baseG > 0) return basePrice / baseG;
+      return basePrice;
+    }
+    return null;
+  }
+
+  function buildPricePayloadFromSalePrice(saleUnit, salePrice, isClubAdmin) {
+    const payload = { default_sale_grams: null };
+    if (salePrice == null) {
+      payload.default_price_eur = null;
+      payload.default_price_per_gram_eur = null;
+      if (isClubAdmin && state.hasRetailPriceColumn) payload.retail_price_eur = null;
+      if (state.hasMenuPriceColumn) payload.menu_price_eur = null;
+      return payload;
+    }
+    if (saleUnit === 'unit') {
+      payload.default_price_eur = salePrice;
+      payload.default_price_per_gram_eur = null;
+    } else {
+      payload.default_price_per_gram_eur = salePrice;
+      payload.default_price_eur = null;
+    }
+    if (isClubAdmin && state.hasRetailPriceColumn) payload.retail_price_eur = salePrice;
+    if (state.hasMenuPriceColumn) payload.menu_price_eur = salePrice;
+    return payload;
+  }
+
   function applyInventoryUnitLabels(unit) {
     const isUnit = unit === 'unit';
     if ($('inv-label-bottle'))
       $('inv-label-bottle').textContent = isUnit ? 'Peso del bote (solo gramos)' : 'Peso del bote (g)';
     if ($('inv-label-stock')) $('inv-label-stock').textContent = isUnit ? 'Stock (ud)' : 'Stock neto (g)';
     if ($('inv-label-alert')) $('inv-label-alert').textContent = isUnit ? 'Alerta stock mín. (ud)' : 'Alerta stock mín. (g)';
-    if ($('inv-label-default-qty'))
-      $('inv-label-default-qty').textContent = isUnit ? 'Unidades sugeridas TPV' : 'Gramos sugeridos TPV';
-    if ($('inv-label-rate'))
-      $('inv-label-rate').textContent = isUnit ? 'Precio por unidad (€/u)' : 'Precio por gramo (€/g)';
+    if ($('inv-label-sale-price')) {
+      $('inv-label-sale-price').textContent = isUnit ? 'Precio de venta (€/ud)' : 'Precio de venta (€/g)';
+    }
     if ($('inv-label-purchase-cost'))
       $('inv-label-purchase-cost').textContent = isUnit
         ? 'Coste de compra (€/ud)'
         : 'Coste de compra (€/g)';
-    if ($('inv-label-retail-price'))
-      $('inv-label-retail-price').textContent = isUnit
-        ? 'Precio de venta ref. (€/ud)'
-        : 'Precio de venta ref. (€/g)';
     const bottle = $('inv-product-bottle');
     if (bottle) bottle.disabled = isUnit;
     const rowBottle = $('inv-row-bottle');
@@ -1131,44 +1170,15 @@
     }
   }
 
-  /** Precio €/g: explícito, o precio ÷ gramos sugeridos; si no hay gramos de referencia, el precio sugerido cuenta como €/g (TPV por peso). */
-  function computeAutoMenuPrice(saleUnit, defPrice, defPerGram, defSale, retailPrice) {
-    if (saleUnit === 'unit') {
-      if (retailPrice != null && !Number.isNaN(retailPrice) && retailPrice >= 0) return retailPrice;
-      if (defPrice != null && !Number.isNaN(defPrice) && defPrice >= 0) return defPrice;
-      return null;
-    }
-    if (defPerGram != null && !Number.isNaN(defPerGram) && defPerGram >= 0) return defPerGram;
-    if (retailPrice != null && !Number.isNaN(retailPrice) && retailPrice >= 0) return retailPrice;
-    if (defPrice != null && !Number.isNaN(defPrice) && defPrice >= 0) {
-      const g = Number(defSale);
-      if (!Number.isNaN(g) && g > 0) return defPrice / g;
-      return defPrice;
-    }
+  /** Recalcula precio al cliente según gramos en ticket y tarifa del producto. */
+  function getPricePerGramForProduct(p) {
+    if (!p || !state.hasProductExtras) return null;
+    if (unitKey(p) === 'unit') return null;
+    const unified = getProductSalePrice(p);
+    if (unified != null) return unified;
     return null;
   }
 
-  function getPricePerGramForProduct(p) {
-    if (!p || !state.hasProductExtras) return null;
-    const perG =
-      p.default_price_per_gram_eur != null && p.default_price_per_gram_eur !== ''
-        ? Number(p.default_price_per_gram_eur)
-        : NaN;
-    if (!Number.isNaN(perG) && perG >= 0) {
-      return perG;
-    }
-    const baseG = Number(p.default_sale_grams);
-    const basePrice = Number(p.default_price_eur);
-    if (Number.isNaN(basePrice) || basePrice < 0) {
-      return null;
-    }
-    if (Number.isNaN(baseG) || baseG <= 0) {
-      return basePrice;
-    }
-    return basePrice / baseG;
-  }
-
-  /** Recalcula precio al cliente según gramos en ticket y tarifa del producto. */
   function updatePriceFromTicketGrams() {
     const p = state.tpvSelectedId
       ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId))
@@ -1320,7 +1330,7 @@
     setMenuStatus(
       n > 0
         ? `Precios actualizados en ${n} producto(s). Recarga el menú en la tablet.`
-        : 'No había productos nuevos que rellenar (revisa precio TPV o ventas).',
+        : 'No había productos nuevos que rellenar (revisa el precio de venta de cada producto).',
       false,
     );
   }
@@ -1688,6 +1698,9 @@
     if (q) {
       list = list.filter((p) => (p.name || '').toLowerCase().includes(q));
     }
+    if (state.filterStockLevel) {
+      list = list.filter((p) => stockLevel(p) === state.filterStockLevel);
+    }
     return list;
   }
 
@@ -1794,6 +1807,31 @@
     state.categories.forEach((c) => mk(c.name, c.id, state.filterCategoryId === c.id));
   }
 
+  function renderInvStockChips() {
+    const row = $('inv-stock-chips');
+    if (!row) return;
+    row.innerHTML = '';
+    const opts = [
+      ['Todos', ''],
+      ['OK', 'ok'],
+      ['Stock bajo', 'low'],
+      ['Sin stock', 'out'],
+    ];
+    opts.forEach(([label, val]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (state.filterStockLevel === val ? ' is-active' : '');
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        state.filterStockLevel = val;
+        renderInvStockChips();
+        renderProductsTable();
+        renderInvCards();
+      });
+      row.appendChild(b);
+    });
+  }
+
   function renderTpvGrid() {
     const grid = $('tpv-product-grid');
     if (!grid) return;
@@ -1818,14 +1856,14 @@
         'tpv-card' + (empty ? ' is-empty-stock' : '') + (selected ? ' is-selected' : '');
       card.setAttribute('role', 'listitem');
       const em = (p.emoji || '').trim();
-      const rate = state.hasProductExtras ? getPricePerGramForProduct(p) : null;
+      const rate = state.hasProductExtras ? getProductSalePrice(p) : null;
       const rateLabel = unitShort(p);
       const priceHtml =
         rate != null && !Number.isNaN(rate)
-          ? `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</span>`
-          : p.default_price_eur != null && !Number.isNaN(p.default_price_eur)
-            ? `<span class="tpv-card__price">${escapeHtml(formatMoney(p.default_price_eur))}</span>`
-            : '';
+          ? unitKey(p) === 'unit'
+            ? `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}</span>`
+            : `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</span>`
+          : '';
       const catLabel = categoryName(p.category_id);
       card.innerHTML = `
         <span class="tpv-card__visual">
@@ -1893,21 +1931,21 @@
     const em = (p.emoji || '').trim();
     $('tpv-selected-label').textContent = `${em ? em + ' ' : ''}${p.name}`;
 
-    const defG = p.default_sale_grams;
-    const baseDef =
-      defG != null && !Number.isNaN(Number(defG))
-        ? Number(defG)
-        : unitKey(p) === 'unit'
-          ? 1
+    const defG =
+      unitKey(p) === 'unit'
+        ? 1
+        : p.default_sale_grams != null && !Number.isNaN(Number(p.default_sale_grams))
+          ? Number(p.default_sale_grams)
           : 0.5;
-    const safeDef = unitKey(p) === 'unit' ? Math.max(1, Math.round(baseDef)) : baseDef;
+    const safeDef = unitKey(p) === 'unit' ? Math.max(1, Math.round(defG)) : defG;
     const defGx = String(safeDef).replace('.', ',');
     $('tpv-grams-charged').value = defGx;
     $('tpv-grams-dispensed').value = defGx;
 
-    const defP = p.default_price_eur;
-    if (defP != null && !Number.isNaN(Number(defP))) {
-      $('tpv-price').value = String(defP).replace('.', ',');
+    if (unitKey(p) === 'unit') {
+      const salePrice = getProductSalePrice(p);
+      $('tpv-price').value =
+        salePrice != null ? String(salePrice).replace('.', ',') : '';
     } else {
       $('tpv-price').value = '';
     }
@@ -2114,12 +2152,8 @@
     $('inv-product-bottle').value = '0';
     $('inv-product-stock').value = '0';
     $('inv-product-alert').value = '0';
-    $('inv-product-default-grams').value = '';
-    $('inv-product-default-price').value = '';
-    if ($('inv-product-price-per-g')) $('inv-product-price-per-g').value = '';
+    if ($('inv-product-sale-price')) $('inv-product-sale-price').value = '';
     if ($('inv-product-purchase-cost')) $('inv-product-purchase-cost').value = '';
-    if ($('inv-product-retail-price')) $('inv-product-retail-price').value = '';
-    if ($('inv-product-menu-price')) $('inv-product-menu-price').value = '';
     if ($('inv-product-strain')) $('inv-product-strain').value = '';
     resetProductImageUiState();
     state.editingOriginalStock = null;
@@ -2139,26 +2173,10 @@
     $('inv-product-bottle').value = String(p.bottle_weight_grams ?? 0);
     $('inv-product-stock').value = String(p.stock_grams ?? 0);
     $('inv-product-alert').value = String(p.stock_alert_grams ?? 0);
-    if (p.default_sale_grams != null && !Number.isNaN(Number(p.default_sale_grams))) {
-      $('inv-product-default-grams').value = String(p.default_sale_grams).replace('.', ',');
-    } else {
-      $('inv-product-default-grams').value = '';
-    }
-    if (p.default_price_eur != null && !Number.isNaN(Number(p.default_price_eur))) {
-      $('inv-product-default-price').value = String(p.default_price_eur).replace('.', ',');
-    } else {
-      $('inv-product-default-price').value = '';
-    }
-    const ppg = $('inv-product-price-per-g');
-    if (ppg) {
-      if (
-        p.default_price_per_gram_eur != null &&
-        !Number.isNaN(Number(p.default_price_per_gram_eur))
-      ) {
-        ppg.value = String(p.default_price_per_gram_eur).replace('.', ',');
-      } else {
-        ppg.value = '';
-      }
+    const saleEl = $('inv-product-sale-price');
+    if (saleEl) {
+      const sp = getProductSalePrice(p);
+      saleEl.value = sp != null ? String(sp).replace('.', ',') : '';
     }
     const pc = $('inv-product-purchase-cost');
     if (pc) {
@@ -2166,22 +2184,6 @@
         pc.value = String(p.purchase_cost_eur).replace('.', ',');
       } else {
         pc.value = '';
-      }
-    }
-    const rp = $('inv-product-retail-price');
-    if (rp) {
-      if (p.retail_price_eur != null && !Number.isNaN(Number(p.retail_price_eur))) {
-        rp.value = String(p.retail_price_eur).replace('.', ',');
-      } else {
-        rp.value = '';
-      }
-    }
-    const menuEl = $('inv-product-menu-price');
-    if (menuEl) {
-      if (p.menu_price_eur != null && !Number.isNaN(Number(p.menu_price_eur))) {
-        menuEl.value = String(p.menu_price_eur).replace('.', ',');
-      } else {
-        menuEl.value = '';
       }
     }
     if ($('inv-product-strain')) {
@@ -2211,12 +2213,8 @@
     const bottle = parseDecimal($('inv-product-bottle')?.value);
     const stock = parseDecimal($('inv-product-stock')?.value);
     const alertG = parseDecimal($('inv-product-alert')?.value);
-    const defSaleRaw = ($('inv-product-default-grams')?.value || '').trim();
-    const defPriceRaw = ($('inv-product-default-price')?.value || '').trim();
-    const defPerGramRaw = ($('inv-product-price-per-g')?.value || '').trim();
-    const defSale = defSaleRaw === '' ? null : parseDecimal(defSaleRaw);
-    const defPrice = defPriceRaw === '' ? null : parseDecimal(defPriceRaw);
-    const defPerGram = defPerGramRaw === '' ? null : parseDecimal(defPerGramRaw);
+    const salePriceRaw = ($('inv-product-sale-price')?.value || '').trim();
+    const salePrice = salePriceRaw === '' ? null : parseDecimal(salePriceRaw);
 
     if (!name) {
       setMsg('inv-status', 'Indica un nombre de producto.', true);
@@ -2230,22 +2228,13 @@
       setMsg('inv-status', 'Alerta de stock mínimo no válida.', true);
       return;
     }
-    if (defSale !== null && (Number.isNaN(defSale) || defSale < 0)) {
-      setMsg('inv-status', 'Gramos sugeridos TPV no válidos.', true);
-      return;
-    }
-    if (defPrice !== null && (Number.isNaN(defPrice) || defPrice < 0)) {
-      setMsg('inv-status', 'Precio sugerido no válido.', true);
-      return;
-    }
-    if (defPerGram !== null && (Number.isNaN(defPerGram) || defPerGram < 0)) {
-      setMsg('inv-status', 'Precio por gramo no válido.', true);
+    if (salePrice !== null && (Number.isNaN(salePrice) || salePrice < 0)) {
+      setMsg('inv-status', 'Precio de venta no válido.', true);
       return;
     }
 
     const isClubAdmin = state.ctx?.profile?.role === 'admin_club';
     let purchaseCostField = null;
-    let retailPriceField = null;
     if (isClubAdmin && state.hasProductExtras) {
       const pr = ($('inv-product-purchase-cost')?.value || '').trim();
       if (pr !== '') {
@@ -2257,17 +2246,6 @@
         purchaseCostField = pv;
       } else {
         purchaseCostField = null;
-      }
-      const rr = ($('inv-product-retail-price')?.value || '').trim();
-      if (rr !== '') {
-        const rv = parseDecimal($('inv-product-retail-price')?.value);
-        if (Number.isNaN(rv) || rv < 0) {
-          setMsg('inv-status', 'Precio de venta de referencia no válido.', true);
-          return;
-        }
-        retailPriceField = rv;
-      } else {
-        retailPriceField = null;
       }
     }
 
@@ -2305,38 +2283,14 @@
     const extraRow = state.hasProductExtras
       ? {
           stock_alert_grams: alertG,
-          default_sale_grams: defSale,
-          default_price_eur: defPrice,
-          default_price_per_gram_eur: defPerGram,
+          ...buildPricePayloadFromSalePrice(saleUnit, salePrice, isClubAdmin),
           ...(isClubAdmin && state.hasPurchaseCostColumn
             ? { purchase_cost_eur: purchaseCostField }
             : {}),
-          ...(isClubAdmin && state.hasRetailPriceColumn ? { retail_price_eur: retailPriceField } : {}),
         }
       : {};
 
-    let menuPriceField = null;
-    const menuRaw = ($('inv-product-menu-price')?.value || '').trim();
-    if (menuRaw !== '') {
-      menuPriceField = parseDecimal(menuRaw);
-      if (Number.isNaN(menuPriceField) || menuPriceField < 0) {
-        setMsg('inv-status', 'Precio en menú no válido.', true);
-        return;
-      }
-    } else if (state.hasMenuPriceColumn) {
-      menuPriceField = computeAutoMenuPrice(
-        saleUnit,
-        defPrice,
-        defPerGram,
-        defSale,
-        retailPriceField,
-      );
-    }
-
     const row = { ...baseRow, ...extraRow };
-    if (state.hasMenuPriceColumn && menuPriceField != null) {
-      row.menu_price_eur = menuPriceField;
-    }
     if (state.hasCannabisStrainColumn) {
       if (categoryShowsStrain(categoryId)) {
         const s = ($('inv-product-strain')?.value || '').trim();
@@ -3326,6 +3280,7 @@
       renderProductsTable();
       renderInvCards();
     });
+    renderInvStockChips();
     $('inv-search')?.addEventListener('input', () => {
       state.invSearch = $('inv-search')?.value || '';
       renderProductsTable();
@@ -3468,6 +3423,7 @@
       await loadInventoryAccessFlags(ctx);
       applyInventoryEditAccess();
       state.filterCategoryId = '';
+      state.filterStockLevel = '';
       state.invSearch = '';
       state.tpvSearch = '';
       state.tpvCatFilter = '';
@@ -3475,6 +3431,7 @@
       state.tpvPendingCartRowId = null;
       if ($('inv-filter-category')) $('inv-filter-category').value = '';
       if ($('inv-search')) $('inv-search').value = '';
+      renderInvStockChips();
       if ($('tpv-search')) $('tpv-search').value = '';
       renderTpvCart();
       syncTpvStockWrapVisibility();

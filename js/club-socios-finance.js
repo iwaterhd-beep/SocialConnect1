@@ -21,6 +21,10 @@
   let financeVentasCategories = [];
   let financeVentasSearch = '';
   let financeVentasUiBound = false;
+  const financeShiftsFilter = { range: '30d', from: '', to: '' };
+  const financeAdjustFilter = { range: '30d', from: '', to: '' };
+  const financeWalletFilter = { range: '30d', from: '', to: '' };
+  let financeSectionFiltersBound = false;
 
   const BUCKET = 'club_member_docs';
   const MAX_FILE_BYTES = 5242880;
@@ -256,13 +260,24 @@
     if (!tbody || !ctx) return;
     bindFinanceShiftClosuresUiOnce();
 
-    const { data: shifts, error } = await sb()
+    const bounds = getFinanceDateBounds(
+      financeShiftsFilter.range,
+      financeShiftsFilter.from,
+      financeShiftsFilter.to,
+    );
+
+    let query = sb()
       .from('shifts')
       .select('id, opened_at, closed_at, opened_by, closed_by')
       .eq('club_id', ctx.club.id)
       .not('closed_at', 'is', null)
       .order('closed_at', { ascending: false })
-      .limit(50);
+      .limit(financeShiftsFilter.range === 'all' ? 200 : 100);
+
+    if (bounds.from) query = query.gte('closed_at', bounds.from.toISOString());
+    if (bounds.to) query = query.lte('closed_at', bounds.to.toISOString());
+
+    const { data: shifts, error } = await query;
 
     if (error) {
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
@@ -287,6 +302,10 @@
     if (!rows.length) {
       if (emptyEl) {
         emptyEl.hidden = false;
+        emptyEl.textContent =
+          financeShiftsFilter.range === 'all' && !financeShiftsFilter.from && !financeShiftsFilter.to
+            ? 'No hay cierres registrados todavía.'
+            : `No hay cierres en ${financeDateRangeLabel(financeShiftsFilter.range, financeShiftsFilter.from, financeShiftsFilter.to)}.`;
       }
       return;
     }
@@ -1464,38 +1483,44 @@
     return x;
   }
 
-  function getFinanceVentasBounds() {
+  function getFinanceDateBounds(range, fromStr, toStr) {
     const now = new Date();
-    if (financeVentasRange === 'today') {
+    if (range === 'today') {
       return { from: startOfDay(now), to: null };
     }
-    if (financeVentasRange === 'week') {
+    if (range === 'week') {
       return { from: mondayStartOfWeek(now), to: null };
     }
-    if (financeVentasRange === '30d') {
+    if (range === '30d') {
       const from = startOfDay(now);
       from.setDate(from.getDate() - 30);
       return { from, to: null };
     }
-    if (financeVentasRange === 'custom') {
-      const from = parseFinanceDateInput(financeVentasFrom, false);
-      const to = parseFinanceDateInput(financeVentasTo, true);
+    if (range === 'custom') {
+      const from = parseFinanceDateInput(fromStr, false);
+      const to = parseFinanceDateInput(toStr, true);
       return { from, to };
     }
     return { from: null, to: null };
   }
 
-  function financeVentasRangeLabel() {
-    if (financeVentasRange === 'today') return 'hoy';
-    if (financeVentasRange === 'week') return 'esta semana';
-    if (financeVentasRange === '30d') return 'los últimos 30 días';
-    if (financeVentasRange === 'all') return 'todo el historial';
-    if (financeVentasFrom && financeVentasTo) {
-      return `del ${financeVentasFrom} al ${financeVentasTo}`;
-    }
-    if (financeVentasFrom) return `desde ${financeVentasFrom}`;
-    if (financeVentasTo) return `hasta ${financeVentasTo}`;
+  function financeDateRangeLabel(range, fromStr, toStr) {
+    if (range === 'today') return 'hoy';
+    if (range === 'week') return 'esta semana';
+    if (range === '30d') return 'los últimos 30 días';
+    if (range === 'all') return 'todo el historial';
+    if (fromStr && toStr) return `del ${fromStr} al ${toStr}`;
+    if (fromStr) return `desde ${fromStr}`;
+    if (toStr) return `hasta ${toStr}`;
     return 'el rango elegido';
+  }
+
+  function getFinanceVentasBounds() {
+    return getFinanceDateBounds(financeVentasRange, financeVentasFrom, financeVentasTo);
+  }
+
+  function financeVentasRangeLabel() {
+    return financeDateRangeLabel(financeVentasRange, financeVentasFrom, financeVentasTo);
   }
 
   function financeVentasCategoryLabel() {
@@ -1597,6 +1622,51 @@
     };
     mk('Todas', '', financeVentasCategoryId === '');
     financeVentasCategories.forEach((c) => mk(c.name, c.id, financeVentasCategoryId === c.id));
+  }
+
+  function renderFinanceDateFilterUi(section, range) {
+    document.querySelectorAll(`[data-finance-${section}-range]`).forEach((btn) => {
+      btn.classList.toggle('is-active', btn.getAttribute(`data-finance-${section}-range`) === range);
+    });
+    const customWrap = $(`finance-${section}-custom`);
+    if (customWrap) {
+      const showCustom = range === 'custom';
+      customWrap.hidden = !showCustom;
+      customWrap.classList.toggle('is-hidden', !showCustom);
+    }
+  }
+
+  function bindFinanceDateFilter(section, filter, refreshFn) {
+    if (filter._bound) return;
+    filter._bound = true;
+    const attr = `data-finance-${section}-range`;
+
+    document.querySelectorAll(`[${attr}]`).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        filter.range = btn.getAttribute(attr) || '30d';
+        renderFinanceDateFilterUi(section, filter.range);
+        if (filter.range !== 'custom') void refreshFn();
+      });
+    });
+
+    $(`finance-${section}-apply`)?.addEventListener('click', () => {
+      filter.from = ($(`finance-${section}-from`)?.value || '').trim();
+      filter.to = ($(`finance-${section}-to`)?.value || '').trim();
+      filter.range = 'custom';
+      renderFinanceDateFilterUi(section, 'custom');
+      void refreshFn();
+    });
+
+    renderFinanceDateFilterUi(section, filter.range);
+  }
+
+  function bindFinanceSectionFiltersOnce() {
+    if (financeSectionFiltersBound) return;
+    if (!$('finance-shifts-tbody') && !$('finance-inventory-adjust-tbody') && !$('finance-wallet-tbody')) return;
+    financeSectionFiltersBound = true;
+    bindFinanceDateFilter('shifts', financeShiftsFilter, refreshFinanceShiftClosures);
+    bindFinanceDateFilter('adjust', financeAdjustFilter, refreshFinanceStockAdjustments);
+    bindFinanceDateFilter('wallet', financeWalletFilter, refreshFinanceWalletMovements);
   }
 
   function renderFinanceVentasRangeChips() {
@@ -1988,7 +2058,11 @@
     const emptyEl = $('finance-wallet-empty');
     if (!tbody || !ctx) return;
 
-    const bounds = getFinanceVentasBounds();
+    const bounds = getFinanceDateBounds(
+      financeWalletFilter.range,
+      financeWalletFilter.from,
+      financeWalletFilter.to,
+    );
     let query = sb()
       .from('club_member_wallet_ledger')
       .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes, member_id')
@@ -2023,7 +2097,9 @@
     tbody.innerHTML = '';
     if (!list.length) {
       if (emptyEl) emptyEl.hidden = false;
-      if (summaryEl) summaryEl.textContent = `Sin ajustes de monedero en ${financeVentasRangeLabel()}.`;
+      if (summaryEl) {
+        summaryEl.textContent = `Sin movimientos de monedero en ${financeDateRangeLabel(financeWalletFilter.range, financeWalletFilter.from, financeWalletFilter.to)}.`;
+      }
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
@@ -2064,18 +2140,25 @@
     const section = $('finance-inventory-adjust-section');
     if (!tbody || !ctx) return;
 
-    const d30 = startOfDay(new Date());
-    d30.setDate(d30.getDate() - 30);
+    const bounds = getFinanceDateBounds(
+      financeAdjustFilter.range,
+      financeAdjustFilter.from,
+      financeAdjustFilter.to,
+    );
 
-    const { data: rows, error } = await sb()
+    let adjustQuery = sb()
       .from('inventory_stock_adjustments')
       .select(
         'id, created_at, delta_grams, previous_stock_grams, new_stock_grams, notes, product_id, created_by',
       )
       .eq('club_id', ctx.club.id)
-      .gte('created_at', d30.toISOString())
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(financeAdjustFilter.range === 'all' ? 500 : 200);
+
+    if (bounds.from) adjustQuery = adjustQuery.gte('created_at', bounds.from.toISOString());
+    if (bounds.to) adjustQuery = adjustQuery.lte('created_at', bounds.to.toISOString());
+
+    const { data: rows, error } = await adjustQuery;
 
     if (error) {
       if (
@@ -2117,7 +2200,10 @@
 
     tbody.innerHTML = '';
     if (!list.length) {
-      if (emptyEl) emptyEl.hidden = false;
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = `No hay ajustes en ${financeDateRangeLabel(financeAdjustFilter.range, financeAdjustFilter.from, financeAdjustFilter.to)}.`;
+      }
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
@@ -2301,6 +2387,7 @@
 
   async function refreshFinance() {
     if (!ctx) return;
+    bindFinanceSectionFiltersOnce();
     setFinanceMsg('Cargando…', false);
 
     const kpiOk = await refreshFinanceKpis();

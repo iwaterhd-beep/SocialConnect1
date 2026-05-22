@@ -27,7 +27,7 @@
     </div>
   </div>
   <p class="hint hint--small" style="margin-top: 0.5rem">
-    Si en el menú salen «—», pulsa <strong>Rellenar precios</strong> o en cada producto indica <strong>Precio en menú tablet</strong>.
+    Si en el menú salen «—», pulsa <strong>Rellenar precios</strong> (usa el precio de venta de cada producto).
   </p>
   <p id="inv-menu-status" class="msg" role="status" aria-live="polite"></p>
 </details>
@@ -50,6 +50,7 @@
       </select>
     </div>
     <div id="inv-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
+    <div id="inv-stock-chips" class="chip-row sc-chip-row-compact inv-stock-chips" role="group" aria-label="Estado de stock"></div>
   </div>
 
   <div id="inv-product-cards" class="inv-prod-grid sc-inv-grid" aria-live="polite"></div>
@@ -203,9 +204,8 @@
       </div>
       <div class="inv-extra-fields">
         <p class="hint inv-extra-hint" id="inv-extra-hint" hidden>
-          Ejecuta <code>009_inventory_product_extras.sql</code> y <code>015_inventory_price_per_gram.sql</code> para alertas,
-          TPV y precio por gramo. <strong>Coste de compra</strong> y <strong>precio de venta ref.</strong> requieren
-          <code>022_inventory_purchase_cost.sql</code> y <code>023_inventory_retail_price.sql</code> (Finanzas admin).
+          Ejecuta <code>009_inventory_product_extras.sql</code> para alertas y precio de venta en TPV.
+          <strong>Coste de compra</strong> requiere <code>022_inventory_purchase_cost.sql</code> (Finanzas admin).
           Para poder <strong>quitar del catálogo</strong> productos con ventas o ajustes +/-, ejecuta <code>024_inventory_product_archived.sql</code>.
         </p>
         <div class="grid grid--2">
@@ -214,40 +214,17 @@
             <input class="input" id="inv-product-alert" inputmode="decimal" value="0" />
           </div>
           <div class="form__row">
-            <label for="inv-product-default-grams" id="inv-label-default-qty">Cantidad sugerida TPV</label>
+            <label for="inv-product-sale-price" id="inv-label-sale-price">Precio de venta (€)</label>
             <input
               class="input"
-              id="inv-product-default-grams"
+              id="inv-product-sale-price"
               inputmode="decimal"
-              placeholder="Ej. 0,5 (opcional)"
-            />
-          </div>
-        </div>
-        <div class="grid grid--2">
-          <div class="form__row">
-            <label for="inv-product-default-price">Precio sugerido TPV (€)</label>
-            <input class="input" id="inv-product-default-price" inputmode="decimal" placeholder="Opcional" />
-          </div>
-          <div class="form__row" id="inv-row-menu-price">
-            <label for="inv-product-menu-price" id="inv-label-menu-price">Precio en menú tablet (€)</label>
-            <input
-              class="input"
-              id="inv-product-menu-price"
-              inputmode="decimal"
-              placeholder="Ej. 1,50 — bebidas por unidad"
+              placeholder="Ej. 1,50"
             />
             <p class="hint hint--small" style="margin-top: 0.35rem">
-              Lo que ven los socios en la carta. <strong>Unidad</strong>: €/ud · <strong>Gramos</strong>: €/g
+              Mismo precio en <strong>TPV</strong>, <strong>menú tablet</strong> y valoración de stock.
+              <strong>Unidad</strong>: €/ud · <strong>Gramos</strong>: €/g
             </p>
-          </div>
-          <div class="form__row">
-            <label for="inv-product-price-per-g" id="inv-label-rate">Precio por unidad (€/u)</label>
-            <input
-              class="input"
-              id="inv-product-price-per-g"
-              inputmode="decimal"
-              placeholder="Ej. 5 — prioridad en TPV"
-            />
           </div>
         </div>
         <div class="grid grid--2">
@@ -263,24 +240,7 @@
               Tu <strong>coste</strong> por gramo o por unidad. En <strong>Finanzas</strong> (admin): valor del stock al coste.
             </p>
           </div>
-          <div class="form__row" id="inv-row-retail-price" hidden>
-            <label for="inv-product-retail-price" id="inv-label-retail-price">Precio de venta ref. (€)</label>
-            <input
-              class="input"
-              id="inv-product-retail-price"
-              inputmode="decimal"
-              placeholder="€/g o €/ud — referencia"
-            />
-            <p class="hint hint--small" style="margin-top: 0.35rem">
-              A qué <strong>vendes</strong> (referencia). En <strong>Finanzas</strong> (admin): valor del stock si se vendiera todo a ese precio.
-            </p>
-          </div>
         </div>
-        <p class="hint" style="margin-top: 0.35rem">
-          <strong>€/g</strong> tiene prioridad: importe = gramos en ticket × €/g.
-          Con <strong>precio</strong> y <strong>gramos sugeridos</strong>, la tarifa es precio ÷ esos gramos.
-          Si solo indicas <strong>precio</strong> (sin gramos sugeridos), en TPV se interpreta como <strong>€/g</strong> (p. ej. 5 y 2 g en ticket → 10 €).
-        </p>
       </div>
     </div>
     <div class="row-actions">

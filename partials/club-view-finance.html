@@ -37,6 +37,26 @@
 
 <section class="card-section sc-finance-shifts" aria-labelledby="finance-shifts-title">
   <h2 id="finance-shifts-title">Cierres de turno</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo cierres">
+      <button type="button" class="chip" data-finance-shifts-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-shifts-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-shifts-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-shifts-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-shifts-range="custom">Fechas</button>
+    </div>
+    <div id="finance-shifts-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-shifts-from">Desde</label>
+        <input class="input" id="finance-shifts-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-shifts-to">Hasta</label>
+        <input class="input" id="finance-shifts-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-shifts-apply">Aplicar</button>
+    </div>
+  </div>
   <p id="finance-shifts-empty" class="hint">No hay cierres registrados todavía.</p>
   <div class="table-wrap sc-table-compact">
     <table class="table-compact">
@@ -56,6 +76,26 @@
 
 <section class="card-section sc-finance-adjust" aria-labelledby="finance-inventory-adjust-title" id="finance-inventory-adjust-section">
   <h2 id="finance-inventory-adjust-title">Ajustes inventario (+/-)</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo ajustes">
+      <button type="button" class="chip" data-finance-adjust-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-adjust-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-adjust-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-adjust-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-adjust-range="custom">Fechas</button>
+    </div>
+    <div id="finance-adjust-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-adjust-from">Desde</label>
+        <input class="input" id="finance-adjust-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-adjust-to">Hasta</label>
+        <input class="input" id="finance-adjust-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-adjust-apply">Aplicar</button>
+    </div>
+  </div>
   <p id="finance-inventory-adjust-empty" class="hint" hidden>No hay ajustes en los últimos 30 días.</p>
   <div class="table-wrap sc-table-compact">
     <table class="table-compact">
@@ -75,6 +115,26 @@
 
 <section class="card-section sc-finance-wallet" aria-labelledby="finance-wallet-title">
   <h2 id="finance-wallet-title">Monedero</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo monedero">
+      <button type="button" class="chip" data-finance-wallet-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-wallet-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-wallet-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-wallet-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-wallet-range="custom">Fechas</button>
+    </div>
+    <div id="finance-wallet-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-wallet-from">Desde</label>
+        <input class="input" id="finance-wallet-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-wallet-to">Hasta</label>
+        <input class="input" id="finance-wallet-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-wallet-apply">Aplicar</button>
+    </div>
+  </div>
   <p id="finance-wallet-summary" class="hint"></p>
   <p id="finance-wallet-empty" class="hint" hidden>Sin movimientos en este periodo.</p>
   <div class="table-wrap sc-table-compact">
@@ -96,17 +156,17 @@
 </section>
 
 <section class="card-section sc-finance-sales sc-span-full" aria-labelledby="finance-ventas-title">
-  <h2 id="finance-ventas-title">Ventas TPV</h2>
-  <div class="finance-ventas-toolbar sc-toolbar-inline">
+  <h2 id="finance-ventas-title" class="sc-finance-sales__title">Ventas TPV</h2>
+  <div class="finance-ventas-toolbar sc-finance-toolbar sc-finance-toolbar--center sc-toolbar-inline">
     <input type="search" id="finance-sales-search" class="input" placeholder="Buscar producto…" autocomplete="off" />
-    <div id="finance-ventas-range" class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo">
+    <div id="finance-ventas-range" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo">
       <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
       <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
       <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
       <button type="button" class="chip" data-finance-sales-range="all">Todas</button>
       <button type="button" class="chip" data-finance-sales-range="custom">Fechas</button>
     </div>
-    <div id="finance-ventas-custom" class="finance-ventas-custom is-hidden" hidden>
+    <div id="finance-ventas-custom" class="finance-ventas-custom sc-finance-toolbar__custom is-hidden" hidden>
       <div class="form__row" style="margin-bottom: 0">
         <label for="finance-sales-from">Desde</label>
         <input class="input" id="finance-sales-from" type="date" />
@@ -123,7 +183,7 @@
         <option value="">Todas</option>
       </select>
     </div>
-    <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact" aria-label="Categorías"></div>
+    <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" aria-label="Categorías"></div>
   </div>
   <p id="finance-ventas-summary" class="hint"></p>
   <p id="finance-ventas-empty" class="hint" hidden>No hay ventas en este periodo.</p>
