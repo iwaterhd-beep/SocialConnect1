@@ -509,6 +509,9 @@
     if (typeof window.scClubReloadInventoryProducts === 'function') {
       await window.scClubReloadInventoryProducts();
     }
+    if (typeof window.scClubRefreshHomeKpis === 'function') {
+      void window.scClubRefreshHomeKpis();
+    }
   }
 
   function bindStockUi() {

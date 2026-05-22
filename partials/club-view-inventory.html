@@ -1,6 +1,6 @@
-<div class="club-view-stage">
-<section class="card-section menu-admin-card" aria-labelledby="inv-menu-title">
-  <h2 id="inv-menu-title">Menú en tablet</h2>
+<div class="club-view-stage sc-inv-layout">
+<details class="sc-collapse card-section menu-admin-card sc-inv-menu">
+  <summary>Menú en tablet</summary>
   <p class="hint" style="margin-top: 0">
     Carta pública para socios: solo <strong>producto</strong> y <strong>precio</strong> (con stock). Enlace:
     <code>socialconnectcs.com/menu/?club=tu-club</code>
@@ -30,9 +30,9 @@
     Si en el menú salen «—», pulsa <strong>Rellenar precios</strong> o en cada producto indica <strong>Precio en menú tablet</strong>.
   </p>
   <p id="inv-menu-status" class="msg" role="status" aria-live="polite"></p>
-</section>
+</details>
 
-<section class="card-section" aria-labelledby="inv-list-title">
+<section class="card-section sc-inv-products" aria-labelledby="inv-list-title">
   <div class="member-csv-toolbar">
     <h2 id="inv-list-title">Productos</h2>
     <div class="member-csv-toolbar__actions">
@@ -52,9 +52,9 @@
     <div id="inv-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
   </div>
 
-  <div id="inv-product-cards" class="inv-prod-grid" aria-live="polite"></div>
+  <div id="inv-product-cards" class="inv-prod-grid sc-inv-grid" aria-live="polite"></div>
 
-  <div class="table-wrap" style="margin-top: 0.75rem">
+  <div class="table-wrap sc-inv-table-fallback" style="margin-top: 0.75rem">
     <table class="table-compact">
       <thead>
         <tr>

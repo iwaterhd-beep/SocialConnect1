@@ -604,6 +604,8 @@
     updateAllDocLabels();
     setMemberMsg('Editando socio.', false);
     memberEditInitialType = row.member_type || 'standard';
+    renderMembersTable();
+    document.querySelector('.sc-members-list tr.is-selected')?.scrollIntoView({ block: 'nearest' });
   }
 
   async function showMemberProfile(memberId) {
@@ -771,6 +773,7 @@
     if (initials) initials.style.display = '';
     updateMemberAvatarInitials();
     updateAllDocLabels();
+    renderMembersTable();
   }
 
   function renderMembersTable() {
@@ -783,6 +786,7 @@
       .forEach((m) => {
       const tr = document.createElement('tr');
       if (isActiveVipMember(m)) tr.classList.add('member-row--vip');
+      if ($('member-edit-id')?.value === m.id) tr.classList.add('is-selected');
       const dni =
         m.dni != null && String(m.dni).trim() !== ''
           ? String(m.dni).trim()
@@ -811,6 +815,10 @@
         });
       });
       tr.querySelector('[data-edit-member]')?.addEventListener('click', () => {
+        void editMemberFromRow(m.id);
+      });
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('button, a, [data-profile-member]')) return;
         void editMemberFromRow(m.id);
       });
       tbody.appendChild(tr);
@@ -1346,6 +1354,9 @@
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
     }
+    if (typeof window.scClubRefreshHomeKpis === 'function') {
+      void window.scClubRefreshHomeKpis();
+    }
   }
 
   function startOfDay(d) {
@@ -1664,6 +1675,93 @@
       detailEl.textContent = cashLine + recLine;
     }
     return true;
+  }
+
+  async function refreshHomeKpis() {
+    if (!ctx) return;
+    const clubId = ctx.club.id;
+    const salesEl = $('home-kpi-sales');
+    const membersEl = $('home-kpi-members');
+    const alertsEl = $('home-kpi-alerts');
+    if (!salesEl && !membersEl && !alertsEl) return;
+
+    const now = new Date();
+    const d0 = startOfDay(now);
+
+    const tasks = [];
+
+    if (salesEl) {
+      tasks.push(
+        (async () => {
+          let { data: rows, error } = await sb()
+            .from('tpv_dispenses')
+            .select('price_charged_eur, created_at')
+            .eq('club_id', clubId)
+            .gte('created_at', d0.toISOString())
+            .limit(300);
+          if (error) {
+            salesEl.textContent = '—';
+            return;
+          }
+          let sumToday = 0;
+          (rows || []).forEach((r) => {
+            sumToday += Number(r.price_charged_eur) || 0;
+          });
+          salesEl.textContent = formatMoney(sumToday);
+        })(),
+      );
+    }
+
+    if (membersEl) {
+      tasks.push(
+        (async () => {
+          const { count, error } = await sb()
+            .from('club_members')
+            .select('id', { count: 'exact', head: true })
+            .eq('club_id', clubId)
+            .eq('is_active', true);
+          membersEl.textContent = error ? '—' : String(count ?? 0);
+        })(),
+      );
+    }
+
+    if (alertsEl) {
+      tasks.push(
+        (async () => {
+          let { data: products, error } = await sb()
+            .from('inventory_products')
+            .select('stock_grams, stock_alert_grams')
+            .eq('club_id', clubId);
+          if (
+            error &&
+            (error.code === '42703' ||
+              String(error.message || '').toLowerCase().includes('stock_alert'))
+          ) {
+            const retry = await sb()
+              .from('inventory_products')
+              .select('stock_grams')
+              .eq('club_id', clubId);
+            products = retry.data;
+            error = retry.error;
+          }
+          if (error) {
+            alertsEl.textContent = '—';
+            return;
+          }
+          let lowCount = 0;
+          (products || []).forEach((p) => {
+            const min = Number(p.stock_alert_grams) || 0;
+            if (min <= 0) return;
+            const stock = Number(p.stock_grams) || 0;
+            if (stock <= min) lowCount += 1;
+          });
+          alertsEl.textContent = String(lowCount);
+          alertsEl.classList.toggle('is-alert', lowCount > 0);
+        })(),
+      );
+    }
+
+    await Promise.all(tasks);
   }
 
   async function refreshFinanceVentasTpv() {
@@ -2775,8 +2873,18 @@
     if (!ctx) return;
     try {
       await refreshFinance();
+      await refreshHomeKpis();
     } catch (e) {
       /* ignore refresh errors from external triggers */
+    }
+  };
+
+  window.scClubRefreshHomeKpis = async function () {
+    if (!ctx) return;
+    try {
+      await refreshHomeKpis();
+    } catch (e) {
+      /* ignore */
     }
   };
 })();

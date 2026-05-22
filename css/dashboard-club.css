@@ -1,11 +1,11 @@
 /* Panel club — layout inspirado en SocialConnect (TPV rejilla + ticket) */
 
-/* Barra superior fija (#tnav style) */
-.has-club-topnav {
+/* Barra superior fija (#tnav style) — solo layout legacy sin sidebar */
+body.has-club-topnav:not(.club-app) {
   padding-top: 56px;
 }
 
-body.has-club-topnav {
+body.has-club-topnav:not(.club-app) {
   background:
     radial-gradient(ellipse 140% 90% at 10% -20%, rgba(34, 197, 94, 0.2), transparent 50%),
     radial-gradient(ellipse 100% 70% at 95% 10%, rgba(13, 148, 136, 0.16), transparent 48%),

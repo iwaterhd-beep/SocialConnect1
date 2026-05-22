@@ -106,6 +106,26 @@
     return map[userId] || '—';
   }
 
+  function updateShellShiftIndicators(open) {
+    const pill = $('app-shift-pill');
+    if (pill) {
+      pill.hidden = false;
+      pill.classList.toggle('app-shift-pill--open', !!open);
+      pill.classList.toggle('app-shift-pill--closed', !open);
+      pill.textContent = open ? 'Turno abierto' : 'Sin turno';
+    }
+    const homeShift = $('home-kpi-shift');
+    if (homeShift) {
+      homeShift.textContent = open ? 'Abierto' : 'Cerrado';
+      homeShift.classList.toggle('is-open', !!open);
+      homeShift.classList.remove('is-alert');
+    }
+    document.querySelectorAll('[data-shift-nav-badge]').forEach((badge) => {
+      badge.hidden = !open;
+      badge.setAttribute('aria-hidden', open ? 'false' : 'true');
+    });
+  }
+
   async function refreshShiftsUI(ctx) {
     const open = await getOpenShift(ctx.club.id);
     const recent = await fetchRecentShifts(ctx.club.id);
@@ -135,6 +155,8 @@
       btnClose.disabled = true;
       delete btnClose.dataset.shiftId;
     }
+
+    updateShellShiftIndicators(!!open);
 
     const tbody = $('shifts-tbody');
     if (tbody) {
@@ -1139,6 +1161,9 @@
   }
 
   function refreshClubView(viewName) {
+    if (viewName === 'home' && typeof window.scClubRefreshHomeKpis === 'function') {
+      void window.scClubRefreshHomeKpis();
+    }
     if (viewName === 'stock') {
       if (typeof window.scClubRefreshStockUi === 'function') {
         void window.scClubRefreshStockUi();
@@ -1165,10 +1190,68 @@
     }
   }
 
+  const PAGE_TITLES = {
+    home: 'Inicio',
+    tpv: 'TPV',
+    inventory: 'Inventario',
+    stock: 'Stock por turno',
+    members: 'Socios',
+    finance: 'Finanzas',
+  };
+
+  function setPageTitle(viewName) {
+    const el = $('app-page-title');
+    if (el) el.textContent = PAGE_TITLES[viewName] || 'Panel';
+  }
+
+  function closeSidebar() {
+    document.body.classList.remove('sidebar-open');
+    const backdrop = $('app-sidebar-backdrop');
+    if (backdrop) {
+      backdrop.hidden = true;
+      backdrop.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function openSidebar() {
+    document.body.classList.add('sidebar-open');
+    const backdrop = $('app-sidebar-backdrop');
+    if (backdrop) {
+      backdrop.hidden = false;
+      backdrop.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function initSidebarUi() {
+    $('sidebar-toggle')?.addEventListener('click', () => openSidebar());
+    $('sidebar-close')?.addEventListener('click', () => closeSidebar());
+    $('app-sidebar-backdrop')?.addEventListener('click', () => closeSidebar());
+
+    if (window.matchMedia('(min-width: 1024px) and (max-width: 1279px)').matches) {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  }
+
+  const VIEW_IDS = ['home', 'tpv', 'inventory', 'stock', 'members', 'finance'];
+
+  function viewFromHash() {
+    const h = (location.hash || '').replace(/^#/, '').toLowerCase();
+    return VIEW_IDS.includes(h) ? h : 'home';
+  }
+
+  function syncViewHash(viewName) {
+    const target = viewName === 'home' ? '' : `#${viewName}`;
+    const current = location.hash || '';
+    if (target === current) return;
+    const base = location.pathname + location.search;
+    history.replaceState(null, '', target ? `${base}${target}` : base);
+  }
+
   function initNav() {
     const tabs = document.querySelectorAll('.club-tab');
     const views = document.querySelectorAll('.club-view');
     function show(viewName) {
+      if (!VIEW_IDS.includes(viewName)) viewName = 'home';
       views.forEach((v) => {
         const match = v.dataset.view === viewName;
         v.classList.toggle('is-hidden', !match);
@@ -1183,12 +1266,23 @@
         t.classList.toggle('is-active', active);
         t.setAttribute('aria-selected', active ? 'true' : 'false');
       });
+      setPageTitle(viewName);
+      closeSidebar();
       refreshClubView(viewName);
+      document.querySelectorAll('[data-quick-nav]').forEach((el) => {
+        el.classList.toggle('is-active', el.dataset.quickNav === viewName);
+      });
+      syncViewHash(viewName);
     }
     tabs.forEach((t) => {
       t.addEventListener('click', () => show(t.dataset.view));
     });
-    show('home');
+    document.querySelectorAll('[data-quick-nav]').forEach((el) => {
+      el.addEventListener('click', () => show(el.dataset.quickNav));
+    });
+    $('app-shift-pill')?.addEventListener('click', () => show('home'));
+    window.addEventListener('hashchange', () => show(viewFromHash()));
+    show(viewFromHash());
   }
 
   async function init() {
@@ -1217,6 +1311,7 @@
     document.dispatchEvent(new CustomEvent('sc-club-shell-ready'));
 
     initNav();
+    initSidebarUi();
     initClubDarkMode();
 
     try {
@@ -1263,6 +1358,10 @@
       } catch (e) {
         console.error(e);
       }
+    }
+
+    if (typeof window.scClubRefreshHomeKpis === 'function') {
+      void window.scClubRefreshHomeKpis();
     }
 
     $('logout-btn')?.addEventListener('click', async () => {

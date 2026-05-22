@@ -1,56 +1,44 @@
-<div class="club-view-stage">
-<section class="card-section" aria-labelledby="finance-title">
-  <h2 id="finance-title">Finanzas</h2>
-  <p class="hint" style="margin-top: 0">
-    Resumen de <strong>ventas TPV</strong> (efectivo y monedero) y <strong>movimientos de monedero</strong> (recargas/retiradas).
-    Las recargas marcadas en efectivo entran en el arqueo del turno.
-  </p>
+<div class="club-view-stage sc-finance-layout">
+<section class="card-section sc-finance-kpis-card" aria-labelledby="finance-title">
+  <div class="sc-section-head">
+    <h2 id="finance-title">Resumen</h2>
+    <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
+  </div>
   <div class="finance-kpis" id="finance-kpis">
-    <div class="finance-kpi">
+    <div class="finance-kpi sc-kpi">
       <span class="finance-kpi__label">Hoy</span>
       <span class="finance-kpi__value" id="finance-kpi-today">—</span>
     </div>
-    <div class="finance-kpi">
-      <span class="finance-kpi__label">Últimos 7 días</span>
+    <div class="finance-kpi sc-kpi">
+      <span class="finance-kpi__label">7 días</span>
       <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
     </div>
-    <div class="finance-kpi">
-      <span class="finance-kpi__label">Últimos 30 días</span>
+    <div class="finance-kpi sc-kpi">
+      <span class="finance-kpi__label">30 días</span>
       <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
     </div>
   </div>
-  <p id="finance-kpi-detail" class="hint finance-kpi-detail" style="margin-top: 0.5rem"></p>
+  <p id="finance-kpi-detail" class="hint finance-kpi-detail"></p>
   <section id="finance-admin-inventory-cost" class="finance-admin-inventory-cost is-hidden" hidden aria-labelledby="finance-inv-cost-title">
     <h3 id="finance-inv-cost-title" class="finance-admin-inventory-cost__title">Valor inventario (admin)</h3>
-    <p class="hint" style="margin-top: 0">
-      Solo para el <strong>administrador del club</strong>: estimación desde <strong>Inventario</strong> (no es el dinero de caja del TPV).
-      <strong>Stock al coste</strong> solo usa el <em>coste de compra</em> del producto.
-      <strong>Stock a precio de venta ref.</strong> usa el <em>precio de venta ref.</em> si lo rellenaste; si no, la misma tarifa que el TPV (€/g, €/ud o precio ÷ gramos sugeridos).
-    </p>
     <div class="finance-admin-inventory-cost__kpis">
-      <div class="finance-kpi finance-kpi--inventory-cost" id="finance-kpi-inventory-cost-wrap">
-        <span class="finance-kpi__label">Stock al coste (coste × stock)</span>
+      <div class="finance-kpi finance-kpi--inventory-cost sc-kpi" id="finance-kpi-inventory-cost-wrap">
+        <span class="finance-kpi__label">Stock al coste</span>
         <span class="finance-kpi__value" id="finance-kpi-inventory-cost">—</span>
       </div>
-      <div class="finance-kpi finance-kpi--inventory-retail" id="finance-kpi-inventory-retail-wrap">
-        <span class="finance-kpi__label">Stock a precio de venta ref.</span>
+      <div class="finance-kpi finance-kpi--inventory-retail sc-kpi" id="finance-kpi-inventory-retail-wrap">
+        <span class="finance-kpi__label">Stock a precio venta ref.</span>
         <span class="finance-kpi__value" id="finance-kpi-inventory-retail">—</span>
       </div>
     </div>
   </section>
-  <div class="row-actions" style="margin-top: 1rem">
-    <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
-  </div>
   <p id="finance-status" class="msg" role="status" aria-live="polite"></p>
 </section>
 
-<section class="card-section" aria-labelledby="finance-shifts-title">
+<section class="card-section sc-finance-shifts" aria-labelledby="finance-shifts-title">
   <h2 id="finance-shifts-title">Cierres de turno</h2>
-  <p class="hint" style="margin-top: 0">
-    Turnos ya cerrados: quién abrió y cerró caja, y el <strong>detalle completo del cierre</strong> (ventas, stock, arqueo) al pulsar <strong>Ver cierre</strong>.
-  </p>
-  <p id="finance-shifts-empty" class="hint" style="margin-top: 0">No hay cierres registrados todavía.</p>
-  <div class="table-wrap" style="margin-top: 0.75rem">
+  <p id="finance-shifts-empty" class="hint">No hay cierres registrados todavía.</p>
+  <div class="table-wrap sc-table-compact">
     <table class="table-compact">
       <thead>
         <tr>
@@ -66,22 +54,17 @@
   </div>
 </section>
 
-<section class="card-section" aria-labelledby="finance-inventory-adjust-title" id="finance-inventory-adjust-section">
-  <h2 id="finance-inventory-adjust-title">Movimientos de inventario (+/-)</h2>
-  <p class="hint" style="margin-top: 0">
-    Altas y bajas de stock hechas desde <strong>Inventario</strong> con el botón <strong>+/-</strong>: quién lo hizo, cuánto y la nota opcional.
-  </p>
-  <p id="finance-inventory-adjust-empty" class="hint" style="margin-top: 0" hidden>
-    No hay ajustes de inventario en los últimos 30 días.
-  </p>
-  <div class="table-wrap" style="margin-top: 0.75rem">
+<section class="card-section sc-finance-adjust" aria-labelledby="finance-inventory-adjust-title" id="finance-inventory-adjust-section">
+  <h2 id="finance-inventory-adjust-title">Ajustes inventario (+/-)</h2>
+  <p id="finance-inventory-adjust-empty" class="hint" hidden>No hay ajustes en los últimos 30 días.</p>
+  <div class="table-wrap sc-table-compact">
     <table class="table-compact">
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Producto</th>
           <th>Usuario</th>
-          <th>Movimiento</th>
+          <th>Mov.</th>
           <th>Nota</th>
         </tr>
       </thead>
@@ -90,14 +73,11 @@
   </div>
 </section>
 
-<section class="card-section" aria-labelledby="finance-wallet-title">
-  <h2 id="finance-wallet-title">Monedero (recargas y retiradas)</h2>
-  <p class="hint" style="margin-top: 0">
-    Ajustes de saldo de socios. Si marcaste <strong>en efectivo</strong>, el importe entra en el arqueo del turno.
-  </p>
-  <p id="finance-wallet-summary" class="hint" style="margin-top: 0.75rem"></p>
-  <p id="finance-wallet-empty" class="hint" style="margin-top: 0" hidden>Sin movimientos de monedero en este periodo.</p>
-  <div class="table-wrap" style="margin-top: 0.75rem">
+<section class="card-section sc-finance-wallet" aria-labelledby="finance-wallet-title">
+  <h2 id="finance-wallet-title">Monedero</h2>
+  <p id="finance-wallet-summary" class="hint"></p>
+  <p id="finance-wallet-empty" class="hint" hidden>Sin movimientos en este periodo.</p>
+  <div class="table-wrap sc-table-compact">
     <table class="table-compact">
       <thead>
         <tr>
@@ -115,21 +95,11 @@
   </div>
 </section>
 
-<section class="card-section" aria-labelledby="finance-ventas-title">
+<section class="card-section sc-finance-sales sc-span-full" aria-labelledby="finance-ventas-title">
   <h2 id="finance-ventas-title">Ventas TPV</h2>
-  <p class="hint" style="margin-top: 0">
-    Consulta las ventas registradas y filtra por <strong>hoy</strong>, <strong>semana</strong>, <strong>30 días</strong>,
-    <strong>todas</strong>, un <strong>rango de fechas</strong>, por <strong>categoría</strong> o por <strong>producto</strong>.
-  </p>
-  <div class="finance-ventas-toolbar">
-    <input
-      type="search"
-      id="finance-sales-search"
-      class="input"
-      placeholder="Buscar producto…"
-      autocomplete="off"
-    />
-    <div id="finance-ventas-range" class="chip-row" role="group" aria-label="Periodo de ventas">
+  <div class="finance-ventas-toolbar sc-toolbar-inline">
+    <input type="search" id="finance-sales-search" class="input" placeholder="Buscar producto…" autocomplete="off" />
+    <div id="finance-ventas-range" class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo">
       <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
       <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
       <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
@@ -145,19 +115,19 @@
         <label for="finance-sales-to">Hasta</label>
         <input class="input" id="finance-sales-to" type="date" />
       </div>
-      <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar fechas</button>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar</button>
     </div>
     <div class="form__row finance-ventas-category" style="margin-bottom: 0">
       <label for="finance-sales-category">Categoría</label>
       <select class="select" id="finance-sales-category">
-        <option value="">Todas las categorías</option>
+        <option value="">Todas</option>
       </select>
     </div>
-    <div id="finance-sales-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
+    <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact" aria-label="Categorías"></div>
   </div>
-  <p id="finance-ventas-summary" class="hint" style="margin-top: 0.75rem"></p>
-  <p id="finance-ventas-empty" class="hint" style="margin-top: 0" hidden>No hay ventas en este periodo.</p>
-  <div class="table-wrap" style="margin-top: 0.75rem">
+  <p id="finance-ventas-summary" class="hint"></p>
+  <p id="finance-ventas-empty" class="hint" hidden>No hay ventas en este periodo.</p>
+  <div class="table-wrap sc-table-fill">
     <table class="table-compact">
       <thead>
         <tr>

@@ -30,7 +30,7 @@
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #74c69d;
+  color: #22c55e;
 }
 
 .menu-header__title {
@@ -87,10 +87,10 @@
 }
 
 .menu-cat-nav__btn.is-active {
-  background: linear-gradient(135deg, #2d6a4f 0%, #52b788 100%);
-  border-color: rgba(149, 213, 178, 0.5);
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  border-color: rgba(34, 197, 94, 0.5);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(45, 106, 79, 0.45);
+  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.4);
 }
 
 .menu-main {
@@ -124,7 +124,7 @@
   flex: 1;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, rgba(82, 183, 136, 0.8), transparent);
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.75), transparent);
 }
 
 .menu-grid {

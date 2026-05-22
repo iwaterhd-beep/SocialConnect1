@@ -3,100 +3,154 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#14532d" />
+    <meta name="theme-color" content="#16a34a" />
     <title>Panel del club — Social Connect</title>
-    <link rel="stylesheet" href="css/theme.css?v=22" />
-    <link rel="stylesheet" href="css/dashboard-club.css?v=23" />
+    <link rel="stylesheet" href="css/theme.css?v=24" />
+    <link rel="stylesheet" href="css/dashboard-club.css?v=24" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=6" />
   </head>
-  <body class="has-club-topnav">
-    <header class="club-topnav" role="banner">
-      <div class="club-topnav__inner">
-        <div class="club-topnav__brand">
-          <span class="club-topnav__mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-              <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+  <body class="club-app has-club-topnav">
+    <div class="app-shell">
+      <aside class="app-sidebar" id="app-sidebar" aria-label="Navegación principal">
+        <div class="app-sidebar__head">
+          <div class="app-sidebar__brand">
+            <span class="app-sidebar__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
+              </svg>
+            </span>
+            <span class="app-sidebar__brand-text">
+              <span class="app-sidebar__wordmark">Social <span class="app-sidebar__accent">Connect</span></span>
+              <span class="app-sidebar__club" id="club-topnav-club">—</span>
+            </span>
+          </div>
+          <button type="button" class="app-sidebar__close" id="sidebar-close" aria-label="Cerrar menú">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
-          </span>
-          <div class="club-topnav__brand-text">
-            <div class="club-topnav__wordmark">
-              Social <span class="club-topnav__accent">Connect</span>
-            </div>
-            <div class="club-topnav__clubline" id="club-topnav-club">—</div>
-          </div>
-        </div>
-        <div class="club-topnav__actions">
-          <label class="club-dark-toggle club-dark-toggle--nav">
-            <input type="checkbox" id="club-dark-toggle" />
-            Oscuro
-          </label>
-          <button type="button" class="btn btn--nav-logout" id="logout-btn">
-            Salir
           </button>
         </div>
-      </div>
-    </header>
 
-    <div class="shell shell--app">
-      <div class="panel panel--wide club-panel">
-        <header class="dash-header dash-header--club">
-          <div class="dash-header__copy">
-            <p class="dash-header__eyebrow">Panel del club</p>
-            <h1 id="club-name-display">Club</h1>
-            <p class="dash-meta">
-              Rol: <strong id="club-role-display">—</strong> ·
-              <span id="club-user-email">—</span>
-            </p>
-          </div>
-        </header>
-
-        <p id="club-status" class="msg" role="status" aria-live="polite"></p>
-
-        <nav class="club-tabs" role="tablist" aria-label="Secciones del panel">
-          <button type="button" class="club-tab is-active" data-view="home" role="tab" aria-selected="true">
-            Inicio
+        <nav class="app-sidebar__nav club-tabs" role="tablist" aria-label="Secciones del panel">
+          <button type="button" class="club-tab app-nav-item is-active" data-view="home" role="tab" aria-selected="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" />
+              <path d="M9 21V12h6v9" />
+            </svg>
+            <span class="app-nav-item__label">Inicio</span>
           </button>
-          <button type="button" class="club-tab" data-view="tpv" role="tab" aria-selected="false">TPV</button>
-          <button type="button" class="club-tab" data-view="inventory" role="tab" aria-selected="false">
-            Inventario
+          <button type="button" class="club-tab app-nav-item" data-view="tpv" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
+            <span class="app-nav-item__label">TPV</span>
+            <span class="app-nav-badge" data-shift-nav-badge hidden aria-hidden="true"></span>
           </button>
-          <button type="button" class="club-tab" data-view="stock" role="tab" aria-selected="false">
-            Stock
+          <button type="button" class="club-tab app-nav-item" data-view="inventory" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+              <path d="M3.3 7.7L12 12.5l8.7-4.8M12 22V12.5" />
+            </svg>
+            <span class="app-nav-item__label">Inventario</span>
           </button>
-          <button type="button" class="club-tab" data-view="members" role="tab" aria-selected="false">
-            Socios
+          <button type="button" class="club-tab app-nav-item" data-view="stock" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+            <span class="app-nav-item__label">Stock</span>
+            <span class="app-nav-badge" data-shift-nav-badge hidden aria-hidden="true"></span>
           </button>
-          <button type="button" class="club-tab" data-view="finance" role="tab" aria-selected="false">
-            Finanzas
+          <button type="button" class="club-tab app-nav-item" data-view="members" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+            <span class="app-nav-item__label">Socios</span>
+          </button>
+          <button type="button" class="club-tab app-nav-item" data-view="finance" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+            <span class="app-nav-item__label">Finanzas</span>
           </button>
         </nav>
 
-        <!-- Contenido por vista: partials/club-view-*.html (ver js/dashboard-club-partials.js) -->
-        <div id="club-view-home" class="club-view" data-view="home" role="tabpanel">
-          <p class="hint club-partial-placeholder">Cargando…</p>
+        <div class="app-sidebar__foot">
+          <label class="app-sidebar__theme club-dark-toggle">
+            <input type="checkbox" id="club-dark-toggle" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
+            <span>Modo oscuro</span>
+          </label>
         </div>
+      </aside>
 
-        <div id="club-view-tpv" class="club-view is-hidden" data-view="tpv" role="tabpanel" hidden>
-          <p class="hint club-partial-placeholder">Cargando…</p>
-        </div>
+      <div class="app-sidebar-backdrop" id="app-sidebar-backdrop" hidden aria-hidden="true"></div>
 
-        <div id="club-view-inventory" class="club-view is-hidden" data-view="inventory" role="tabpanel" hidden>
-          <p class="hint club-partial-placeholder">Cargando…</p>
-        </div>
+      <div class="app-body">
+        <header class="app-header" role="banner">
+          <div class="app-header__left">
+            <button type="button" class="app-header__menu" id="sidebar-toggle" aria-label="Abrir menú">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>
+            </button>
+            <div class="app-header__titles">
+              <h1 class="app-header__page" id="app-page-title">Inicio</h1>
+              <p class="app-header__club" id="club-name-display">Club</p>
+            </div>
+          </div>
+          <div class="app-header__right">
+            <span class="app-shift-pill app-shift-pill--closed" id="app-shift-pill" role="status">Sin turno</span>
+            <div class="app-header__user">
+              <span class="app-header__avatar" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                </svg>
+              </span>
+              <div class="app-header__user-text">
+                <span class="app-header__email" id="club-user-email">—</span>
+                <span class="app-header__role" id="club-role-display">—</span>
+              </div>
+            </div>
+            <button type="button" class="sc-btn sc-btn--ghost sc-btn--sm" id="logout-btn">Salir</button>
+          </div>
+        </header>
 
-        <div id="club-view-stock" class="club-view is-hidden" data-view="stock" role="tabpanel" hidden>
-          <p class="hint club-partial-placeholder">Cargando…</p>
-        </div>
+        <main class="app-main">
+          <p id="club-status" class="msg app-status" role="status" aria-live="polite"></p>
 
-        <div id="club-view-members" class="club-view is-hidden" data-view="members" role="tabpanel" hidden>
-          <p class="hint club-partial-placeholder">Cargando…</p>
-        </div>
+          <div id="club-view-home" class="club-view" data-view="home" role="tabpanel">
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
 
-        <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
-          <p class="hint club-partial-placeholder">Cargando…</p>
-        </div>
+          <div id="club-view-tpv" class="club-view is-hidden" data-view="tpv" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+
+          <div id="club-view-inventory" class="club-view is-hidden" data-view="inventory" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+
+          <div id="club-view-stock" class="club-view is-hidden" data-view="stock" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+
+          <div id="club-view-members" class="club-view is-hidden" data-view="members" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+
+          <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+        </main>
       </div>
     </div>
 
@@ -133,9 +187,9 @@
     <script src="js/auth-helpers.js"></script>
     <script src="js/dashboard-club-partials.js"></script>
     <script src="js/club-inventory-tpv.js?v=29"></script>
-    <script src="js/club-stock.js?v=22"></script>
-    <script src="js/club-socios-finance.js?v=23"></script>
-    <script src="js/dashboard-club.js?v=23"></script>
+    <script src="js/club-stock.js?v=23"></script>
+    <script src="js/club-socios-finance.js?v=26"></script>
+    <script src="js/dashboard-club.js?v=30"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>
