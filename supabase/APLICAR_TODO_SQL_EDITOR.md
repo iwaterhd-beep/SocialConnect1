@@ -18,6 +18,7 @@ Ejecuta **una por una**, en este orden:
 14. **`supabase/migrations/033_public_menu.sql`** — menú tablet público `/menu/?club=slug` y sativa/indica en categoría weed.
 15. **`supabase/migrations/034_menu_sort_by_price.sql`** — productos del menú ordenados por precio (menor a mayor).
 16. **`supabase/migrations/035_menu_price_fallback.sql`** — muestra precio aunque solo esté en TPV / última venta.
+17. **`supabase/migrations/039_shift_stock_events_club_access_rls.sql`** — permite leer contajes de stock a trabajadores en `club_access` y vincula ajustes +/- al turno abierto.
 
 ---
 

@@ -71,6 +71,7 @@
     canEditInventory: false,
     adjustProductId: null,
     adjustDirection: 'add',
+    editingOriginalStock: null,
   };
   const EMOJI_RECENT_KEY = 'sc_inv_recent_emojis';
 
@@ -2023,6 +2024,7 @@
     if ($('inv-product-menu-price')) $('inv-product-menu-price').value = '';
     if ($('inv-product-strain')) $('inv-product-strain').value = '';
     resetProductImageUiState();
+    state.editingOriginalStock = null;
     void refreshProductImagePreview();
     setInvSaleUnitUi('grams');
     syncProductStrainRowVisibility();
@@ -2088,6 +2090,7 @@
       $('inv-product-strain').value =
         p.cannabis_strain === 'indica' ? 'indica' : p.cannabis_strain === 'sativa' ? 'sativa' : '';
     }
+    state.editingOriginalStock = Number(p.stock_grams) || 0;
     resetProductImageUiState();
     state.productLoadedImagePath = (p.image_path || '').trim();
     void refreshProductImagePreview();
@@ -2171,6 +2174,24 @@
     }
 
     setMsg('inv-status', 'Guardando…', false);
+
+    let stockUpdatedViaShiftRpc = false;
+    if (id && !Number.isNaN(stock)) {
+      const origStock = state.editingOriginalStock;
+      if (origStock !== null && origStock !== undefined && Math.abs(stock - origStock) > 0.0001) {
+        const { error: stockRpcErr } = await sb().rpc('club_register_manual_stock_count', {
+          p_product_id: id,
+          p_new_stock_grams: stock,
+        });
+        if (!stockRpcErr) {
+          stockUpdatedViaShiftRpc = true;
+        } else if (!/no hay turno abierto/i.test(stockRpcErr.message || '')) {
+          setMsg('inv-status', stockRpcErr.message || 'No se pudo actualizar el stock.', true);
+          return;
+        }
+      }
+    }
+
     const baseRow = {
       club_id: state.ctx.club.id,
       name,
@@ -2180,6 +2201,9 @@
       bottle_weight_grams: saleUnit === 'unit' ? 0 : bottle,
       stock_grams: stock,
     };
+    if (stockUpdatedViaShiftRpc) {
+      delete baseRow.stock_grams;
+    }
     const extraRow = state.hasProductExtras
       ? {
           stock_alert_grams: alertG,
