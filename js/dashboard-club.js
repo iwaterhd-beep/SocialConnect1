@@ -826,29 +826,19 @@
       denHtml = `<pre class="hint" style="white-space:pre-wrap;margin:0.5rem 0 0">${escapeHtml(JSON.stringify(shift.closing_denominations, null, 2))}</pre>`;
     }
 
-    /** Solo productos con contaje registrado cuando hay eventos — evita listas donde todo es "—". */
-    const snapshotProducts = (events.length
-      ? products.filter((p) => countByProduct[String(p.id)])
-      : products
-    )
+    const snapshotProducts = products
       .slice()
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
     const stockSnapshotHint =
-      events.length && snapshotProducts.length
-        ? '<p class="hint" style="margin:0 0 0.5rem">Solo aparecen aquí los productos con contaje guardado en este turno. El descuadre es la diferencia en el momento de guardar (stock contado menos stock previo).</p>'
-        : '';
-
-    const emptySnapshotNotice =
-      events.length && snapshotProducts.length === 0
-        ? '<p class="hint" style="margin:0">No hay líneas inventario que coincidan con los registros de contaje (referencias de producto incoherentes). Revisa datos o ejecuta migraciones 013–031 en Supabase.</p>'
-        : '';
+      '<p class="hint" style="margin:0 0 0.5rem">Descuadre: diferencia al guardar desde <strong>Stock por turno</strong> (contado − stock previo). <strong>0</strong> si coincidía; <strong>—</strong> si no hubo contaje en este turno.</p>';
 
     const stockSnapshot = snapshotProducts
       .map((p) => {
         const em = (p.emoji || '').trim();
         const countEv = countByProduct[String(p.id)];
-        const descTxt = formatStockDiscrepancy(p, getShiftStockDelta(countEv));
+        const delta = countEv ? getShiftStockDelta(countEv) : null;
+        const descTxt = delta !== null ? formatStockDiscrepancy(p, delta) : '—';
         return `<tr>
         <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}</td>
         <td>${escapeHtml(Number(p.stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
@@ -926,17 +916,11 @@
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Stock actual tras cerrar (inventario)</h4>
         ${stockSnapshotHint}
-        ${
-          emptySnapshotNotice
-            ? emptySnapshotNotice
-            : `<div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (del contaje)</th></tr></thead><tbody>${stockSnapshot || '<tr><td colspan="3" class="hint">—</td></tr>'}</tbody></table></div>`
-        }
+        <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (del contaje)</th></tr></thead><tbody>${stockSnapshot || '<tr><td colspan="3" class="hint">—</td></tr>'}</tbody></table></div>
         ${
           eventsFetchError
             ? '<p class="hint" style="margin:0.5rem 0 0">No hay datos de historial de contaje (error al cargarlos). Cuando se cargue bien, esta columna mostrará el descuadre solo si hubo guardado desde Stock por turno.</p>'
-            : events.length === 0
-              ? '<p class="hint" style="margin:0.5rem 0 0">Aquí aparece todo el inventario; la columna de descuadre solo muestra valores si ese producto tiene un contaje guardado en este turno (ver tabla anterior).</p>'
-              : ''
+            : ''
         }
       </div>
     `;

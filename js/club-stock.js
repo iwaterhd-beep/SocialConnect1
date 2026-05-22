@@ -65,6 +65,13 @@
     return txt;
   }
 
+  function isMissingDbColumnError(err) {
+    if (!err) return false;
+    if (err.code === '42703') return true;
+    const m = String(err.message || '').toLowerCase();
+    return m.includes('column') && (m.includes('does not exist') || m.includes('no existe'));
+  }
+
   function buildLatestCountByProduct(events) {
     const map = {};
     (events || []).forEach((ev) => {
@@ -362,14 +369,23 @@
       return;
     }
 
-    const { data, error } = await sb()
+    const fullCols =
+      'id, created_at, product_id, stock_net_grams, source, previous_stock_grams, delta_grams, shift_id';
+    let { data, error } = await sb()
       .from('shift_stock_events')
-      .select(
-        'id, created_at, product_id, stock_net_grams, source, previous_stock_grams, delta_grams, shift_id',
-      )
+      .select(fullCols)
       .eq('shift_id', state.shiftId)
       .order('created_at', { ascending: false })
       .limit(80);
+
+    if (error && isMissingDbColumnError(error)) {
+      ({ data, error } = await sb()
+        .from('shift_stock_events')
+        .select('id, created_at, product_id, stock_net_grams, source, shift_id')
+        .eq('shift_id', state.shiftId)
+        .order('created_at', { ascending: false })
+        .limit(80));
+    }
 
     if (error) {
       if (error.code === '42P01' || (error.message && error.message.includes('shift_stock'))) {
@@ -470,6 +486,14 @@
       delta = deltaPreview;
     }
     const descTxt = formatStockDiscrepancy(p, delta);
+    state.lastCountByProduct[String(productId)] = {
+      product_id: productId,
+      stock_net_grams: net,
+      previous_stock_grams: prevStock,
+      delta_grams: delta,
+      created_at: new Date().toISOString(),
+      source: 'manual',
+    };
     if (input) input.value = '';
     if (tare > 0) {
       setStockMsg(
