@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /menu/
+Disallow: /dashboard-club.html
+Disallow: /dashboard-superadmin.html
+Disallow: /js/
+Disallow: /partials/
+Disallow: /supabase/
+
+Sitemap: https://www.socialconnectcs.com/sitemap.xml

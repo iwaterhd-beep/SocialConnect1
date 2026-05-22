@@ -7,22 +7,13 @@
     if (!err || !err.message) return 'No se pudo iniciar sesión.';
     const m = String(err.message);
     if (/invalid login credentials/i.test(m)) {
-      const cod = err.code ? ' (' + err.code + ')' : '';
-      return (
-        'Email o contraseña incorrectos para Supabase Auth.' +
-        cod +
-        ' Comprueba en Authentication → Users que exista el mismo email y prueba ' +
-        'pegar en js/config.js la clave anon que empieza por eyJ… (anonKeyLegacy). ' +
-        'Sin @ en usuario se usa admin@' +
-        ((window.SC_CONFIG && window.SC_CONFIG.loginEmailDomain) || 'example.com') +
-        '.'
-      );
+      return 'Email o contraseña incorrectos. Comprueba tus datos e inténtalo de nuevo.';
     }
-    if (/email not confirmed|signup_disabled|Email rate limit/i.test(m)) {
-      return (
-        m +
-        ' — Revisa en Authentication: confirmación de email desactivada y registro permitido.'
-      );
+    if (/email not confirmed/i.test(m)) {
+      return 'Confirma tu email antes de entrar o contacta con el administrador del club.';
+    }
+    if (/signup_disabled|Email rate limit/i.test(m)) {
+      return 'No se pudo iniciar sesión en este momento. Inténtalo de nuevo en unos minutos.';
     }
     return m;
   }

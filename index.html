@@ -3,24 +3,61 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#16a34a" />
-    <title>Social Connect — Acceso</title>
-    <link rel="stylesheet" href="css/theme.css?v=24" />
-    <link rel="stylesheet" href="css/sc-auth.css?v=2" />
+    <meta name="theme-color" content="#14532d" />
+    <title>SocialConnect — Software de gestión para clubes</title>
+    <meta
+      name="description"
+      content="SocialConnect: TPV, inventario, socios, finanzas y cierres de turno para tu club. Panel web todo en uno. Conecta, comparte, crece."
+    />
+    <meta name="application-name" content="SocialConnect" />
+    <link rel="canonical" href="https://www.socialconnectcs.com/" />
+    <link rel="icon" href="assets/img/logo-socialconnect.png" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/img/logo-socialconnect.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SocialConnect" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://www.socialconnectcs.com/" />
+    <meta property="og:title" content="SocialConnect — Gestión integral de tu club" />
+    <meta
+      property="og:description"
+      content="TPV, inventario, socios, finanzas y control de stock por turno en un solo panel."
+    />
+    <meta property="og:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SocialConnect — Gestión integral de tu club" />
+    <meta
+      name="twitter:description"
+      content="TPV, inventario, socios, finanzas y control de stock por turno en un solo panel."
+    />
+    <meta name="twitter:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "SocialConnect",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://www.socialconnectcs.com/",
+        "description": "Software de gestión para clubes: TPV, inventario, socios, finanzas y cierres de turno.",
+        "image": "https://www.socialconnectcs.com/assets/img/logo-socialconnect.png",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      }
+    </script>
+    <link rel="stylesheet" href="css/theme.css?v=25" />
+    <link rel="stylesheet" href="css/sc-auth.css?v=4" />
   </head>
   <body>
     <div class="auth-page">
       <aside class="auth-hero" aria-hidden="true">
         <div class="auth-hero__logo">
-          <span class="auth-card__mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
-            </svg>
-          </span>
-          <span>Social Connect</span>
+          <img
+            class="sc-logo sc-logo--hero"
+            src="assets/img/logo-socialconnect.png"
+            alt="SocialConnect"
+            width="520"
+            height="520"
+            decoding="async"
+          />
         </div>
         <h2>Gestión integral de tu club</h2>
         <p>TPV, inventario, socios, finanzas y control de stock por turno en un solo panel.</p>
@@ -42,29 +79,29 @@
 
       <main class="auth-main">
         <div class="auth-card">
-          <header class="auth-card__brand">
-            <span class="auth-card__mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <rect x="3" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-                <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" opacity="0.95" />
-                <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
-                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" opacity="0.95" />
-              </svg>
-            </span>
+          <header class="auth-card__brand auth-card__brand--logo">
+            <img
+              class="sc-logo sc-logo--auth-card"
+              src="assets/img/logo-socialconnect.png"
+              alt="SocialConnect"
+              width="520"
+              height="520"
+              decoding="async"
+            />
             <div class="auth-card__titles">
-              <h1 id="login-title">Iniciar sesión</h1>
-              <p>Panel de gestión del club</p>
+              <h1 id="login-title">Acceso al panel</h1>
+              <p>TPV, inventario, socios y finanzas de tu club en un solo lugar.</p>
             </div>
           </header>
 
           <form id="login-form" novalidate>
             <div class="form__row">
-              <label for="username">Usuario</label>
+              <label for="username">Email</label>
               <input
                 class="input"
                 id="username"
                 name="username"
-                type="text"
+                type="email"
                 autocomplete="username"
                 placeholder="tu@email.com"
                 required
@@ -93,6 +130,6 @@
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
-    <script src="js/login.js"></script>
+    <script src="js/login.js?v=2"></script>
   </body>
 </html>

@@ -46,6 +46,18 @@
   margin-bottom: 1.5rem;
 }
 
+.auth-card__brand--logo {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.auth-card__brand--logo .auth-card__titles h1 {
+  font-size: 1.35rem;
+}
+
 .auth-card__mark {
   width: 44px;
   height: 44px;
@@ -169,20 +181,8 @@
 
   .auth-hero__logo {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 1rem;
-  }
-
-  .auth-hero__logo .auth-card__mark {
-    width: 52px;
-    height: 52px;
-  }
-
-  .auth-hero__logo span {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    justify-content: flex-start;
+    margin-bottom: 1.25rem;
   }
 
   .auth-hero h2 {
