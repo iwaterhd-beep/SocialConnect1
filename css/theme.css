@@ -589,15 +589,18 @@ a:focus-visible {
 }
 
 .sc-logo--auth-card {
-  width: min(168px, 100%);
-  border-radius: 12px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
 }
 
 .sc-logo--hero {
-  width: min(220px, 100%);
-  border-radius: 14px;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+  width: min(120px, 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 .sc-logo--admin {
