@@ -659,6 +659,28 @@
   color: #059669;
 }
 
+.club-app .tpv-pos .tpv-receipt__input--locked,
+.club-app .tpv-pos .tpv-receipt__input:read-only {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: default;
+}
+
+.club-app .tpv-pos .tpv-receipt__input--price:read-only {
+  color: #059669;
+  font-weight: 700;
+}
+
+.club-app .tpv-pos .tpv-receipt__qty-grid--unit {
+  grid-template-columns: 1fr 1.1fr;
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__input--locked,
+body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-secondary);
+}
+
 .club-app .tpv-pos .tpv-receipt__member-search {
   display: flex;
   align-items: center;

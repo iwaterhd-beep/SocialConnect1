@@ -105,18 +105,18 @@
 
               <div class="tpv-receipt__qty" aria-labelledby="tpv-lbl-grams">
                 <h3 class="tpv-receipt__section-label" id="tpv-lbl-grams">Cantidad</h3>
-                <div class="tpv-receipt__qty-grid">
+                <div class="tpv-receipt__qty-grid" id="tpv-qty-grid">
                   <label class="tpv-receipt__field">
                     <span id="tpv-label-charged">Ticket</span>
                     <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-charged" inputmode="decimal" placeholder="0,5" />
                   </label>
-                  <label class="tpv-receipt__field">
+                  <label class="tpv-receipt__field" id="tpv-field-real">
                     <span id="tpv-label-real">Reales</span>
                     <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-dispensed" inputmode="decimal" placeholder="0,52" />
                   </label>
                   <label class="tpv-receipt__field tpv-receipt__field--price">
                     <span>Precio €</span>
-                    <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" />
+                    <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" readonly />
                   </label>
                 </div>
                 <p id="tpv-margin-hint" class="tpv-receipt__hint"></p>

@@ -786,6 +786,51 @@
     });
   }
 
+  function getTpvSelectedProduct() {
+    if (!state.tpvSelectedId) return null;
+    return state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)) || null;
+  }
+
+  /** Bloquea precio (siempre tarifa) y reales en productos por unidad. */
+  function syncTpvFieldAccess() {
+    const shiftOpen = Boolean(state.tpvOpenShiftId);
+    const p = getTpvSelectedProduct();
+    const hasProduct = Boolean(p);
+    const isUnit = hasProduct && unitKey(p) === 'unit';
+    const linkDispensed = $('tpv-link-grams')?.checked !== false;
+
+    const qtyGrid = $('tpv-qty-grid');
+    if (qtyGrid) qtyGrid.classList.toggle('tpv-receipt__qty-grid--unit', isUnit);
+
+    const syncToggle = $('tpv-link-grams')?.closest('.tpv-pos__sync-toggle');
+    if (syncToggle) syncToggle.hidden = isUnit;
+
+    const realField = $('tpv-field-real');
+    if (realField) realField.hidden = isUnit;
+
+    const marginHint = $('tpv-margin-hint');
+    if (marginHint) marginHint.hidden = isUnit;
+
+    const priceEl = $('tpv-price');
+    if (priceEl) {
+      priceEl.readOnly = true;
+      priceEl.disabled = !shiftOpen || !hasProduct;
+      priceEl.classList.toggle('tpv-receipt__input--locked', hasProduct && shiftOpen);
+    }
+
+    const dispensedEl = $('tpv-grams-dispensed');
+    if (dispensedEl) {
+      const lockReal = isUnit || linkDispensed;
+      dispensedEl.readOnly = lockReal;
+      dispensedEl.disabled = !shiftOpen || !hasProduct || lockReal;
+      dispensedEl.classList.toggle('tpv-receipt__input--locked', lockReal && shiftOpen && !isUnit);
+      if (isUnit || linkDispensed) {
+        const s = ($('tpv-grams-charged')?.value || '').trim();
+        if (s) dispensedEl.value = s;
+      }
+    }
+  }
+
   let toastTimer;
   function showToast(message) {
     const el = $('club-toast');
@@ -882,6 +927,7 @@
         if (el) el.disabled = !on;
       },
     );
+    syncTpvFieldAccess();
   }
 
   function setTpvWalletFundsStatus(text, isError) {
@@ -1819,6 +1865,7 @@
     updateTpvUnitLabels({ sale_unit: 'grams' });
     applyTpvStepPreset({ sale_unit: 'grams' });
     updateTpvMarginHint();
+    syncTpvFieldAccess();
     renderTpvGrid();
     const ae = document.activeElement;
     if (ae && typeof ae.closest === 'function' && ae.closest('#tpv-product-grid') && typeof ae.blur === 'function') {
@@ -1856,8 +1903,7 @@
     const safeDef = unitKey(p) === 'unit' ? Math.max(1, Math.round(baseDef)) : baseDef;
     const defGx = String(safeDef).replace('.', ',');
     $('tpv-grams-charged').value = defGx;
-    const link = $('tpv-link-grams')?.checked !== false;
-    $('tpv-grams-dispensed').value = link ? defGx : defGx;
+    $('tpv-grams-dispensed').value = defGx;
 
     const defP = p.default_price_eur;
     if (defP != null && !Number.isNaN(Number(defP))) {
@@ -1876,6 +1922,7 @@
     updateTpvMarginHint();
     updatePriceFromTicketGrams();
     ensureTpvPriceForCurrentLine();
+    syncTpvFieldAccess();
     syncAutoTpvLine({ silent: true });
     pulseTpvCard(idNorm);
     pulseTpvTicket();
@@ -1901,6 +1948,7 @@
     if (p) {
       updateTpvUnitLabels(p);
       applyTpvStepPreset(p);
+      syncTpvFieldAccess();
     }
     renderTpvGrid();
   }
@@ -2429,16 +2477,16 @@
     }
     const s = String(v).replace('.', ',');
     chargedEl.value = s;
-    if ($('tpv-link-grams')?.checked !== false) {
-      $('tpv-grams-dispensed').value = s;
-    }
+    syncDispensedFromCharged();
     updateTpvMarginHint();
     updatePriceFromTicketGrams();
     scheduleAutoTpvLine();
   }
 
   function syncDispensedFromCharged() {
-    if ($('tpv-link-grams')?.checked !== false) {
+    const p = getTpvSelectedProduct();
+    const force = !p || unitKey(p) === 'unit' || $('tpv-link-grams')?.checked !== false;
+    if (force) {
       const s = ($('tpv-grams-charged')?.value || '').trim();
       $('tpv-grams-dispensed').value = s;
     }
@@ -2449,19 +2497,13 @@
   function updateTpvMarginHint() {
     const el = $('tpv-margin-hint');
     if (!el) return;
+    const p = getTpvSelectedProduct();
+    if (unitKey(p) === 'unit') {
+      el.textContent = '';
+      return;
+    }
     const a = parseDecimal($('tpv-grams-charged')?.value);
     const b = parseDecimal($('tpv-grams-dispensed')?.value);
-    const p = state.tpvSelectedId ? state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)) : null;
-    if (unitKey(p) === 'unit') {
-      if (!Number.isNaN(a) && Math.abs(a - Math.round(a)) > 0.0001) {
-        el.textContent = 'En productos por unidad, la cantidad en ticket debe ser entera.';
-        return;
-      }
-      if (!Number.isNaN(b) && Math.abs(b - Math.round(b)) > 0.0001) {
-        el.textContent = 'En productos por unidad, la cantidad real debe ser entera.';
-        return;
-      }
-    }
     if (Number.isNaN(a) || Number.isNaN(b)) {
       el.textContent = '';
       return;
@@ -2473,8 +2515,8 @@
     }
     el.textContent =
       d > 0
-        ? `Margen físico: +${formatNum(d)} ${unitShort(state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)))} salen del inventario respecto al ticket.`
-        : `Ajuste: ${formatNum(Math.abs(d))} ${unitShort(state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId)))} menos dispensados que en ticket.`;
+        ? `Margen físico: +${formatNum(d)} ${unitShort(p)} salen del inventario respecto al ticket.`
+        : `Ajuste: ${formatNum(Math.abs(d))} ${unitShort(p)} menos dispensados que en ticket.`;
   }
 
   async function loadMembersForTpv() {
@@ -3343,6 +3385,7 @@
       renderTpvGrid();
     });
     $('tpv-link-grams')?.addEventListener('change', () => {
+      syncTpvFieldAccess();
       syncDispensedFromCharged();
       scheduleAutoTpvLine();
     });
@@ -3352,11 +3395,11 @@
       scheduleAutoTpvLine();
     });
     $('tpv-grams-dispensed')?.addEventListener('input', () => {
+      if (unitKey(getTpvSelectedProduct()) === 'unit') return;
       updateTpvMarginHint();
       scheduleAutoTpvLine();
     });
     $('tpv-price')?.addEventListener('input', () => {
-      updateTicketGramsFromPrice();
       updateTpvWalletUi();
     });
     $('tpv-notes')?.addEventListener('input', () => scheduleAutoTpvLine());
