@@ -1077,9 +1077,10 @@ body.club-dark.club-app .app-header__avatar {
   max-height: min(42vh, 360px);
 }
 
-/* Members split view */
-.sc-members-layout {
-  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+/* Members — lista a ancho completo + modales */
+.sc-members-layout,
+.sc-members-layout--full {
+  grid-template-columns: 1fr;
   align-items: start;
   gap: var(--space-4);
 }
@@ -1087,9 +1088,26 @@ body.club-dark.club-app .app-header__avatar {
 .sc-members-list {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   max-height: calc(100dvh - var(--header-h) - 40px);
-  position: sticky;
-  top: 0;
+}
+
+.club-app .sc-members-table-wrap {
+  max-height: calc(100dvh - var(--header-h) - 220px);
+}
+
+.member-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.member-modal__actions [aria-label='Cerrar'] {
+  min-width: 36px;
+  padding-inline: 10px;
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .sc-members-list .sc-members-search {
@@ -1102,27 +1120,12 @@ body.club-dark.club-app .app-header__avatar {
   max-height: none;
 }
 
-.sc-members-detail {
-  max-height: calc(100dvh - var(--header-h) - 40px);
-  overflow-y: auto;
-}
-
 .sc-members-hero {
   margin-bottom: var(--space-3);
 }
 
-.sc-members-detail .member-form-sc__grid {
+#member-edit-modal .member-form-sc__grid {
   gap: var(--space-3);
-}
-
-.member-panel-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 240px;
-  padding: var(--space-5);
-  text-align: center;
 }
 
 .member-panel-profile__head {
@@ -1235,6 +1238,69 @@ body.club-dark.club-app .app-header__avatar {
 
 .club-app .sc-stock-main .sc-table-fill {
   max-height: calc(100dvh - var(--header-h) - 160px);
+}
+
+.sc-stock-main__title {
+  text-align: center;
+  margin-bottom: var(--space-3);
+}
+
+.sc-stock-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 12px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+}
+
+.sc-stock-toolbar__hint {
+  margin: 0;
+  text-align: center;
+  max-width: 40rem;
+  line-height: 1.45;
+}
+
+.sc-stock-toolbar__controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sc-stock-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.sc-stock-toolbar__filters .form__row {
+  margin-bottom: 0;
+  min-width: min(100%, 180px);
+}
+
+.sc-stock-toolbar__filters .select {
+  min-width: 180px;
+}
+
+.sc-stock-toolbar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 56rem;
+}
+
+body.club-dark.club-app .sc-stock-toolbar {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Finance grid */
@@ -1354,16 +1420,7 @@ body.club-dark.club-app .app-header__avatar {
 
 /* Responsive layouts */
 @media (max-width: 1100px) {
-  .sc-members-layout {
-    grid-template-columns: 1fr;
-  }
-
   .sc-members-list {
-    position: static;
-    max-height: none;
-  }
-
-  .sc-members-detail {
     max-height: none;
   }
 

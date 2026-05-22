@@ -334,10 +334,64 @@
 
   function syncMemberProfileVipClass(m) {
     const on = isActiveVipMember(m);
-    const panel = $('member-panel-profile');
-    const hero = document.querySelector('#member-panel-profile .member-profile-hero');
-    if (panel) panel.classList.toggle('is-vip-member', on);
+    const modal = $('member-profile-modal');
+    const hero = document.querySelector('#member-profile-modal .member-profile-hero');
+    if (modal) modal.classList.toggle('is-vip-member', on);
     if (hero) hero.classList.toggle('member-profile-hero--vip', on);
+  }
+
+  function closeMemberModals() {
+    ['member-profile-modal', 'member-edit-modal'].forEach((id) => {
+      const modal = $(id);
+      if (!modal) return;
+      modal.classList.add('is-hidden');
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  function openMemberModal(kind) {
+    const profileModal = $('member-profile-modal');
+    const editModal = $('member-edit-modal');
+    if (kind === 'profile') {
+      if (editModal) {
+        editModal.classList.add('is-hidden');
+        editModal.hidden = true;
+        editModal.setAttribute('aria-hidden', 'true');
+      }
+      if (profileModal) {
+        profileModal.classList.remove('is-hidden');
+        profileModal.hidden = false;
+        profileModal.setAttribute('aria-hidden', 'false');
+      }
+      return;
+    }
+    if (kind === 'edit') {
+      if (profileModal) {
+        profileModal.classList.add('is-hidden');
+        profileModal.hidden = true;
+        profileModal.setAttribute('aria-hidden', 'true');
+      }
+      if (editModal) {
+        editModal.classList.remove('is-hidden');
+        editModal.hidden = false;
+        editModal.setAttribute('aria-hidden', 'false');
+      }
+    }
+  }
+
+  function setMemberUiMode(mode) {
+    if (mode === 'empty') {
+      closeMemberModals();
+      return;
+    }
+    if (mode === 'profile') {
+      openMemberModal('profile');
+      return;
+    }
+    if (mode === 'edit') {
+      openMemberModal('edit');
+    }
   }
 
   function getMemberNames(m) {
@@ -375,24 +429,6 @@
     if (statusEl) {
       statusEl.textContent = m.is_active ? 'Activo' : 'Inactivo';
       statusEl.classList.toggle('member-view-status--inactive', !m.is_active);
-    }
-  }
-
-  function setMemberUiMode(mode) {
-    const empty = $('member-panel-empty');
-    const profile = $('member-panel-profile');
-    const edit = $('member-panel-edit');
-    if (empty) {
-      empty.hidden = mode !== 'empty';
-      empty.classList.toggle('is-hidden', mode !== 'empty');
-    }
-    if (profile) {
-      profile.hidden = mode !== 'profile';
-      profile.classList.toggle('is-hidden', mode !== 'profile');
-    }
-    if (edit) {
-      edit.hidden = mode !== 'edit';
-      edit.classList.toggle('is-hidden', mode !== 'edit');
     }
   }
 
@@ -654,7 +690,7 @@
     const m = membersCache.find((x) => x.id === memberId);
     if (!m) {
       selectedMemberId = '';
-      setMemberProfilePlaceholder('Selecciona un socio para ver su detalle.');
+      closeMemberModals();
       return;
     }
     selectedMemberId = memberId;
@@ -843,6 +879,7 @@
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
+          <button type="button" class="btn btn--ghost btn--small" data-profile-member="${m.id}">Perfil</button>
           <button type="button" class="btn btn--ghost btn--small" data-edit-member="${m.id}">Editar</button>
         </td>
       `;
@@ -855,9 +892,6 @@
       tr.querySelector('[data-edit-member]')?.addEventListener('click', (e) => {
         e.stopPropagation();
         void editMemberFromRow(m.id);
-      });
-      tr.addEventListener('click', () => {
-        void showMemberProfile(m.id);
       });
       tbody.appendChild(tr);
     });
@@ -894,13 +928,11 @@
     renderMembersTable();
     if (selectedMemberId) {
       if (membersCache.some((m) => m.id === selectedMemberId)) {
-        await showMemberProfile(selectedMemberId);
+        /* Mantener selección en tabla; no reabrir modal automáticamente */
       } else {
         selectedMemberId = '';
-        setMemberProfilePlaceholder('Selecciona un socio para ver su detalle.');
+        closeMemberModals();
       }
-    } else {
-      setMemberProfilePlaceholder('Selecciona un socio para ver su detalle.');
     }
 
     if (typeof window.scClubInventoryReloadMembers === 'function') {
@@ -2821,12 +2853,19 @@
       const id = ($('member-edit-id')?.value || '').trim();
       setMemberMsg('', false);
       if (id) {
+        closeMemberModals();
         void showMemberProfile(id);
         return;
       }
       selectedMemberId = '';
       clearMemberForm();
-      setMemberProfilePlaceholder('');
+      closeMemberModals();
+    });
+
+    document.querySelectorAll('[data-member-close-modal]').forEach((el) => {
+      el.addEventListener('click', () => {
+        closeMemberModals();
+      });
     });
     $('members-search')?.addEventListener('input', () => {
       membersSearch = $('members-search')?.value || '';

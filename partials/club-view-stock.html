@@ -12,28 +12,32 @@
 </section>
 
 <section class="card-section sc-stock-main" aria-labelledby="stock-manual-title">
-  <h2 id="stock-manual-title">Contaje manual</h2>
-  <p class="hint sc-hint-collapsed">
-    Con <strong>bote</strong>: peso total en báscula (se resta tara). Sin bote: stock neto directo.
-  </p>
-  <div class="inv-toolbar sc-toolbar-inline">
-    <div class="form__row" style="margin-bottom: 0">
-      <label for="stk-filter-category">Categoría</label>
-      <select class="select" id="stk-filter-category">
-        <option value="">Todas</option>
-      </select>
+  <h2 id="stock-manual-title" class="sc-stock-main__title">Contaje manual</h2>
+  <div class="sc-stock-toolbar">
+    <p class="hint sc-stock-toolbar__hint sc-hint-collapsed">
+      Con <strong>bote</strong>: peso total en báscula (se resta tara). Sin bote: stock neto directo.
+    </p>
+    <div class="sc-stock-toolbar__controls">
+      <div class="sc-stock-toolbar__filters">
+        <div class="form__row">
+          <label for="stk-filter-category">Categoría</label>
+          <select class="select" id="stk-filter-category">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="form__row">
+          <label for="stk-sort-by">Orden</label>
+          <select class="select" id="stk-sort-by">
+            <option value="name_asc">Nombre (A-Z)</option>
+            <option value="name_desc">Nombre (Z-A)</option>
+            <option value="stock_asc">Stock ↑</option>
+            <option value="stock_desc">Stock ↓</option>
+            <option value="category">Categoría</option>
+          </select>
+        </div>
+      </div>
+      <div id="stk-cat-chips" class="chip-row sc-chip-row-compact sc-stock-toolbar__chips" aria-label="Categorías"></div>
     </div>
-    <div class="form__row" style="margin-bottom: 0">
-      <label for="stk-sort-by">Orden</label>
-      <select class="select" id="stk-sort-by">
-        <option value="name_asc">Nombre (A-Z)</option>
-        <option value="name_desc">Nombre (Z-A)</option>
-        <option value="stock_asc">Stock ↑</option>
-        <option value="stock_desc">Stock ↓</option>
-        <option value="category">Categoría</option>
-      </select>
-    </div>
-    <div id="stk-cat-chips" class="chip-row sc-chip-row-compact" aria-label="Categorías"></div>
   </div>
   <div class="table-wrap sc-table-fill">
     <table class="table-compact">
