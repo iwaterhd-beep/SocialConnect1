@@ -574,28 +574,28 @@ a:focus-visible {
 }
 
 .sc-logo--sidebar {
-  width: min(192px, calc(100% - 4px));
+  width: min(132px, calc(100% - 4px));
   margin-inline: auto;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .sc-logo--auth-card {
-  width: min(260px, 100%);
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  width: min(168px, 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
 }
 
 .sc-logo--hero {
-  width: min(340px, 100%);
-  border-radius: 16px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+  width: min(220px, 100%);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
 }
 
 .sc-logo--admin {
-  width: 72px;
-  border-radius: 10px;
+  width: 52px;
+  border-radius: 8px;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
 .club-app:not(.club-dark) .sc-logo--sidebar {
