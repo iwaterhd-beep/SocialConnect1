@@ -231,6 +231,7 @@
 .club-app .tpv-pos .tpv-prod-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  grid-auto-rows: max-content;
   gap: 10px;
   padding: var(--space-3);
   overflow-y: auto;
@@ -238,6 +239,7 @@
   min-height: 0;
   max-height: none;
   align-content: start;
+  align-items: start;
   scrollbar-width: thin;
 }
 
@@ -251,7 +253,10 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  min-height: 0;
+  align-self: start;
+  width: 100%;
+  min-height: auto;
+  height: auto;
   padding: 0;
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
@@ -303,7 +308,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   aspect-ratio: 1;
+  min-height: 72px;
   background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -317,6 +324,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex-shrink: 0;
   padding: 8px 9px 10px;
   min-width: 0;
 }
@@ -615,6 +623,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow: visible;
 }
 
 .club-app .tpv-pos .tpv-receipt__input {
@@ -877,14 +886,54 @@
   color: #64748b;
 }
 
+.club-app .tpv-pos .tpv-receipt__member {
+  position: relative;
+  z-index: 2;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-search.tpv-member-field {
+  position: relative;
+  z-index: 3;
+}
+
 .club-app .tpv-pos .tpv-member-dropdown {
-  margin-top: 4px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin-top: 0;
+  z-index: 40;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
   background: #fff;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
   max-height: 200px;
   overflow-y: auto;
+}
+
+.club-app .tpv-pos .tpv-member-dropdown.is-hidden {
+  display: none;
+}
+
+.club-app .tpv-pos .tpv-member-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid #eef2f6;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.club-app .tpv-pos .tpv-member-dropdown button:last-child {
+  border-bottom: none;
+}
+
+.club-app .tpv-pos .tpv-member-dropdown button:hover {
+  background: #f0fdf4;
 }
 
 /* Neutralize legacy ticket styles inside tpv-pos */
@@ -979,6 +1028,13 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
     min-height: 0;
     max-height: none;
     overflow-y: auto;
+    grid-auto-rows: max-content;
+    align-items: start;
+  }
+
+  .club-app #club-view-tpv.tpv-pos-view .tpv-pos .tpv-card {
+    min-height: auto;
+    height: auto;
   }
 }
 
