@@ -352,16 +352,17 @@
   async function loadShiftEvents() {
     const tbody = $('stock-events-tbody');
     const emptyEl = $('stock-events-empty');
-    if (!tbody) return;
 
     if (!state.shiftId) {
-      tbody.innerHTML = '';
+      state.lastCountByProduct = {};
+      if (tbody) tbody.innerHTML = '';
       if (emptyEl) emptyEl.textContent = 'Sin turno abierto.';
       return;
     }
 
     if (!state.eventsAvailable) {
-      tbody.innerHTML = '';
+      state.lastCountByProduct = {};
+      if (tbody) tbody.innerHTML = '';
       if (emptyEl) {
         emptyEl.textContent =
           'Ejecuta en Supabase la migración 013_shift_stock_events.sql para guardar el historial por turno.';
@@ -390,20 +391,29 @@
     if (error) {
       if (error.code === '42P01' || (error.message && error.message.includes('shift_stock'))) {
         state.eventsAvailable = false;
-        tbody.innerHTML = '';
+        state.lastCountByProduct = {};
+        if (tbody) tbody.innerHTML = '';
         if (emptyEl) {
           emptyEl.textContent =
             'Ejecuta en Supabase la migración 013_shift_stock_events.sql para guardar el historial por turno.';
         }
         return;
       }
-      tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+      }
       return;
     }
 
     const rows = data || [];
-    const prodMap = Object.fromEntries(state.products.map((p) => [p.id, p]));
     state.lastCountByProduct = buildLatestCountByProduct(rows);
+
+    if (!tbody) {
+      renderManualTable();
+      return;
+    }
+
+    const prodMap = Object.fromEntries(state.products.map((p) => [p.id, p]));
 
     tbody.innerHTML = '';
     if (!rows.length) {

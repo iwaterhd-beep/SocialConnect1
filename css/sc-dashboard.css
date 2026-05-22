@@ -1215,12 +1215,12 @@ body.club-dark.club-app .app-header__avatar {
   background: var(--green-50);
 }
 
-/* Stock 2-column */
+/* Stock — contaje manual a ancho completo */
 .sc-stock-layout {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  grid-template-columns: 1fr;
   grid-template-areas:
-    "banner banner"
-    "main side";
+    "banner"
+    "main";
   align-items: start;
 }
 
@@ -1230,21 +1230,11 @@ body.club-dark.club-app .app-header__avatar {
 
 .sc-stock-main {
   grid-area: main;
+  min-width: 0;
 }
 
-.sc-stock-side {
-  grid-area: side;
-  position: sticky;
-  top: 0;
-  max-height: calc(100dvh - var(--header-h) - 40px);
-  display: flex;
-  flex-direction: column;
-}
-
-.sc-stock-side .table-wrap {
-  flex: 1;
-  min-height: 0;
-  max-height: none;
+.club-app .sc-stock-main .sc-table-fill {
+  max-height: calc(100dvh - var(--header-h) - 160px);
 }
 
 /* Finance grid */
@@ -1374,19 +1364,6 @@ body.club-dark.club-app .app-header__avatar {
   }
 
   .sc-members-detail {
-    max-height: none;
-  }
-
-  .sc-stock-layout {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "banner"
-      "main"
-      "side";
-  }
-
-  .sc-stock-side {
-    position: static;
     max-height: none;
   }
 

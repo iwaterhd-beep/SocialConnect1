@@ -120,10 +120,6 @@
       homeShift.classList.toggle('is-open', !!open);
       homeShift.classList.remove('is-alert');
     }
-    document.querySelectorAll('[data-shift-nav-badge]').forEach((badge) => {
-      badge.hidden = !open;
-      badge.setAttribute('aria-hidden', open ? 'false' : 'true');
-    });
   }
 
   async function refreshShiftsUI(ctx) {
