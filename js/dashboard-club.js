@@ -250,16 +250,16 @@
     el.classList.toggle('msg--error', Boolean(isError));
   }
 
-  async function refreshClubTeamTable(clubId) {
+  async function refreshClubTeamTable(clubId, adminUserId) {
     const tbody = $('club-team-tbody');
     if (!tbody) return;
     const { data, error } = await sb()
       .from('club_access')
-      .select('id, email, role, created_at, can_edit_inventory')
+      .select('id, email, role, created_at, can_edit_inventory, auth_user_id')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false });
     if (error) {
-      const cols = error.code === '42703' ? 2 : 3;
+      const cols = error.code === '42703' ? 3 : 4;
       tbody.innerHTML = `<tr><td colspan="${cols}">${escapeHtml(error.message)}</td></tr>`;
       return;
     }
@@ -272,10 +272,17 @@
           : `<label class="team-inv-edit"><input type="checkbox" data-team-inv-edit="${escapeHtml(row.id)}"${
               row.can_edit_inventory ? ' checked' : ''
             } /> Permitir</label>`;
+      const canRemove =
+        row.role === 'empleado' &&
+        (!row.auth_user_id || String(row.auth_user_id) !== String(adminUserId || ''));
+      const actionCell = canRemove
+        ? `<button type="button" class="btn btn--ghost btn--small btn--danger" data-team-remove="${escapeHtml(row.id)}" data-team-email="${escapeHtml(row.email)}">Eliminar</button>`
+        : '<span class="hint">—</span>';
       tr.innerHTML = `
         <td>${escapeHtml(row.email)}</td>
         <td>${escapeHtml(row.role)}</td>
         <td>${invCell}</td>
+        <td class="actions">${actionCell}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -287,10 +294,35 @@
     sec.hidden = false;
 
     if (sec.dataset.bound === '1') {
-      void refreshClubTeamTable(ctx.club.id);
+      void refreshClubTeamTable(ctx.club.id, ctx.profile.id);
       return;
     }
     sec.dataset.bound = '1';
+
+    $('club-team-tbody')?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-team-remove]');
+      if (!btn) return;
+      const accessId = btn.getAttribute('data-team-remove');
+      const email = btn.getAttribute('data-team-email') || 'este trabajador';
+      if (!accessId) return;
+      if (!confirm(`¿Eliminar a ${email}?\n\nSe revocará su acceso al club y no podrá volver a entrar con esa cuenta.`)) {
+        return;
+      }
+      setClubTeamMsg('Eliminando trabajador…', false);
+      btn.disabled = true;
+      const { error } = await sb().rpc('club_remove_worker', { p_access_id: accessId });
+      if (error) {
+        btn.disabled = false;
+        const msg =
+          error.code === 'PGRST202' || /club_remove_worker/i.test(error.message || '')
+            ? 'Ejecuta en Supabase la migración 040_club_remove_worker.sql.'
+            : error.message || 'No se pudo eliminar al trabajador.';
+        setClubTeamMsg(msg, true);
+        return;
+      }
+      setClubTeamMsg('Trabajador eliminado.', false);
+      await refreshClubTeamTable(ctx.club.id, ctx.profile.id);
+    });
 
     $('club-team-tbody')?.addEventListener('change', async (e) => {
       const cb = e.target.closest('[data-team-inv-edit]');
@@ -391,13 +423,13 @@
             : 'Trabajador creado. Ya puede iniciar sesión con ese email y contraseña.',
           false,
         );
-        await refreshClubTeamTable(clubId);
+        await refreshClubTeamTable(clubId, adminId);
       } catch (e) {
         setClubTeamMsg(e.message || 'No se pudo crear el trabajador.', true);
       }
     });
 
-    void refreshClubTeamTable(ctx.club.id);
+    void refreshClubTeamTable(ctx.club.id, ctx.profile.id);
   }
 
   const shiftWizard = {
