@@ -362,7 +362,7 @@
   white-space: nowrap;
 }
 
-/* ── Ticket panel ── */
+/* ── Ticket / Receipt (POS premium) ── */
 .tpv-pos__ticket {
   min-height: 0;
   max-height: calc(100dvh - var(--header-h) - 100px);
@@ -370,136 +370,168 @@
   top: 0;
 }
 
-.club-app .tpv-pos .tpv-ticket-paper {
+.club-app .tpv-pos .tpv-receipt {
   display: flex;
   flex-direction: column;
   height: 100%;
   max-height: calc(100dvh - var(--header-h) - 100px);
-  border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: #fff;
   box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+    0 20px 50px -12px rgba(15, 23, 42, 0.12);
   overflow: hidden;
 }
 
-.club-app .tpv-pos .tpv-ticket-paper--pulse {
+.club-app .tpv-pos .tpv-receipt.tpv-ticket-paper--pulse {
   animation: tpvTicketPulse 0.35s ease;
 }
 
 @keyframes tpvTicketPulse {
   0%,
   100% {
-    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.12);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25), 0 8px 32px rgba(22, 163, 74, 0.15);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.28), 0 20px 50px -8px rgba(22, 163, 74, 0.2);
   }
 }
 
-.club-app .tpv-pos .tpv-ticket-inner {
+.club-app .tpv-pos .tpv-receipt__shell {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
 }
 
-.club-app .tpv-pos .tpv-ticket-head {
+.club-app .tpv-pos .tpv-receipt__head {
   flex-shrink: 0;
-  padding: var(--space-4);
-  background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%);
+  padding: 14px 16px 16px;
+  background: #0f172a;
   color: #fff;
-  border-bottom: none;
-  box-shadow: none;
 }
 
-.club-app .tpv-pos .tpv-ticket-kicker {
-  margin: 0 0 4px;
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.club-app .tpv-pos .tpv-ticket-product-name {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  min-height: auto;
-  text-shadow: none;
-}
-
-.club-app .tpv-pos .tpv-ticket-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: var(--space-3);
-  gap: var(--space-2);
-  background: #f8fafc;
-}
-
-.club-app .tpv-pos .tpv-ticket-block {
-  padding: var(--space-3);
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid var(--border-subtle);
-  box-shadow: none;
-  margin: 0;
-}
-
-.club-app .tpv-pos .tpv-ticket-block__head {
+.club-app .tpv-pos .tpv-receipt__head-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.club-app .tpv-pos .tpv-ticket-block__title {
-  margin: 0;
-  padding: 0;
-  border: none;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+.club-app .tpv-pos .tpv-receipt__eyebrow {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.club-app .tpv-pos .tpv-ticket-block--cart {
-  border-color: rgba(22, 163, 74, 0.15);
-  background: linear-gradient(180deg, #fff 0%, #f0fdf4 100%);
+.club-app .tpv-pos .tpv-receipt__stock {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  font-variant-numeric: tabular-nums;
 }
 
-.club-app .tpv-pos .tpv-cart-list {
+.club-app .tpv-pos .tpv-receipt__stock:empty,
+.club-app .tpv-pos .tpv-receipt__stock.is-empty {
+  display: none;
+}
+
+.club-app .tpv-pos .tpv-receipt__product {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.club-app .tpv-pos .tpv-receipt__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: #fafbfc;
+  scrollbar-width: thin;
+}
+
+.club-app .tpv-pos .tpv-receipt__section-label {
+  margin: 0 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+/* Cart */
+.club-app .tpv-pos .tpv-receipt__cart {
+  padding: 12px 14px;
+  background: #fff;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.club-app .tpv-pos .tpv-receipt__cart-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.club-app .tpv-pos .tpv-receipt__cart-bar .tpv-receipt__section-label {
+  margin: 0;
+}
+
+.club-app .tpv-pos .tpv-receipt__text-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.club-app .tpv-pos .tpv-receipt__text-btn:hover {
+  color: #dc2626;
+}
+
+.club-app .tpv-pos .tpv-receipt__lines {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 160px;
+  max-height: 140px;
   overflow-y: auto;
-  margin-bottom: var(--space-2);
+  margin-bottom: 10px;
 }
 
-.club-app .tpv-pos .tpv-cart-line {
+.club-app .tpv-pos .tpv-receipt__line,
+.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 10px;
   padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--border-subtle);
-  animation: tpvLineIn 0.22s ease both;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  animation: tpvLineIn 0.2s ease both;
 }
 
 @keyframes tpvLineIn {
   from {
     opacity: 0;
-    transform: translateX(8px);
+    transform: translateX(6px);
   }
   to {
     opacity: 1;
@@ -507,15 +539,16 @@
   }
 }
 
+.club-app .tpv-pos .tpv-receipt__line .tpv-cart-line__title,
 .club-app .tpv-pos .tpv-cart-line__title {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #0f172a;
 }
 
 .club-app .tpv-pos .tpv-cart-line__meta {
   font-size: 0.6875rem;
-  color: var(--text-secondary);
+  color: #64748b;
   margin-top: 2px;
 }
 
@@ -523,179 +556,344 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .club-app .tpv-pos .tpv-cart-line__side strong {
   font-size: 0.8125rem;
-  color: var(--green-600);
+  font-weight: 700;
+  color: #059669;
 }
 
-.club-app .tpv-pos .tpv-cart-total-wrap {
+.club-app .tpv-pos .tpv-cart-line__side .btn {
+  min-height: 26px;
+  padding: 0 6px;
+  font-size: 0.6875rem;
+}
+
+.club-app .tpv-pos .tpv-receipt__empty,
+.club-app .tpv-pos .tpv-cart-empty-hint {
+  margin: 0;
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.club-app .tpv-pos .tpv-receipt__total {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding-top: var(--space-2);
-  border-top: 1px dashed rgba(22, 163, 74, 0.25);
+  padding-top: 10px;
+  border-top: 1px solid #eef2f6;
 }
 
-.club-app .tpv-pos .tpv-cart-total-label {
+.club-app .tpv-pos .tpv-receipt__total-label {
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  color: #64748b;
 }
 
-.club-app .tpv-pos .tpv-cart-total {
-  font-size: 1.375rem;
+.club-app .tpv-pos .tpv-receipt__total-value,
+.club-app .tpv-pos .tpv-receipt__total #tpv-cart-total {
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--text-primary);
+  color: #0f172a;
   font-variant-numeric: tabular-nums;
 }
 
-.club-app .tpv-pos .tpv-cart-empty-hint {
+/* Composer */
+.club-app .tpv-pos .tpv-receipt__composer {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.club-app .tpv-pos .tpv-receipt__input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #0f172a;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.club-app .tpv-pos .tpv-receipt__input:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.club-app .tpv-pos .tpv-receipt__input--num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.club-app .tpv-pos .tpv-receipt__input--price {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #059669;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.club-app .tpv-pos .tpv-receipt__icon-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 1.125rem;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.club-app .tpv-pos .tpv-receipt__member-chip .tpv-member-chip {
   margin: 0;
   font-size: 0.8125rem;
-  text-align: center;
-  padding: var(--space-3);
+  font-weight: 600;
+  color: #0f172a;
 }
 
-.club-app .tpv-pos .input--ticket,
-.club-app .tpv-pos .tpv-ticket-paper .input.input--ticket {
-  min-height: 36px;
-  padding: 8px 10px;
-  font-size: 0.875rem;
-  border-radius: 10px;
-  border-color: var(--border-subtle);
-  background: #fff;
+.club-app .tpv-pos .tpv-receipt__wallet-panel {
+  margin-top: 8px;
+  font-size: 0.8125rem;
 }
 
-.club-app .tpv-pos .input--price {
-  font-size: 1.125rem;
-  font-weight: 700;
-  text-align: center;
+.club-app .tpv-pos .tpv-receipt__wallet-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 0;
 }
 
-.club-app .tpv-pos .tpv-stepper {
+.club-app .tpv-pos .tpv-receipt__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.club-app .tpv-pos .tpv-receipt__field > span {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.club-app .tpv-pos .tpv-receipt__qty-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.1fr;
+  gap: 8px;
+}
+
+.club-app .tpv-pos .tpv-receipt__hint {
+  margin: 6px 0 0;
+  font-size: 0.6875rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.club-app .tpv-pos .tpv-receipt__stepper {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-top: var(--space-2);
+  margin-top: 8px;
 }
 
-.club-app .tpv-pos .tpv-step {
-  min-height: 32px;
-  padding: 0 4px;
-  border: 1px solid var(--border-subtle);
+.club-app .tpv-pos .tpv-receipt__step {
+  min-height: 30px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
   font-family: inherit;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #64748b;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: all 0.12s ease;
 }
 
-.club-app .tpv-pos .tpv-step:hover {
-  border-color: var(--green-600);
-  color: var(--green-600);
-  background: var(--green-50);
+.club-app .tpv-pos .tpv-receipt__step:hover:not(:disabled) {
+  border-color: #22c55e;
+  color: #059669;
+  background: #f0fdf4;
 }
 
-.club-app .tpv-pos .tpv-pay-method__seg {
+.club-app .tpv-pos .tpv-receipt__pay-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.club-app .tpv-pos .tpv-pay-method__label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.club-app .tpv-pos .tpv-pay-method__opt {
+.club-app .tpv-pos .tpv-receipt__pay-opt {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
+  min-height: 38px;
+  padding: 0 10px;
   border-radius: 10px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid #e2e8f0;
+  background: #fff;
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.12s ease, background 0.12s ease;
+  transition: all 0.12s ease;
 }
 
-.club-app .tpv-pos .tpv-pay-method__opt:has(input:checked) {
-  border-color: var(--green-600);
-  background: var(--green-50);
-  color: var(--green-600);
+.club-app .tpv-pos .tpv-receipt__pay-opt:has(input:checked) {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  color: #059669;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
 }
 
-.club-app .tpv-pos .tpv-ticket-actions {
+.club-app .tpv-pos .tpv-receipt__pay-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.club-app .tpv-pos .tpv-receipt__field--note {
+  margin-top: 4px;
+}
+
+/* Footer cobrar */
+.club-app .tpv-pos .tpv-receipt__footer {
   flex-shrink: 0;
-  padding: var(--space-3);
+  padding: 12px 14px 14px;
   background: #fff;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid #eef2f6;
 }
 
-.club-app .tpv-pos .tpv-cobrar {
+.club-app .tpv-pos .tpv-receipt__cobrar {
   width: 100%;
-  min-height: 52px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(135deg, #059669 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #047857 0%, #16a34a 100%);
   color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35);
+  box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
-.club-app .tpv-pos .tpv-cobrar:hover:not(:disabled) {
-  filter: brightness(1.05);
+.club-app .tpv-pos .tpv-receipt__cobrar:hover:not(:disabled) {
+  filter: brightness(1.04);
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(22, 163, 74, 0.4);
+  box-shadow: 0 14px 32px rgba(22, 163, 74, 0.4);
 }
 
-.club-app .tpv-pos .tpv-cobrar:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.club-app .tpv-pos .tpv-cobrar:disabled {
-  opacity: 0.5;
+.club-app .tpv-pos .tpv-receipt__cobrar:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-.club-app .tpv-pos .tpv-cobrar__hint {
-  font-size: 0.625rem;
-  font-weight: 500;
-  opacity: 0.75;
+.club-app .tpv-pos .tpv-receipt__cobrar-label {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.club-app .tpv-pos .tpv-ticket-status {
-  margin: var(--space-2) 0 0;
+.club-app .tpv-pos .tpv-receipt__cobrar-amount {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.club-app .tpv-pos .tpv-receipt__status {
+  margin: 8px 0 0;
   font-size: 0.75rem;
   text-align: center;
+}
+
+/* VIP ticket */
+.club-app .tpv-pos .tpv-receipt.tpv-ticket-paper--vip .tpv-receipt__head {
+  background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 100%);
+}
+
+.club-app .tpv-pos .tpv-receipt.tpv-ticket-paper--vip .tpv-receipt__member-chip {
+  background: #f5f3ff;
+  border-color: rgba(109, 40, 217, 0.25);
+}
+
+.club-app .tpv-pos .tpv-receipt__wallet-panel .tpv-wallet-funds {
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.club-app .tpv-pos .tpv-receipt__wallet-panel .tpv-wallet-funds__row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.club-app .tpv-pos .tpv-receipt__wallet-panel .tpv-wallet-funds-cash-toggle {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.club-app .tpv-pos .tpv-member-dropdown {
+  margin-top: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Neutralize legacy ticket styles inside tpv-pos */
+.club-app .tpv-pos #tpv-ticket-paper.tpv-receipt {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.club-app .tpv-pos .tpv-ticket-block,
+.club-app .tpv-pos .tpv-ticket-scroll,
+.club-app .tpv-pos .tpv-ticket-head {
+  all: unset;
 }
 
 /* ── Últimas ventas colapsable ── */
@@ -743,16 +941,30 @@ body.club-dark.club-app .tpv-pos .tpv-card__visual {
   background: rgba(0, 0, 0, 0.2);
 }
 
-body.club-dark.club-app .tpv-pos .tpv-ticket-scroll {
-  background: rgba(0, 0, 0, 0.15);
-}
-
-body.club-dark.club-app .tpv-pos .tpv-ticket-block {
+body.club-dark.club-app .tpv-pos .tpv-receipt {
   background: var(--bg-surface);
+  border-color: var(--border-subtle);
 }
 
-body.club-dark.club-app .tpv-pos .tpv-ticket-block--cart {
-  background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(22, 163, 74, 0.08) 100%);
+body.club-dark.club-app .tpv-pos .tpv-receipt__cart,
+body.club-dark.club-app .tpv-pos .tpv-receipt__footer {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__body {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__input {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
+  background: rgba(0, 0, 0, 0.15);
+  border-color: var(--border-subtle);
 }
 
 /* ── Responsive ── */
@@ -787,7 +999,8 @@ body.club-dark.club-app .tpv-pos .tpv-ticket-block--cart {
     max-height: none;
   }
 
-  .club-app .tpv-pos .tpv-ticket-paper {
+  .club-app .tpv-pos .tpv-receipt,
+  .club-app .tpv-pos #tpv-ticket-paper {
     max-height: 70vh;
   }
 

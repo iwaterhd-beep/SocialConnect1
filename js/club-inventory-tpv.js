@@ -1868,7 +1868,7 @@
 
     const hint = $('tpv-stock-hint');
     if (hint) {
-      hint.textContent = `Stock disponible: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
+      hint.textContent = `Stock: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
     }
     syncTpvStockWrapVisibility();
     updateTpvUnitLabels(p);
@@ -1895,7 +1895,7 @@
     }
     const p = state.products.find((x) => tpvIdsEqual(x.id, state.tpvSelectedId));
     if ($('tpv-stock-hint') && p) {
-      $('tpv-stock-hint').textContent = `Stock disponible: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
+      $('tpv-stock-hint').textContent = `Stock: ${formatNum(p.stock_grams)} ${unitShort(p)}`;
     }
     syncTpvStockWrapVisibility();
     if (p) {
@@ -2772,9 +2772,15 @@
 
   function syncTpvStockWrapVisibility() {
     const h = $('tpv-stock-hint');
-    const w = h?.closest?.('.tpv-ticket-stock-wrap');
-    if (!w) return;
-    w.classList.toggle('is-empty', !(h.textContent && h.textContent.trim()));
+    if (!h) return;
+    const has = Boolean(h.textContent && h.textContent.trim());
+    h.hidden = !has;
+    h.classList.toggle('is-empty', !has);
+  }
+
+  function syncTpvCobrarAmount(total) {
+    const el = $('tpv-cobrar-amount');
+    if (el) el.textContent = formatMoney(total);
   }
 
   function syncAutoTpvLine(options = {}) {
@@ -2860,14 +2866,15 @@
     const lines = state.tpvCart || [];
     const total = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
     totalEl.textContent = formatMoney(total);
+    syncTpvCobrarAmount(total);
     wrap.innerHTML = '';
     if (!lines.length) {
-      wrap.innerHTML = '<p class="hint tpv-cart-empty-hint">Aún no hay líneas en el ticket.</p>';
+      wrap.innerHTML = '<p class="tpv-receipt__empty">Añade productos desde la rejilla</p>';
       return;
     }
     lines.forEach((line) => {
       const row = document.createElement('div');
-      row.className = 'tpv-cart-line';
+      row.className = 'tpv-receipt__line tpv-cart-line';
       const us = line.sale_unit === 'unit' ? 'ud' : 'g';
       row.innerHTML = `
         <div class="tpv-cart-line__main">
