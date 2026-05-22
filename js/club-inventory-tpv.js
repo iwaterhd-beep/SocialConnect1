@@ -837,6 +837,7 @@
     if (banner) {
       banner.textContent = shiftBannerLabel(Boolean(state.tpvOpenShiftId));
       banner.classList.toggle('tpv-shift-banner--warn', !state.tpvOpenShiftId);
+      banner.classList.toggle('tpv-pos__shift--warn', !state.tpvOpenShiftId);
     }
     toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
   }
@@ -859,6 +860,9 @@
       if (el) el.disabled = !on;
     });
     document.querySelectorAll('[data-tpv-step]').forEach((b) => {
+      b.disabled = !on;
+    });
+    document.querySelectorAll('#tpv-cat-nav .tpv-cat-nav__btn').forEach((b) => {
       b.disabled = !on;
     });
     document.querySelectorAll('#tpv-cat-chips .chip').forEach((b) => {
@@ -1653,6 +1657,45 @@
     return list;
   }
 
+  function categoryInitial(name) {
+    const t = String(name || '').trim();
+    return t ? t.charAt(0).toUpperCase() : '?';
+  }
+
+  function pulseTpvCard(productId) {
+    if (!productId) return;
+    const grid = $('tpv-product-grid');
+    if (!grid) return;
+    grid.querySelectorAll('.tpv-card').forEach((card) => {
+      card.classList.remove('tpv-card--pulse');
+    });
+    const cards = grid.querySelectorAll('.tpv-card');
+    for (const card of cards) {
+      if (card.dataset.productId === String(productId)) {
+        card.classList.add('tpv-card--pulse');
+        card.addEventListener(
+          'animationend',
+          () => card.classList.remove('tpv-card--pulse'),
+          { once: true },
+        );
+        break;
+      }
+    }
+  }
+
+  function pulseTpvTicket() {
+    const paper = $('tpv-ticket-paper');
+    if (!paper) return;
+    paper.classList.remove('tpv-ticket-paper--pulse');
+    void paper.offsetWidth;
+    paper.classList.add('tpv-ticket-paper--pulse');
+    paper.addEventListener(
+      'animationend',
+      () => paper.classList.remove('tpv-ticket-paper--pulse'),
+      { once: true },
+    );
+  }
+
   function categoryName(id) {
     if (!id) return '—';
     const c = state.categories.find((x) => x.id === id);
@@ -1660,30 +1703,24 @@
   }
 
   function renderTpvCategoryChips() {
-    const row = $('tpv-cat-chips');
-    if (!row) return;
-    row.innerHTML = '';
-    const all = document.createElement('button');
-    all.type = 'button';
-    all.className = 'chip' + (state.tpvCatFilter === '' ? ' is-active' : '');
-    all.textContent = 'Todas';
-    all.addEventListener('click', () => {
-      state.tpvCatFilter = '';
-      renderTpvCategoryChips();
-      renderTpvGrid();
-    });
-    row.appendChild(all);
-    state.categories.forEach((c) => {
+    const nav = $('tpv-cat-nav');
+    if (!nav) return;
+    nav.innerHTML = '';
+    const mk = (label, val, icon) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip' + (state.tpvCatFilter === c.id ? ' is-active' : '');
-      b.textContent = c.name;
+      b.className = 'tpv-cat-nav__btn' + (state.tpvCatFilter === val ? ' is-active' : '');
+      b.innerHTML = `<span class="tpv-cat-nav__icon" aria-hidden="true">${escapeHtml(icon)}</span><span class="tpv-cat-nav__label">${escapeHtml(label)}</span>`;
       b.addEventListener('click', () => {
-        state.tpvCatFilter = c.id;
+        state.tpvCatFilter = val;
         renderTpvCategoryChips();
         renderTpvGrid();
       });
-      row.appendChild(b);
+      return b;
+    };
+    nav.appendChild(mk('Todas', '', '▦'));
+    state.categories.forEach((c) => {
+      nav.appendChild(mk(c.name, c.id, categoryInitial(c.name)));
     });
     toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
   }
@@ -1715,34 +1752,45 @@
     const grid = $('tpv-product-grid');
     if (!grid) return;
     const list = getTpvFilteredProducts();
+    const countEl = $('tpv-product-count');
+    if (countEl) {
+      countEl.textContent = list.length ? `${list.length} producto${list.length === 1 ? '' : 's'}` : '';
+    }
     grid.innerHTML = '';
     if (!list.length) {
-      grid.innerHTML = '<p class="hint" style="grid-column:1/-1">No hay productos con este filtro.</p>';
+      grid.innerHTML = '<p class="hint tpv-pos__empty" style="grid-column:1/-1">No hay productos con este filtro.</p>';
       return;
     }
     list.forEach((p) => {
       const stock = Number(p.stock_grams) || 0;
       const empty = stock <= 0;
+      const selected = tpvIdsEqual(p.id, state.tpvSelectedId);
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = 'tpv-card' + (empty ? ' is-empty-stock' : '');
+      card.dataset.productId = String(p.id);
+      card.className =
+        'tpv-card' + (empty ? ' is-empty-stock' : '') + (selected ? ' is-selected' : '');
       card.setAttribute('role', 'listitem');
       const em = (p.emoji || '').trim();
       const rate = state.hasProductExtras ? getPricePerGramForProduct(p) : null;
       const rateLabel = unitShort(p);
-      const priceHint =
+      const priceHtml =
         rate != null && !Number.isNaN(rate)
-          ? `<div class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</div>`
+          ? `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</span>`
           : p.default_price_eur != null && !Number.isNaN(p.default_price_eur)
-            ? `<div class="tpv-card__price">${escapeHtml(formatMoney(p.default_price_eur))}</div>`
+            ? `<span class="tpv-card__price">${escapeHtml(formatMoney(p.default_price_eur))}</span>`
             : '';
+      const catLabel = categoryName(p.category_id);
       card.innerHTML = `
-        <span class="tpv-card__body">
-          <span class="tpv-card__emoji-wrap"><span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span></span>
-          <span class="tpv-card__info">
-            <span class="tpv-card__name">${escapeHtml(p.name)}</span>
-            <span class="tpv-card__meta">Stock ${escapeHtml(formatNum(stock))} ${escapeHtml(unitShort(p))}</span>
-            ${priceHint}
+        <span class="tpv-card__visual">
+          <span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span>
+        </span>
+        <span class="tpv-card__content">
+          <span class="tpv-card__cat">${escapeHtml(catLabel)}</span>
+          <span class="tpv-card__name">${escapeHtml(p.name)}</span>
+          <span class="tpv-card__row">
+            <span class="tpv-card__stock">${escapeHtml(formatNum(stock))} ${escapeHtml(unitShort(p))}</span>
+            ${priceHtml}
           </span>
         </span>
       `;
@@ -1765,7 +1813,7 @@
     state.tpvPendingCartRowId = null;
     state.tpvSelectedId = '';
     if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
-    if ($('tpv-selected-label')) $('tpv-selected-label').textContent = 'Toca un producto a la izquierda';
+    if ($('tpv-selected-label')) $('tpv-selected-label').textContent = 'Selecciona un producto';
     if ($('tpv-stock-hint')) $('tpv-stock-hint').textContent = '';
     syncTpvStockWrapVisibility();
     updateTpvUnitLabels({ sale_unit: 'grams' });
@@ -1829,6 +1877,8 @@
     updatePriceFromTicketGrams();
     ensureTpvPriceForCurrentLine();
     syncAutoTpvLine({ silent: true });
+    pulseTpvCard(idNorm);
+    pulseTpvTicket();
     renderTpvGrid();
     const ae = document.activeElement;
     if (ae && typeof ae.closest === 'function' && ae.closest('#tpv-product-grid') && typeof ae.blur === 'function') {
@@ -2748,6 +2798,7 @@
     } else {
       state.tpvPendingCartRowId = built.line.cart_row_id;
       state.tpvCart.push(built.line);
+      pulseTpvTicket();
     }
     renderTpvCart();
     if (!silent) {
@@ -2808,7 +2859,7 @@
     if (!wrap || !totalEl) return;
     const lines = state.tpvCart || [];
     const total = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
-    totalEl.textContent = `Total: ${formatMoney(total)}`;
+    totalEl.textContent = formatMoney(total);
     wrap.innerHTML = '';
     if (!lines.length) {
       wrap.innerHTML = '<p class="hint tpv-cart-empty-hint">Aún no hay líneas en el ticket.</p>';
