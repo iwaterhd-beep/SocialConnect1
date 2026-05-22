@@ -88,6 +88,8 @@
   gap: var(--space-3);
   flex: 1;
   min-height: 0;
+  height: calc(100dvh - var(--header-h) - 100px);
+  max-height: calc(100dvh - var(--header-h) - 100px);
   align-items: stretch;
 }
 
@@ -102,7 +104,8 @@
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(12px);
   overflow-y: auto;
-  max-height: calc(100dvh - var(--header-h) - 100px);
+  height: 100%;
+  min-height: 0;
   scrollbar-width: thin;
 }
 
@@ -168,6 +171,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   border-radius: 14px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -232,7 +236,7 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  max-height: calc(100dvh - var(--header-h) - 120px);
+  max-height: none;
   align-content: start;
   scrollbar-width: thin;
 }
@@ -365,16 +369,17 @@
 /* ── Ticket / Receipt (POS premium) ── */
 .tpv-pos__ticket {
   min-height: 0;
-  max-height: calc(100dvh - var(--header-h) - 100px);
-  position: sticky;
-  top: 0;
+  height: 100%;
+  max-height: none;
+  position: relative;
+  top: auto;
 }
 
 .club-app .tpv-pos .tpv-receipt {
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: calc(100dvh - var(--header-h) - 100px);
+  max-height: none;
   border-radius: 18px;
   border: 1px solid rgba(15, 23, 42, 0.06);
   background: #fff;
@@ -967,6 +972,16 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
   border-color: var(--border-subtle);
 }
 
+/* Anular reglas legacy de dashboard-club en layout POS nuevo */
+@media (min-width: 900px) {
+  .club-app #club-view-tpv.tpv-pos-view .tpv-pos .tpv-prod-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .tpv-pos__workspace {
@@ -978,6 +993,8 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
   .tpv-pos__workspace {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
+    height: auto;
+    max-height: none;
   }
 
   .tpv-pos__sidebar {
@@ -994,18 +1011,23 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
     max-width: 140px;
   }
 
+  .tpv-pos__catalog {
+    height: auto;
+    max-height: 50vh;
+  }
+
   .tpv-pos__ticket {
-    position: static;
-    max-height: none;
+    height: auto;
   }
 
   .club-app .tpv-pos .tpv-receipt,
   .club-app .tpv-pos #tpv-ticket-paper {
     max-height: 70vh;
+    height: auto;
   }
 
   .club-app .tpv-pos .tpv-prod-grid {
-    max-height: 50vh;
+    max-height: none;
   }
 }
 
