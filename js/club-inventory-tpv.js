@@ -1164,12 +1164,11 @@
     }
   }
 
-  /** Recalcula precio al cliente según gramos en ticket y tarifa del producto. */
+  /** Tarifa TPV del producto: €/g o €/ud según tipo de venta. */
   function getPricePerGramForProduct(p) {
     if (!p || !state.hasProductExtras) return null;
-    if (unitKey(p) === 'unit') return null;
     const unified = getProductSalePrice(p);
-    if (unified != null) return unified;
+    if (unified != null && unified >= 0) return unified;
     return null;
   }
 
