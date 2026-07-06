@@ -9,7 +9,7 @@
     <link rel="icon" href="assets/img/logo-socialconnect.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/logo-socialconnect.png?v=2" />
     <link rel="stylesheet" href="css/theme.css?v=28" />
-    <link rel="stylesheet" href="css/dashboard-club.css?v=25" />
+    <link rel="stylesheet" href="css/dashboard-club.css?v=26" />
     <link rel="stylesheet" href="css/sc-dashboard.css?v=15" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=7" />
   </head>
@@ -181,6 +181,122 @@
       </div>
     </div>
 
+    <div
+      id="member-terms-modal"
+      class="shift-modal member-terms-modal is-hidden"
+      aria-hidden="true"
+      aria-labelledby="member-terms-title"
+    >
+      <div class="shift-modal__backdrop" data-member-terms-close></div>
+      <div class="shift-modal__panel card-section shift-modal__panel--wide member-terms-modal__panel" role="dialog">
+        <div class="member-terms-modal__head">
+          <div class="member-terms-modal__icon" aria-hidden="true">🌿</div>
+          <div>
+            <h3 id="member-terms-title" class="shift-modal__title">Aviso legal y consentimiento de socio</h3>
+            <p class="hint member-terms-modal__subtitle">Lee y acepta los términos antes de completar el alta.</p>
+          </div>
+        </div>
+
+        <div class="member-terms-tabs" role="tablist" aria-label="Secciones del aviso legal">
+          <button type="button" class="member-terms-tabs__btn is-active" data-member-terms-tab="privacidad" role="tab" aria-selected="true">Privacidad</button>
+          <button type="button" class="member-terms-tabs__btn" data-member-terms-tab="estatutos" role="tab" aria-selected="false">Estatutos</button>
+          <button type="button" class="member-terms-tabs__btn" data-member-terms-tab="conducta" role="tab" aria-selected="false">Normas del club</button>
+        </div>
+
+        <div id="member-terms-scroll" class="shift-modal__body shift-modal__body--scroll member-terms-modal__body">
+          <div class="member-terms-panel is-active" id="member-terms-panel-privacidad" role="tabpanel">
+            <h4 class="member-terms-panel__h">Responsable del tratamiento</h4>
+            <p>En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD), le informamos que sus datos serán tratados por <strong id="member-terms-club-name-1">—</strong>, con CIF <strong id="member-terms-club-cif">—</strong> y domicilio en <strong id="member-terms-club-address">—</strong>.</p>
+            <h4 class="member-terms-panel__h">Finalidad y base legal</h4>
+            <p>Los datos personales facilitados se utilizarán exclusivamente para:</p>
+            <ul>
+              <li>Gestión y control de acceso de socios al club.</li>
+              <li>Verificación de la mayoría de edad (obligatorio, ≥ 18 años).</li>
+              <li>Cumplimiento de obligaciones legales y fiscales.</li>
+              <li>Comunicaciones internas de la asociación.</li>
+            </ul>
+            <div class="member-terms-highlight">
+              <p>Los datos <strong>nunca serán cedidos a terceros</strong> salvo obligación legal o requerimiento de autoridad competente.</p>
+            </div>
+            <h4 class="member-terms-panel__h">Conservación de datos</h4>
+            <p>Los datos se conservarán mientras el interesado sea socio activo y, una vez causada baja, durante los plazos legales exigibles (mínimo 5 años para documentación contable).</p>
+            <h4 class="member-terms-panel__h">Derechos del titular</h4>
+            <p>Puede ejercer sus derechos de acceso, rectificación, supresión, oposición, portabilidad y limitación del tratamiento dirigiéndose a: <strong id="member-terms-club-email">—</strong> adjuntando copia de su DNI.</p>
+            <h4 class="member-terms-panel__h">Confidencialidad</h4>
+            <p>Toda la información relativa al consumo, acceso y actividad dentro del club es estrictamente confidencial y está protegida bajo el deber de secreto de todos los miembros y empleados de la asociación.</p>
+          </div>
+
+          <div class="member-terms-panel" id="member-terms-panel-estatutos" role="tabpanel" hidden>
+            <h4 class="member-terms-panel__h">Naturaleza de la asociación</h4>
+            <p><strong id="member-terms-club-name-2">—</strong> es una asociación privada, sin ánimo de lucro, constituida al amparo de la Ley Orgánica 1/2002 de 22 de marzo, reguladora del Derecho de Asociación.</p>
+            <div class="member-terms-highlight">
+              <p>El acceso es <strong>exclusivamente privado</strong>. Está prohibida la publicidad, promoción o venta a personas ajenas a la asociación.</p>
+            </div>
+            <h4 class="member-terms-panel__h">Requisitos para ser socio</h4>
+            <ul>
+              <li>Ser mayor de 18 años. La verificación de identidad es obligatoria.</li>
+              <li>Ser presentado por un socio existente (si aplica según estatutos internos).</li>
+              <li>Consumidor habitual de cannabis antes de la incorporación al club.</li>
+              <li>Aceptar íntegramente los presentes estatutos y normas de convivencia.</li>
+            </ul>
+            <h4 class="member-terms-panel__h">Cuotas y aportaciones</h4>
+            <p>El socio contribuirá con la cuota periódica aprobada en Asamblea General. Las aportaciones son de carácter asociativo y no constituyen precio de compraventa.</p>
+            <h4 class="member-terms-panel__h">Causas de baja</h4>
+            <ul>
+              <li>Solicitud voluntaria del socio.</li>
+              <li>Impago de cuotas durante 2 meses consecutivos.</li>
+              <li>Incumplimiento grave de las normas del club.</li>
+              <li>Conducta contraria a los fines de la asociación.</li>
+            </ul>
+          </div>
+
+          <div class="member-terms-panel" id="member-terms-panel-conducta" role="tabpanel" hidden>
+            <h4 class="member-terms-panel__h">Normas de conducta y uso</h4>
+            <ul>
+              <li>Queda estrictamente prohibido el acceso o consumo a menores de 18 años.</li>
+              <li>No se permite la entrada bajo los efectos evidentes de otras sustancias.</li>
+              <li>Las cantidades asignadas son para consumo personal dentro del recinto.</li>
+              <li>Está prohibido sacar producto del local para su distribución a terceros.</li>
+              <li>El socio es responsable de sus pertenencias durante su estancia.</li>
+              <li>Se prohíbe la grabación o fotografía de otros socios sin consentimiento.</li>
+              <li>Los incidentes o conflictos deben comunicarse al personal del club.</li>
+            </ul>
+            <div class="member-terms-highlight">
+              <p>La violación de estas normas puede suponer la <strong>expulsión inmediata</strong> y, en su caso, comunicación a las autoridades competentes.</p>
+            </div>
+            <h4 class="member-terms-panel__h">Responsabilidad del socio</h4>
+            <p>El socio declara ser consumidor habitual de cannabis, mayor de edad, y asume plena responsabilidad sobre el uso que haga del producto asignado, eximiendo a la asociación de cualquier responsabilidad derivada de su conducta fuera del club.</p>
+          </div>
+        </div>
+
+        <div class="member-terms-modal__foot">
+          <div class="member-terms-read">
+            <span>Lectura</span>
+            <div class="member-terms-read__bar"><div class="member-terms-read__fill" id="member-terms-read-fill"></div></div>
+            <span id="member-terms-read-pct">0%</span>
+          </div>
+          <div class="member-terms-checks">
+            <label class="member-terms-check">
+              <input type="checkbox" id="member-terms-chk1" />
+              <span>He leído y acepto la <strong>Política de Privacidad</strong> y el tratamiento de mis datos conforme al RGPD.</span>
+            </label>
+            <label class="member-terms-check">
+              <input type="checkbox" id="member-terms-chk2" />
+              <span>Declaro ser <strong>mayor de 18 años</strong>, consumidor habitual de cannabis y acepto los Estatutos del club.</span>
+            </label>
+            <label class="member-terms-check">
+              <input type="checkbox" id="member-terms-chk3" />
+              <span>Acepto las <strong>normas de conducta</strong> y entiendo el carácter privado y no lucrativo de esta asociación.</span>
+            </label>
+          </div>
+          <div class="row-actions member-terms-modal__actions">
+            <button type="button" class="btn btn--ghost" data-member-terms-close>Cancelar</button>
+            <button type="button" class="btn" id="member-terms-confirm" disabled>Confirmar alta de socio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="club-toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -190,8 +306,8 @@
     <script src="js/dashboard-club-partials.js"></script>
     <script src="js/club-inventory-tpv.js?v=38"></script>
     <script src="js/club-stock.js?v=24"></script>
-    <script src="js/club-socios-finance.js?v=30"></script>
-    <script src="js/dashboard-club.js?v=33"></script>
+    <script src="js/club-socios-finance.js?v=31"></script>
+    <script src="js/dashboard-club.js?v=34"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

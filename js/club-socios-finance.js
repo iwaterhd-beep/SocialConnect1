@@ -10,6 +10,7 @@
 
   let ctx = null;
   let membersUiBound = false;
+  let memberTermsUiBound = false;
   let membersCache = [];
   let membersSearch = '';
   let membersTypeFilter = '';
@@ -1321,7 +1322,7 @@
     await showMemberProfile(selectedMemberId);
   }
 
-  async function saveMember() {
+  function readMemberFormFields() {
     const id = ($('member-edit-id')?.value || '').trim();
     const first = ($('member-first-name')?.value || '').trim();
     const last = ($('member-last-name')?.value || '').trim();
@@ -1341,15 +1342,210 @@
     }
     const feeRaw = ($('member-enrollment-fee')?.value || '').trim();
     let enrollment_fee_eur = feeRaw === '' ? 0 : Number(feeRaw);
-    if (Number.isNaN(enrollment_fee_eur) || enrollment_fee_eur < 0) {
-      setMemberMsg('Cuota de inscripción no válida.', true);
-      return;
-    }
+    return {
+      id,
+      first,
+      last,
+      display_name,
+      dni,
+      phone,
+      email,
+      birthRaw,
+      notes,
+      is_active,
+      member_type,
+      member_type_valid_until,
+      enrollment_fee_eur,
+    };
+  }
 
-    if (!display_name) {
-      setMemberMsg('Indica al menos nombre o apellidos.', true);
+  function validateMemberFormFields() {
+    const f = readMemberFormFields();
+    if (Number.isNaN(f.enrollment_fee_eur) || f.enrollment_fee_eur < 0) {
+      return { ok: false, message: 'Cuota de inscripción no válida.' };
+    }
+    if (!f.display_name) {
+      return { ok: false, message: 'Indica al menos nombre o apellidos.' };
+    }
+    return { ok: true, fields: f };
+  }
+
+  function getClubLegalInfoForTerms() {
+    if (typeof window.scClubGetLegalInfo === 'function') {
+      return window.scClubGetLegalInfo();
+    }
+    return {
+      name: ctx?.club?.name || '',
+      cif: ctx?.club?.cif || '',
+      email: ctx?.club?.email || '',
+      address: ctx?.club?.address || '',
+    };
+  }
+
+  function legalDisplay(value, fallback) {
+    const t = String(value || '').trim();
+    return t || fallback || '—';
+  }
+
+  function fillMemberTermsClubInfo() {
+    const legal = getClubLegalInfoForTerms();
+    const name = legalDisplay(legal.name, 'Nombre del club');
+    const cif = legalDisplay(legal.cif, 'pendiente de indicar');
+    const email = legalDisplay(legal.email, 'pendiente de indicar');
+    const address = legalDisplay(legal.address, 'pendiente de indicar');
+    ['member-terms-club-name-1', 'member-terms-club-name-2'].forEach((id) => {
+      const el = $(id);
+      if (el) el.textContent = name;
+    });
+    if ($('member-terms-club-cif')) $('member-terms-club-cif').textContent = cif;
+    if ($('member-terms-club-email')) $('member-terms-club-email').textContent = email;
+    if ($('member-terms-club-address')) $('member-terms-club-address').textContent = address;
+  }
+
+  function updateMemberTermsConfirmBtn() {
+    const btn = $('member-terms-confirm');
+    if (!btn) return;
+    const ok = ['member-terms-chk1', 'member-terms-chk2', 'member-terms-chk3'].every(
+      (id) => $(id)?.checked,
+    );
+    btn.disabled = !ok;
+  }
+
+  function updateMemberTermsReadBar(pct) {
+    const fill = $('member-terms-read-fill');
+    const label = $('member-terms-read-pct');
+    const n = Math.max(0, Math.min(100, Math.round(pct)));
+    if (fill) fill.style.width = `${n}%`;
+    if (label) label.textContent = `${n}%`;
+  }
+
+  function resetMemberTermsModal() {
+    ['member-terms-chk1', 'member-terms-chk2', 'member-terms-chk3'].forEach((id) => {
+      const el = $(id);
+      if (el) el.checked = false;
+    });
+    updateMemberTermsConfirmBtn();
+    const scroll = $('member-terms-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    updateMemberTermsReadBar(0);
+    document.querySelectorAll('[data-member-terms-tab]').forEach((btn, i) => {
+      const tab = btn.getAttribute('data-member-terms-tab') || '';
+      const on = i === 0;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      const panel = $('member-terms-panel-' + tab);
+      if (panel) {
+        panel.classList.toggle('is-active', on);
+        panel.hidden = !on;
+      }
+    });
+  }
+
+  function openMemberTermsModal() {
+    const modal = $('member-terms-modal');
+    if (!modal) {
+      void saveMember();
       return;
     }
+    fillMemberTermsClubInfo();
+    resetMemberTermsModal();
+    modal.classList.remove('is-hidden');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeMemberTermsModal() {
+    const modal = $('member-terms-modal');
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function bindMemberTermsUi() {
+    if (memberTermsUiBound) return;
+    memberTermsUiBound = true;
+
+    document.querySelectorAll('[data-member-terms-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-member-terms-tab') || '';
+        document.querySelectorAll('[data-member-terms-tab]').forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        document.querySelectorAll('.member-terms-panel').forEach((panel) => {
+          const on = panel.id === 'member-terms-panel-' + tab;
+          panel.classList.toggle('is-active', on);
+          panel.hidden = !on;
+        });
+        const scroll = $('member-terms-scroll');
+        if (scroll) {
+          scroll.scrollTop = 0;
+          updateMemberTermsReadBar(0);
+        }
+      });
+    });
+
+    $('member-terms-scroll')?.addEventListener('scroll', function () {
+      const max = this.scrollHeight - this.clientHeight;
+      const pct = max > 0 ? (this.scrollTop / max) * 100 : 100;
+      updateMemberTermsReadBar(pct);
+    });
+
+    ['member-terms-chk1', 'member-terms-chk2', 'member-terms-chk3'].forEach((id) => {
+      $(id)?.addEventListener('change', updateMemberTermsConfirmBtn);
+    });
+
+    $('member-terms-confirm')?.addEventListener('click', () => {
+      closeMemberTermsModal();
+      void saveMember();
+    });
+
+    document.querySelectorAll('[data-member-terms-close]').forEach((el) => {
+      el.addEventListener('click', closeMemberTermsModal);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('member-terms-modal');
+      if (modal && !modal.classList.contains('is-hidden')) closeMemberTermsModal();
+    });
+  }
+
+  async function requestSaveMember() {
+    const validation = validateMemberFormFields();
+    if (!validation.ok) {
+      setMemberMsg(validation.message, true);
+      return;
+    }
+    const id = validation.fields.id;
+    if (id) {
+      await saveMember();
+      return;
+    }
+    openMemberTermsModal();
+  }
+
+  async function saveMember() {
+    const validation = validateMemberFormFields();
+    if (!validation.ok) {
+      setMemberMsg(validation.message, true);
+      return;
+    }
+    const {
+      id,
+      first,
+      last,
+      display_name,
+      dni,
+      phone,
+      email,
+      birthRaw,
+      notes,
+      is_active,
+      member_type,
+      member_type_valid_until,
+      enrollment_fee_eur,
+    } = validation.fields;
 
     setMemberMsg('Guardando…', false);
     const row = {
@@ -2973,7 +3169,7 @@
     if (membersUiBound) return;
     membersUiBound = true;
 
-    $('member-save')?.addEventListener('click', () => saveMember());
+    $('member-save')?.addEventListener('click', () => void requestSaveMember());
     $('members-new')?.addEventListener('click', () => {
       selectedMemberId = '';
       clearMemberForm();
@@ -3082,6 +3278,7 @@
 
   window.scInitClubSociosFinance = async function (c) {
     ctx = c;
+    bindMemberTermsUi();
     bindMembersUi();
     bindMembersCsvUi();
     try {

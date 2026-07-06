@@ -3291,3 +3291,187 @@ body.club-dark .member-wallet-adjust {
   color: #b45309;
   font-weight: 700;
 }
+
+/* ---------- Datos legales (Inicio) ---------- */
+.sc-home-legal .sc-section-head__meta {
+  margin-top: 0.25rem;
+}
+
+/* ---------- Modal términos alta socio ---------- */
+.member-terms-modal {
+  z-index: 260;
+}
+
+.member-terms-modal__panel {
+  max-width: 42rem;
+  max-height: min(92vh, 720px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.member-terms-modal__head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1.25rem 1.35rem 0.75rem;
+  border-bottom: 1px solid var(--sc-border, #e2e8f0);
+}
+
+.member-terms-modal__icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.65rem;
+  background: rgba(20, 83, 45, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.member-terms-modal__subtitle {
+  margin: 0.25rem 0 0;
+}
+
+.member-terms-tabs {
+  display: flex;
+  gap: 0.15rem;
+  padding: 0 1.35rem;
+  border-bottom: 1px solid var(--sc-border, #e2e8f0);
+}
+
+.member-terms-tabs__btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--sc-muted, #64748b);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.member-terms-tabs__btn.is-active {
+  color: var(--sc-accent, #14532d);
+  border-bottom-color: var(--sc-accent, #14532d);
+}
+
+.member-terms-modal__body {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  padding: 1.1rem 1.35rem;
+}
+
+.member-terms-panel {
+  display: none;
+}
+
+.member-terms-panel.is-active {
+  display: block;
+}
+
+.member-terms-panel__h {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sc-accent, #14532d);
+}
+
+.member-terms-panel__h:first-child {
+  margin-top: 0;
+}
+
+.member-terms-panel p,
+.member-terms-panel li {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--sc-text-muted, #475569);
+}
+
+.member-terms-panel ul {
+  margin: 0.35rem 0 0.75rem;
+  padding-left: 1.15rem;
+}
+
+.member-terms-highlight {
+  margin: 0.75rem 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--sc-accent, #14532d);
+  background: rgba(20, 83, 45, 0.06);
+  border-radius: 0 0.45rem 0.45rem 0;
+}
+
+.member-terms-highlight p {
+  margin: 0;
+}
+
+.member-terms-modal__foot {
+  padding: 0.85rem 1.35rem 1.2rem;
+  border-top: 1px solid var(--sc-border, #e2e8f0);
+  background: var(--sc-surface-2, #f8fafc);
+}
+
+.member-terms-read {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--sc-muted, #64748b);
+}
+
+.member-terms-read__bar {
+  flex: 1;
+  height: 4px;
+  background: var(--sc-border, #e2e8f0);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.member-terms-read__fill {
+  height: 100%;
+  width: 0%;
+  background: var(--sc-accent, #14532d);
+  border-radius: 99px;
+  transition: width 0.25s ease;
+}
+
+.member-terms-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.member-terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--sc-text-muted, #475569);
+  cursor: pointer;
+}
+
+.member-terms-check input {
+  margin-top: 0.15rem;
+  accent-color: var(--sc-accent, #14532d);
+}
+
+.member-terms-modal__actions {
+  margin: 0;
+}
+
+body.club-dark .member-terms-modal__foot {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+body.club-dark .member-terms-highlight {
+  background: rgba(20, 83, 45, 0.18);
+}

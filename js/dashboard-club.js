@@ -3,6 +3,7 @@
  */
 (function () {
   const sb = () => window.scSupabase;
+  let ctxRef = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -28,7 +29,7 @@
 
     const { data: club, error } = await sb()
       .from('clubs')
-      .select('id, name, is_active')
+      .select('id, name, cif, email, address, is_active')
       .eq('id', gate.profile.club_id)
       .maybeSingle();
 
@@ -249,6 +250,78 @@
     el.textContent = text || '';
     el.classList.toggle('msg--error', Boolean(isError));
   }
+
+  function setClubLegalMsg(text, isError) {
+    const el = $('club-legal-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('msg--error', Boolean(isError));
+  }
+
+  function fillClubLegalForm(club) {
+    if ($('club-legal-name')) $('club-legal-name').value = club?.name || '';
+    if ($('club-legal-cif')) $('club-legal-cif').value = club?.cif || '';
+    if ($('club-legal-email')) $('club-legal-email').value = club?.email || '';
+    if ($('club-legal-address')) $('club-legal-address').value = club?.address || '';
+  }
+
+  function initClubLegalSection(ctx) {
+    const sec = $('club-legal-section');
+    if (!sec || ctx.profile.role !== 'admin_club') return;
+    sec.hidden = false;
+    fillClubLegalForm(ctx.club);
+
+    if (sec.dataset.bound === '1') return;
+    sec.dataset.bound = '1';
+
+    $('club-legal-save')?.addEventListener('click', async () => {
+      const name = ($('club-legal-name')?.value || '').trim();
+      const cif = ($('club-legal-cif')?.value || '').trim();
+      const email = ($('club-legal-email')?.value || '').trim();
+      const address = ($('club-legal-address')?.value || '').trim();
+
+      if (!name) {
+        setClubLegalMsg('Indica el nombre del club.', true);
+        return;
+      }
+      if (email && !email.includes('@')) {
+        setClubLegalMsg('El email no parece válido.', true);
+        return;
+      }
+
+      setClubLegalMsg('Guardando…', false);
+      const { data, error } = await sb()
+        .from('clubs')
+        .update({ name, cif, email, address })
+        .eq('id', ctx.club.id)
+        .select('id, name, cif, email, address, is_active')
+        .single();
+
+      if (error) {
+        const msg =
+          error.code === '42501' || /policy/i.test(error.message || '')
+            ? 'Ejecuta en Supabase la migración 042_clubs_admin_update_legal.sql.'
+            : error.message || 'No se pudieron guardar los datos.';
+        setClubLegalMsg(msg, true);
+        return;
+      }
+
+      Object.assign(ctx.club, data);
+      $('club-name-display').textContent = data.name;
+      const topClub = $('club-topnav-club');
+      if (topClub) topClub.textContent = data.name;
+      setClubLegalMsg('Datos legales guardados.', false);
+    });
+  }
+
+  window.scClubGetLegalInfo = function () {
+    return {
+      name: ctxRef?.club?.name || '',
+      cif: ctxRef?.club?.cif || '',
+      email: ctxRef?.club?.email || '',
+      address: ctxRef?.club?.address || '',
+    };
+  };
 
   async function refreshClubTeamTable(clubId, adminUserId) {
     const tbody = $('club-team-tbody');
@@ -1333,6 +1406,7 @@
       return;
     }
     if (!ctx) return;
+    ctxRef = ctx;
 
     if (typeof window.SCClubLoadPartials === 'function') {
       try {
@@ -1372,6 +1446,7 @@
     }
 
     if (ctx.profile.role === 'admin_club') {
+      initClubLegalSection(ctx);
       initClubTeamSection(ctx);
     }
 
