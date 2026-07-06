@@ -590,10 +590,10 @@ a:focus-visible {
 }
 
 .sc-logo--hero {
-  width: min(140px, 42vw);
+  width: min(148px, 44vw);
   height: auto;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 22%;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
 }
 
 .sc-logo--admin {
