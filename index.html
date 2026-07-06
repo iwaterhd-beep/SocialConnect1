@@ -44,10 +44,25 @@
       }
     </script>
     <link rel="stylesheet" href="css/theme.css?v=32" />
-    <link rel="stylesheet" href="css/sc-auth.css?v=8" />
+    <link rel="stylesheet" href="css/sc-auth.css?v=9" />
   </head>
-  <body>
-    <div class="auth-page">
+  <body class="auth-splash-open">
+    <div id="auth-splash" class="auth-splash is-blinking" role="dialog" aria-modal="true" aria-label="SocialConnect">
+      <div class="auth-splash__glow" aria-hidden="true"></div>
+      <button type="button" class="auth-splash__trigger" id="auth-splash-trigger" aria-label="Entrar a SocialConnect">
+        <img
+          class="auth-splash__logo"
+          src="assets/img/logo-socialconnect-intro.png?v=1"
+          alt="SocialConnect — Cannabis System"
+          width="280"
+          height="280"
+          decoding="async"
+        />
+      </button>
+      <p class="auth-splash__hint" id="auth-splash-hint">Pulsa el logo para entrar</p>
+    </div>
+
+    <div class="auth-page auth-page--splash-hidden" id="auth-page">
       <aside class="auth-hero" aria-hidden="true">
         <div class="auth-hero__logo">
           <img
@@ -130,6 +145,7 @@
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
+    <script src="js/auth-splash.js?v=1"></script>
     <script src="js/login.js?v=2"></script>
   </body>
 </html>
