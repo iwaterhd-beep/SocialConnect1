@@ -111,6 +111,15 @@ body.club-app.has-club-topnav {
   color: inherit;
 }
 
+.app-sidebar__brand--logo {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.app-sidebar__brand--logo .app-sidebar__brand-text {
+  padding-top: 2px;
+}
+
 .app-sidebar__mark {
   width: 36px;
   height: 36px;
@@ -984,6 +993,10 @@ body.club-dark.club-app .app-header__avatar {
   .club-app.sidebar-collapsed .app-nav-item__label,
   .club-app.sidebar-collapsed .app-sidebar__theme span:last-child {
     display: none;
+  }
+
+  .club-app.sidebar-collapsed .sc-logo--sidebar {
+    width: 44px;
   }
 
   .club-app.sidebar-collapsed .app-nav-item.club-tab {
