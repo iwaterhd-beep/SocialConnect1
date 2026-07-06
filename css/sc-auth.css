@@ -375,6 +375,16 @@ body.auth-splash-open {
     margin-bottom: 0.85rem;
   }
 
+  .auth-hero__logo-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0.85rem;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  }
+
   .auth-hero h2 {
     margin: 0 0 0.75rem;
     font-size: clamp(1.75rem, 3vw, 2.25rem);
