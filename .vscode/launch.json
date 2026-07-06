@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: Chrome (servidor local)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5500/index.html",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start static server (port 5500)"
+    },
+    {
+      "name": "Debug: Edge (servidor local)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:5500/index.html",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start static server (port 5500)"
+    },
+    {
+      "name": "Debug: Chrome (solo si tienes Node / npx)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5500/index.html",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start static server (Node / npx)"
+    },
+    {
+      "name": "Chrome solo (servidor ya corriendo en 5500)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5500/index.html",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}

@@ -1,0 +1,325 @@
+<div class="club-view-stage sc-members-layout sc-members-layout--full">
+<section class="card-section sc-members-list" aria-labelledby="members-list-title">
+  <div class="member-csv-toolbar sc-toolbar-compact">
+    <h2 id="members-list-title">Socios</h2>
+    <div class="member-csv-toolbar__actions">
+      <a
+        class="btn btn--ghost btn--small member-csv-template-link"
+        href="assets/plantilla_socios.csv"
+        download="plantilla_socios.csv"
+        title="CSV de ejemplo"
+      >
+        Plantilla
+      </a>
+      <button type="button" class="btn btn--ghost btn--small" id="members-export-csv" title="Exportar CSV">
+        Exportar
+      </button>
+      <button type="button" class="btn btn--ghost btn--small" id="members-import-csv" title="Importar CSV">
+        Importar
+      </button>
+      <button type="button" class="btn btn--ghost btn--small" id="members-new" title="Alta manual">
+        Nuevo socio
+      </button>
+      <button type="button" class="btn btn--ghost btn--small btn--danger" id="members-delete-all" title="Borrar todos">
+        Borrar todos
+      </button>
+      <input type="file" id="members-import-file" class="visually-hidden" accept=".csv,text/csv,text/plain" />
+    </div>
+  </div>
+  <div class="form__row sc-members-search">
+    <label class="visually-hidden" for="members-search">Buscar socio</label>
+    <input
+      type="search"
+      id="members-search"
+      class="input"
+      placeholder="Buscar nº socio, nombre, DNI, teléfono…"
+      autocomplete="off"
+    />
+  </div>
+  <div id="members-type-filter" class="chip-row sc-chip-row-compact" aria-label="Filtrar por tipo de socio">
+    <button type="button" class="chip is-active" data-members-type-filter="">Todos</button>
+    <button type="button" class="chip" data-members-type-filter="standard">Estándar</button>
+    <button type="button" class="chip" data-members-type-filter="premium">Premium</button>
+    <button type="button" class="chip" data-members-type-filter="vip">VIP</button>
+    <button type="button" class="chip" data-members-type-filter="expired">Caducados</button>
+  </div>
+  <p class="hint sc-hint-collapsed member-csv-hint">
+    CSV con <strong>;</strong> o <strong>,</strong>. Columnas: nombre, email, teléfono, tipo, uuid…
+  </p>
+  <div class="table-wrap sc-table-fill sc-members-table-wrap">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Nombre</th>
+          <th>DNI</th>
+          <th>Tipo</th>
+          <th>€</th>
+          <th>Tel.</th>
+          <th>Est.</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="members-tbody"></tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<div id="member-profile-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-member-close-modal="profile"></div>
+  <section class="card-section shift-modal__panel shift-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="member-profile-view-title">
+    <div class="sc-section-head member-panel-profile__head">
+      <h2 id="member-profile-view-title">Perfil del socio</h2>
+      <div class="member-modal__actions">
+        <button type="button" class="btn btn--small" id="member-profile-edit-btn">Editar socio</button>
+        <button type="button" class="btn btn--ghost btn--small" data-member-close-modal="profile" aria-label="Cerrar">×</button>
+      </div>
+    </div>
+    <div class="shift-modal__body shift-modal__body--scroll">
+      <div id="member-panel-profile" class="member-panel-profile">
+        <div class="member-profile-hero member-profile-hero--panel">
+          <div class="member-profile-hero__avatar">
+            <span id="member-profile-avatar-initials" class="member-profile-hero__avatar-initials" aria-hidden="false">?</span>
+            <img id="member-profile-avatar-img" class="member-profile-hero__avatar-img is-hidden" src="" alt="" />
+          </div>
+          <dl class="member-view-dl">
+            <div class="member-view-dl__row">
+              <dt>Nombre</dt>
+              <dd id="member-view-first-name">—</dd>
+            </div>
+            <div class="member-view-dl__row">
+              <dt>Apellidos</dt>
+              <dd id="member-view-last-name">—</dd>
+            </div>
+            <div class="member-view-dl__row">
+              <dt>DNI / NIE</dt>
+              <dd id="member-view-dni">—</dd>
+            </div>
+            <div class="member-view-dl__row">
+              <dt>Nº socio</dt>
+              <dd id="member-view-code">—</dd>
+            </div>
+            <div class="member-view-dl__row">
+              <dt>Tipo</dt>
+              <dd id="member-view-type">—</dd>
+            </div>
+            <div class="member-view-dl__row">
+              <dt>Estado</dt>
+              <dd id="member-view-status">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="member-profile-hero__kpis member-profile-hero__kpis--panel">
+          <article class="member-profile-kpi">
+            <span class="member-profile-kpi__label">Dispensaciones</span>
+            <strong id="member-profile-kpi-count" class="member-profile-kpi__value">0</strong>
+          </article>
+          <article class="member-profile-kpi">
+            <span class="member-profile-kpi__label">Total gastado</span>
+            <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
+          </article>
+          <article class="member-profile-kpi member-profile-kpi--wallet">
+            <span class="member-profile-kpi__label">Monedero</span>
+            <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 €</strong>
+          </article>
+        </div>
+
+        <div id="member-wallet-adjust" class="member-wallet-adjust is-hidden" hidden>
+          <h3 class="member-wallet-adjust__title">Monedero del socio</h3>
+          <label class="member-wallet-adjust-cash-toggle">
+            <input type="checkbox" id="member-wallet-adjust-cash" checked />
+            Movimiento en efectivo (afecta caja del turno)
+          </label>
+          <div class="member-wallet-adjust__row">
+            <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe €" />
+            <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo" />
+            <button type="button" class="btn btn--small" id="member-wallet-adjust-add">+ Ingresar</button>
+            <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
+          </div>
+          <p id="member-wallet-adjust-status" class="msg" role="status"></p>
+        </div>
+
+        <div id="member-wallet-ledger-wrap" class="member-wallet-ledger is-hidden" hidden>
+          <h3 class="member-wallet-ledger__title">Movimientos del monedero</h3>
+          <p id="member-wallet-ledger-empty" class="hint member-wallet-ledger__empty is-hidden" hidden>Sin movimientos.</p>
+          <div class="table-wrap member-wallet-ledger__table">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Monedero</th>
+                  <th>Caja</th>
+                  <th>Saldo</th>
+                  <th>Nota</th>
+                </tr>
+              </thead>
+              <tbody id="member-wallet-ledger-tbody">
+                <tr><td colspan="6">Sin datos.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3 class="member-panel-section-title">Dispensaciones</h3>
+        <p id="member-profile-meta" class="hint member-panel-dispenses-meta"></p>
+        <div class="table-wrap member-panel-dispenses-table">
+          <table class="table-compact">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>G ticket / G real</th>
+                <th>Precio</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody id="member-dispenses-tbody">
+              <tr><td colspan="5">Sin datos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="member-edit-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-member-close-modal="edit"></div>
+  <section class="card-section shift-modal__panel shift-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="members-form-title">
+    <div class="member-form-sc__top sc-section-head">
+      <div>
+        <h2 id="members-form-title">Nuevo socio</h2>
+        <p class="hint member-form-sc__hint">Alta manual para vincular ventas en TPV.</p>
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" data-member-close-modal="edit" aria-label="Cerrar">×</button>
+    </div>
+    <div class="shift-modal__body shift-modal__body--scroll">
+      <div id="member-panel-edit" class="member-panel-edit member-form-sc">
+        <input type="hidden" id="member-edit-id" value="" />
+
+        <div class="member-form-sc__hero sc-members-hero">
+          <div class="member-form-sc__avatar" id="member-avatar-wrap">
+            <img class="member-form-sc__avatar-img is-hidden" id="member-avatar-img" src="" alt="Foto del socio" />
+            <span class="member-form-sc__avatar-initials" id="member-avatar-initials" aria-hidden="true">?</span>
+          </div>
+          <div class="member-form-sc__photo-actions">
+            <input type="file" id="member-file-avatar" class="visually-hidden" accept="image/jpeg,image/png,image/webp" />
+            <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="avatar">📁 Foto</button>
+            <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="avatar">📷 Cámara</button>
+            <button type="button" class="btn btn--ghost btn--small" data-member-clear="avatar">Quitar</button>
+          </div>
+        </div>
+
+        <div class="member-form-sc__grid">
+          <div class="form__row">
+            <label for="member-first-name">Nombre</label>
+            <input class="input" id="member-first-name" type="text" autocomplete="given-name" placeholder="Nombre" />
+          </div>
+          <div class="form__row">
+            <label for="member-last-name">Apellidos</label>
+            <input class="input" id="member-last-name" type="text" autocomplete="family-name" placeholder="Apellidos" />
+          </div>
+          <div class="form__row">
+            <label for="member-dni">DNI / NIE</label>
+            <input class="input" id="member-dni" type="text" inputmode="text" autocomplete="off" placeholder="Opcional" />
+          </div>
+          <div class="form__row">
+            <label for="member-birth">Fecha nacimiento</label>
+            <input class="input" id="member-birth" type="date" />
+          </div>
+          <div class="form__row">
+            <label for="member-phone">Teléfono</label>
+            <input class="input" id="member-phone" type="tel" autocomplete="tel" placeholder="Opcional" />
+          </div>
+          <div class="form__row">
+            <label for="member-email">Email</label>
+            <input class="input" id="member-email" type="email" autocomplete="email" placeholder="Opcional" />
+          </div>
+          <div class="form__row">
+            <label for="member-code">Nº socio</label>
+            <input class="input" id="member-code" type="text" autocomplete="off" readonly placeholder="Se asigna al guardar (ej. #00001)" />
+          </div>
+          <div class="form__row">
+            <label for="member-enrollment-fee">Cuota inscripción (€)</label>
+            <input class="input" id="member-enrollment-fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+          </div>
+          <div class="form__row">
+            <label for="member-wallet-balance">Saldo monedero (€)</label>
+            <input class="input" id="member-wallet-balance" type="number" inputmode="decimal" step="0.01" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="form__row member-form-sc__type">
+          <span class="member-form-sc__type-label" id="member-type-label">Tipo de socio</span>
+          <div class="member-type-seg" role="group" aria-labelledby="member-type-label">
+            <button type="button" class="member-type-seg__btn is-active" data-member-type="standard" aria-pressed="true">Estándar</button>
+            <button type="button" class="member-type-seg__btn" data-member-type="premium" aria-pressed="false">Premium</button>
+            <button type="button" class="member-type-seg__btn" data-member-type="vip" aria-pressed="false">VIP</button>
+          </div>
+          <input type="hidden" id="member-type-value" value="standard" />
+          <div id="member-type-valid-wrap" class="member-type-valid-wrap is-hidden" hidden>
+            <label for="member-type-valid-until">Vigencia hasta</label>
+            <input class="input" id="member-type-valid-until" type="date" />
+          </div>
+        </div>
+
+        <details class="sc-collapse member-form-sc__docs-wrap">
+          <summary>Documentación (opcional)</summary>
+          <fieldset class="member-form-sc__docs">
+            <input type="file" id="member-file-dni-front" class="visually-hidden" accept="image/jpeg,image/png,image/webp,application/pdf" />
+            <input type="file" id="member-file-dni-back" class="visually-hidden" accept="image/jpeg,image/png,image/webp,application/pdf" />
+            <input type="file" id="member-file-passport" class="visually-hidden" accept="image/jpeg,image/png,image/webp,application/pdf" />
+            <div class="member-doc-row">
+              <span class="member-doc-row__title">DNI delante</span>
+              <span class="member-doc-row__state" id="member-doc-front-label">Sin archivo</span>
+              <div class="member-doc-row__actions">
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_front">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_front">Quitar</button>
+              </div>
+            </div>
+            <div class="member-doc-row">
+              <span class="member-doc-row__title">DNI detrás</span>
+              <span class="member-doc-row__state" id="member-doc-back-label">Sin archivo</span>
+              <div class="member-doc-row__actions">
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_back">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_back">Quitar</button>
+              </div>
+            </div>
+            <div class="member-doc-row">
+              <span class="member-doc-row__title">Pasaporte</span>
+              <span class="member-doc-row__state" id="member-doc-pass-label">Sin archivo</span>
+              <div class="member-doc-row__actions">
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="passport">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-clear="passport">Quitar</button>
+              </div>
+            </div>
+          </fieldset>
+        </details>
+
+        <div class="member-form-sc__grid member-form-sc__grid--1">
+          <div class="form__row">
+            <label for="member-notes">Notas internas</label>
+            <input class="input" id="member-notes" type="text" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="member-form-sc__status-row">
+          <label class="tpv-link-toggle member-form-sc__active">
+            <input type="checkbox" id="member-active" checked />
+            Socio activo
+          </label>
+        </div>
+
+        <div class="member-form-sc__actions sc-sticky-actions">
+          <button type="button" class="btn btn--ghost" id="member-cancel">Cancelar</button>
+          <button type="button" class="btn" id="member-save">Guardar socio</button>
+        </div>
+
+        <p id="member-status" class="msg" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,301 @@
+<div class="club-view-stage sc-inv-layout">
+<details class="sc-collapse card-section menu-admin-card sc-inv-menu">
+  <summary>Menú en tablet</summary>
+  <p class="hint" style="margin-top: 0">
+    Carta pública para socios: solo <strong>producto</strong> y <strong>precio</strong> (con stock). Enlace:
+    <code>socialconnectcs.com/menu/?club=tu-club</code>
+  </p>
+  <div class="form__row" style="margin-top: 0.75rem">
+    <label class="checkbox-label">
+      <input type="checkbox" id="inv-menu-enabled" />
+      Menú público activo
+    </label>
+  </div>
+  <div class="grid grid--2" style="margin-top: 0.5rem">
+    <div class="form__row" style="margin-bottom: 0">
+      <label for="inv-menu-slug">Ruta del menú</label>
+      <input class="input" id="inv-menu-slug" placeholder="mi-club" autocomplete="off" />
+      <p class="hint hint--small" style="margin-top: 0.35rem">Solo minúsculas, números y guiones.</p>
+    </div>
+    <div class="form__row" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end">
+      <p id="inv-menu-url-preview" class="hint" style="margin: 0 0 0.5rem">—</p>
+      <div class="row-actions">
+        <button type="button" class="btn btn--small" id="inv-menu-save">Guardar menú</button>
+        <button type="button" class="btn btn--ghost btn--small" id="inv-menu-open-link">Abrir menú</button>
+        <button type="button" class="btn btn--ghost btn--small" id="inv-menu-sync-prices">Rellenar precios</button>
+      </div>
+    </div>
+  </div>
+  <p class="hint hint--small" style="margin-top: 0.5rem">
+    Si en el menú salen «—», pulsa <strong>Rellenar precios</strong> (usa el precio de venta de cada producto).
+  </p>
+  <p id="inv-menu-status" class="msg" role="status" aria-live="polite"></p>
+</details>
+
+<section class="card-section sc-inv-products" aria-labelledby="inv-list-title">
+  <div class="member-csv-toolbar">
+    <h2 id="inv-list-title">Productos</h2>
+    <div class="member-csv-toolbar__actions">
+      <button type="button" class="btn btn--ghost btn--small" id="inv-open-cat-modal">Crear categoría</button>
+      <button type="button" class="btn btn--small" id="inv-open-product-modal">Crear producto</button>
+    </div>
+  </div>
+  <p id="inv-products-summary" class="hint" style="margin-top: 0"></p>
+  <div class="inv-toolbar">
+    <input type="search" id="inv-search" class="input" placeholder="Buscar por nombre…" autocomplete="off" />
+    <div class="form__row" style="margin-bottom: 0">
+      <label for="inv-filter-category">Categoría</label>
+      <select class="select" id="inv-filter-category">
+        <option value="">Todas las categorías</option>
+      </select>
+    </div>
+    <div id="inv-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
+    <div id="inv-stock-chips" class="chip-row sc-chip-row-compact inv-stock-chips" role="group" aria-label="Estado de stock"></div>
+  </div>
+
+  <div id="inv-product-cards" class="inv-prod-grid sc-inv-grid" aria-live="polite"></div>
+
+  <div class="table-wrap sc-inv-table-fallback" style="margin-top: 0.75rem">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Nombre</th>
+          <th>Cat.</th>
+          <th>Bote</th>
+          <th>Stock</th>
+          <th>Alerta</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="inv-products-tbody"></tbody>
+    </table>
+  </div>
+  <p id="inv-status" class="msg" role="status" aria-live="polite"></p>
+</section>
+</div>
+
+<div id="inv-cat-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-inv-close-cat-modal="1"></div>
+  <section class="card-section shift-modal__panel" role="dialog" aria-modal="true" aria-labelledby="inv-cat-title">
+    <h2 id="inv-cat-title" class="shift-modal__title">Categorías</h2>
+    <div class="shift-modal__body">
+      <div class="form__row">
+        <label for="inv-cat-name">Nueva categoría</label>
+        <div class="row-actions">
+          <input class="input" id="inv-cat-name" placeholder="Ej. Flores" style="flex: 1; min-width: 0" />
+          <button type="button" class="btn btn--small" id="inv-cat-add">Crear categoría</button>
+        </div>
+      </div>
+      <div class="form__row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="inv-cat-menu-strain" />
+          Sativa / Indica en menú (activar en categoría Weed)
+        </label>
+      </div>
+      <ul id="inv-cat-list" class="inv-cat-list" aria-label="Lista de categorías"></ul>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn--ghost" data-inv-close-cat-modal="1">Cerrar</button>
+    </div>
+  </section>
+</div>
+
+<div id="inv-product-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-inv-close-product-modal="1"></div>
+  <section class="card-section shift-modal__panel shift-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="inv-product-form-title">
+    <h2 id="inv-product-form-title" class="shift-modal__title">Producto</h2>
+    <div class="shift-modal__body shift-modal__body--scroll">
+      <p class="hint" style="margin-top: 0">
+        El <strong>peso del bote</strong> es la tara del envase: al pesar en báscula se resta sola para obtener gramos
+        netos.
+      </p>
+      <input type="hidden" id="inv-product-id" value="" />
+      <div class="grid grid--2" style="margin-top: 0.75rem">
+        <div class="form__row">
+          <label for="inv-product-emoji">Emoji</label>
+          <div class="row-actions">
+            <input
+              class="input"
+              id="inv-product-emoji"
+              maxlength="8"
+              placeholder="Elige emoji…"
+              autocomplete="off"
+              readonly
+              style="flex: 1; min-width: 0"
+            />
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-emoji-open">😀</button>
+          </div>
+        </div>
+        <div class="form__row">
+          <label for="inv-product-name">Nombre</label>
+          <input class="input" id="inv-product-name" placeholder="Nombre del artículo" />
+        </div>
+      </div>
+      <div class="form__row" id="inv-row-product-image">
+        <label>Foto o vídeo para menú tablet</label>
+        <div class="inv-product-image">
+          <div class="inv-product-image__preview" id="inv-product-image-preview-wrap">
+            <img
+              id="inv-product-image-preview"
+              class="inv-product-image__img is-hidden"
+              alt=""
+              width="120"
+              height="120"
+            />
+            <video
+              id="inv-product-image-preview-video"
+              class="inv-product-image__video is-hidden"
+              muted
+              playsinline
+              controls
+              preload="metadata"
+            ></video>
+            <span id="inv-product-image-placeholder" class="inv-product-image__placeholder">Sin archivo</span>
+          </div>
+          <div class="inv-product-image__actions">
+            <input
+              type="file"
+              id="inv-product-image-file"
+              class="visually-hidden"
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+            />
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-pick">Elegir archivo</button>
+            <button type="button" class="btn btn--ghost btn--small" id="inv-product-image-clear" hidden>
+              Quitar
+            </button>
+          </div>
+        </div>
+        <p class="hint hint--small" style="margin-top: 0.35rem">
+          Imagen: JPG, PNG o WebP (máx. 2 MB) · Vídeo: MP4, WebM o MOV (máx. 15 MB)
+        </p>
+      </div>
+      <div class="form__row">
+        <label>Tipo de venta</label>
+        <div class="member-type-seg" role="group" aria-label="Tipo de venta">
+          <button type="button" class="member-type-seg__btn is-active" data-inv-sale-unit="grams">Gramos</button>
+          <button type="button" class="member-type-seg__btn" data-inv-sale-unit="unit">Unidad</button>
+        </div>
+        <input type="hidden" id="inv-product-sale-unit" value="grams" />
+      </div>
+      <div class="form__row">
+        <label for="inv-product-category">Categoría</label>
+        <select class="select" id="inv-product-category">
+          <option value="">Sin categoría</option>
+        </select>
+      </div>
+      <div class="form__row" id="inv-product-strain-row" hidden>
+        <label for="inv-product-strain">Tipo (menú)</label>
+        <select class="select" id="inv-product-strain">
+          <option value="">—</option>
+          <option value="sativa">Sativa</option>
+          <option value="indica">Indica</option>
+        </select>
+      </div>
+      <div class="grid grid--2">
+        <div class="form__row" id="inv-row-bottle">
+          <label for="inv-product-bottle" id="inv-label-bottle">Peso del bote (g)</label>
+          <input class="input" id="inv-product-bottle" inputmode="decimal" value="0" />
+        </div>
+        <div class="form__row">
+          <label for="inv-product-stock" id="inv-label-stock">Stock neto (g)</label>
+          <input class="input" id="inv-product-stock" inputmode="decimal" value="0" />
+        </div>
+      </div>
+      <div class="inv-extra-fields">
+        <p class="hint inv-extra-hint" id="inv-extra-hint" hidden>
+          Ejecuta <code>009_inventory_product_extras.sql</code> para alertas y precio de venta en TPV.
+          <strong>Coste de compra</strong> requiere <code>022_inventory_purchase_cost.sql</code> (Finanzas admin).
+          Para poder <strong>quitar del catálogo</strong> productos con ventas o ajustes +/-, ejecuta <code>024_inventory_product_archived.sql</code>.
+        </p>
+        <div class="grid grid--2">
+          <div class="form__row">
+            <label for="inv-product-alert" id="inv-label-alert">Alerta stock mín. (g)</label>
+            <input class="input" id="inv-product-alert" inputmode="decimal" value="0" />
+          </div>
+          <div class="form__row">
+            <label for="inv-product-sale-price" id="inv-label-sale-price">Precio de venta (€)</label>
+            <input
+              class="input"
+              id="inv-product-sale-price"
+              inputmode="decimal"
+              placeholder="Ej. 1,50"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              Mismo precio en <strong>TPV</strong>, <strong>menú tablet</strong> y valoración de stock.
+              <strong>Unidad</strong>: €/ud · <strong>Gramos</strong>: €/g
+            </p>
+          </div>
+        </div>
+        <div class="grid grid--2">
+          <div class="form__row" id="inv-row-purchase-cost" hidden>
+            <label for="inv-product-purchase-cost" id="inv-label-purchase-cost">Coste de compra (€)</label>
+            <input
+              class="input"
+              id="inv-product-purchase-cost"
+              inputmode="decimal"
+              placeholder="€/g o €/ud — solo administrador del club"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              Tu <strong>coste</strong> por gramo o por unidad. En <strong>Finanzas</strong> (admin): valor del stock al coste.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn" id="inv-product-save">Crear producto</button>
+      <button type="button" class="btn btn--ghost" id="inv-product-new">Nuevo</button>
+      <button type="button" class="btn btn--ghost" data-inv-close-product-modal="1">Cerrar</button>
+    </div>
+  </section>
+</div>
+
+<div id="inv-emoji-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-inv-close-emoji-modal="1"></div>
+  <section class="card-section shift-modal__panel" role="dialog" aria-modal="true" aria-labelledby="inv-emoji-title">
+    <h2 id="inv-emoji-title" class="shift-modal__title">Elige un emoji</h2>
+    <div class="shift-modal__body">
+      <p class="hint" style="margin-top: 0">Busca o navega por categorías, como en el móvil.</p>
+      <div class="form__row" style="margin: 0.5rem 0 0.6rem">
+        <label>Recientes</label>
+        <div id="inv-emoji-recent" class="chip-row" aria-label="Emojis recientes"></div>
+      </div>
+      <emoji-picker id="inv-emoji-picker" locale="es" style="width: 100%; min-height: 360px"></emoji-picker>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn--ghost" data-inv-close-emoji-modal="1">Cerrar</button>
+    </div>
+  </section>
+</div>
+
+<div id="inv-adjust-modal" class="shift-modal is-hidden" aria-hidden="true">
+  <div class="shift-modal__backdrop" data-inv-close-adjust-modal="1"></div>
+  <section class="card-section shift-modal__panel" role="dialog" aria-modal="true" aria-labelledby="inv-adjust-title">
+    <h2 id="inv-adjust-title" class="shift-modal__title">Ajustar stock</h2>
+    <div class="shift-modal__body">
+      <p class="hint" style="margin-top: 0">
+        Producto: <strong id="inv-adjust-product">—</strong>
+      </p>
+      <p class="hint" style="margin-top: 0.35rem">
+        Stock actual: <strong id="inv-adjust-current">—</strong> <span id="inv-adjust-unit">—</span>
+      </p>
+      <div class="inv-adjust-dir" role="group" aria-label="Tipo de ajuste">
+        <button type="button" class="btn btn--ghost btn--small is-active" id="inv-adjust-dir-add">Añadir</button>
+        <button type="button" class="btn btn--ghost btn--small" id="inv-adjust-dir-remove">Retirar</button>
+      </div>
+      <div class="form__row" style="margin-top: 0.75rem">
+        <label for="inv-adjust-qty">Cantidad</label>
+        <input class="input" id="inv-adjust-qty" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 5" />
+      </div>
+      <div class="form__row">
+        <label for="inv-adjust-note">Nota (opcional)</label>
+        <textarea class="input" id="inv-adjust-note" rows="2" placeholder="Motivo del ajuste"></textarea>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn--ghost" data-inv-close-adjust-modal="1">Cancelar</button>
+      <button type="button" class="btn" id="inv-adjust-save">Guardar ajuste</button>
+    </div>
+  </section>
+</div>

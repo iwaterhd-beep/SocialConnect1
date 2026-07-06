@@ -1,0 +1,195 @@
+/* Panel superadmin — layout compacto alineado con dashboard club */
+
+.sc-admin-app {
+  --bg-app: #f5f7f9;
+  --bg-surface: #ffffff;
+  --border-subtle: #e8ecf0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --green-600: #16a34a;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 8px rgba(15, 23, 42, 0.04);
+  --radius-card: 12px;
+  min-height: 100dvh;
+  background: var(--bg-app);
+  font-size: 14px;
+}
+
+.sc-admin-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem 2rem;
+}
+
+.sc-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sc-admin-header h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sc-admin-header__meta {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.sc-admin-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sc-admin-header__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--green-600), #0d9488);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-admin-app .shell {
+  min-height: auto;
+  padding: 0;
+  align-items: stretch;
+}
+
+.sc-admin-app .shell--app {
+  background: transparent;
+  padding: 0;
+}
+
+.sc-admin-app .panel.panel--wide {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sc-admin-app .dash-header--super {
+  display: none;
+}
+
+.sc-admin-app .card-section {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+
+.sc-admin-app .card-section > h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sc-admin-app .grid.grid--2 {
+  gap: 1rem;
+  align-items: start;
+}
+
+.sc-admin-app .table-wrap {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: auto;
+  max-height: min(48vh, 420px);
+}
+
+.sc-admin-app th {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: var(--bg-app);
+  padding: 8px 12px;
+}
+
+.sc-admin-app td {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+.sc-admin-app .input,
+.sc-admin-app .select {
+  min-height: 36px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+}
+
+.sc-admin-app .btn {
+  min-height: 36px;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+}
+
+.sc-admin-app .form__row {
+  margin-bottom: 0.75rem;
+}
+
+.sc-admin-app .footer-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+.sc-admin-app .badge {
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.sc-admin-app .badge--on {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.sc-admin-app .badge--off {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sc-admin-app .msg {
+  font-size: 0.8125rem;
+  margin-bottom: 0.75rem;
+}
+
+.sc-admin-app .hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.sc-admin-app .actions .btn {
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.sc-admin-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .sc-admin-grid--top {
+    grid-template-columns: 1fr 1fr;
+  }
+}

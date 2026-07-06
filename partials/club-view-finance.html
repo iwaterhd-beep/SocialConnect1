@@ -1,0 +1,205 @@
+<div class="club-view-stage sc-finance-layout">
+<section class="card-section sc-finance-kpis-card" aria-labelledby="finance-title">
+  <div class="sc-section-head">
+    <h2 id="finance-title">Resumen</h2>
+    <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
+  </div>
+  <div class="finance-kpis" id="finance-kpis">
+    <div class="finance-kpi sc-kpi">
+      <span class="finance-kpi__label">Hoy</span>
+      <span class="finance-kpi__value" id="finance-kpi-today">—</span>
+    </div>
+    <div class="finance-kpi sc-kpi">
+      <span class="finance-kpi__label">7 días</span>
+      <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
+    </div>
+    <div class="finance-kpi sc-kpi">
+      <span class="finance-kpi__label">30 días</span>
+      <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
+    </div>
+  </div>
+  <p id="finance-kpi-detail" class="hint finance-kpi-detail"></p>
+  <section id="finance-admin-inventory-cost" class="finance-admin-inventory-cost is-hidden" hidden aria-labelledby="finance-inv-cost-title">
+    <h3 id="finance-inv-cost-title" class="finance-admin-inventory-cost__title">Valor inventario (admin)</h3>
+    <div class="finance-admin-inventory-cost__kpis">
+      <div class="finance-kpi finance-kpi--inventory-cost sc-kpi" id="finance-kpi-inventory-cost-wrap">
+        <span class="finance-kpi__label">Stock al coste</span>
+        <span class="finance-kpi__value" id="finance-kpi-inventory-cost">—</span>
+      </div>
+      <div class="finance-kpi finance-kpi--inventory-retail sc-kpi" id="finance-kpi-inventory-retail-wrap">
+        <span class="finance-kpi__label">Stock a precio venta ref.</span>
+        <span class="finance-kpi__value" id="finance-kpi-inventory-retail">—</span>
+      </div>
+    </div>
+  </section>
+  <p id="finance-status" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section class="card-section sc-finance-shifts" aria-labelledby="finance-shifts-title">
+  <h2 id="finance-shifts-title">Cierres de turno</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo cierres">
+      <button type="button" class="chip" data-finance-shifts-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-shifts-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-shifts-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-shifts-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-shifts-range="custom">Fechas</button>
+    </div>
+    <div id="finance-shifts-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-shifts-from">Desde</label>
+        <input class="input" id="finance-shifts-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-shifts-to">Hasta</label>
+        <input class="input" id="finance-shifts-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-shifts-apply">Aplicar</button>
+    </div>
+  </div>
+  <p id="finance-shifts-empty" class="hint">No hay cierres registrados todavía.</p>
+  <div class="table-wrap sc-table-compact">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Cierre</th>
+          <th>Apertura</th>
+          <th>Abierto por</th>
+          <th>Cerrado por</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="finance-shifts-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card-section sc-finance-adjust" aria-labelledby="finance-inventory-adjust-title" id="finance-inventory-adjust-section">
+  <h2 id="finance-inventory-adjust-title">Ajustes inventario (+/-)</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo ajustes">
+      <button type="button" class="chip" data-finance-adjust-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-adjust-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-adjust-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-adjust-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-adjust-range="custom">Fechas</button>
+    </div>
+    <div id="finance-adjust-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-adjust-from">Desde</label>
+        <input class="input" id="finance-adjust-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-adjust-to">Hasta</label>
+        <input class="input" id="finance-adjust-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-adjust-apply">Aplicar</button>
+    </div>
+  </div>
+  <p id="finance-inventory-adjust-empty" class="hint" hidden>No hay ajustes en los últimos 30 días.</p>
+  <div class="table-wrap sc-table-compact">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Usuario</th>
+          <th>Mov.</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody id="finance-inventory-adjust-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card-section sc-finance-wallet" aria-labelledby="finance-wallet-title">
+  <h2 id="finance-wallet-title">Monedero</h2>
+  <div class="sc-finance-toolbar sc-finance-toolbar--center">
+    <div class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo monedero">
+      <button type="button" class="chip" data-finance-wallet-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-wallet-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-wallet-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-wallet-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-wallet-range="custom">Fechas</button>
+    </div>
+    <div id="finance-wallet-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-wallet-from">Desde</label>
+        <input class="input" id="finance-wallet-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-wallet-to">Hasta</label>
+        <input class="input" id="finance-wallet-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-wallet-apply">Aplicar</button>
+    </div>
+  </div>
+  <p id="finance-wallet-summary" class="hint"></p>
+  <p id="finance-wallet-empty" class="hint" hidden>Sin movimientos en este periodo.</p>
+  <div class="table-wrap sc-table-compact">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Socio</th>
+          <th>Tipo</th>
+          <th>Monedero</th>
+          <th>Caja</th>
+          <th>Saldo</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody id="finance-wallet-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card-section sc-finance-sales sc-span-full" aria-labelledby="finance-ventas-title">
+  <h2 id="finance-ventas-title" class="sc-finance-sales__title">Ventas TPV</h2>
+  <div class="finance-ventas-toolbar sc-finance-toolbar sc-finance-toolbar--center sc-toolbar-inline">
+    <input type="search" id="finance-sales-search" class="input" placeholder="Buscar producto…" autocomplete="off" />
+    <div id="finance-ventas-range" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo">
+      <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
+      <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
+      <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
+      <button type="button" class="chip" data-finance-sales-range="all">Todas</button>
+      <button type="button" class="chip" data-finance-sales-range="custom">Fechas</button>
+    </div>
+    <div id="finance-ventas-custom" class="finance-ventas-custom sc-finance-toolbar__custom is-hidden" hidden>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-sales-from">Desde</label>
+        <input class="input" id="finance-sales-from" type="date" />
+      </div>
+      <div class="form__row" style="margin-bottom: 0">
+        <label for="finance-sales-to">Hasta</label>
+        <input class="input" id="finance-sales-to" type="date" />
+      </div>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar</button>
+    </div>
+    <div class="form__row finance-ventas-category" style="margin-bottom: 0">
+      <label for="finance-sales-category">Categoría</label>
+      <select class="select" id="finance-sales-category">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" aria-label="Categorías"></div>
+  </div>
+  <p id="finance-ventas-summary" class="hint"></p>
+  <p id="finance-ventas-empty" class="hint" hidden>No hay ventas en este periodo.</p>
+  <div class="table-wrap sc-table-fill">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Socio</th>
+          <th>Cobro</th>
+          <th>Importe</th>
+        </tr>
+      </thead>
+      <tbody id="finance-ventas-tbody"></tbody>
+    </table>
+  </div>
+</section>
+</div>

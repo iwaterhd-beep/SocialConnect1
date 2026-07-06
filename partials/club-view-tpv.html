@@ -1,0 +1,193 @@
+<div class="tpv-pos">
+  <header class="tpv-pos__header">
+    <div class="tpv-pos__header-main">
+      <h2 class="tpv-pos__title" id="tpv-title">TPV</h2>
+      <p id="tpv-shift-banner" class="tpv-pos__shift status-pill" role="status">Comprobando turno…</p>
+    </div>
+    <label class="tpv-pos__sync-toggle">
+      <input type="checkbox" id="tpv-link-grams" checked />
+      <span>Sincronizar ticket → reales</span>
+    </label>
+  </header>
+
+  <div class="tpv-pos__workspace">
+    <nav id="tpv-cat-nav" class="tpv-pos__sidebar" aria-label="Categorías">
+      <!-- Categorías verticales (JS) -->
+    </nav>
+    <div id="tpv-cat-chips" class="visually-hidden" aria-hidden="true"></div>
+
+    <main class="tpv-pos__catalog">
+      <div class="tpv-pos__toolbar">
+        <label class="tpv-pos__search">
+          <svg class="tpv-pos__search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="M20 20l-3-3" />
+          </svg>
+          <span class="visually-hidden">Buscar producto</span>
+          <input
+            type="search"
+            id="tpv-search"
+            class="tpv-pos__search-input"
+            placeholder="Buscar producto…"
+            autocomplete="off"
+          />
+        </label>
+        <span id="tpv-product-count" class="tpv-pos__count hint"></span>
+      </div>
+      <div id="tpv-product-grid" class="tpv-prod-grid" role="list"></div>
+    </main>
+
+    <aside class="tpv-pos__ticket" aria-label="Ticket de venta">
+      <div id="tpv-ticket-paper" class="tpv-receipt">
+        <div class="tpv-receipt__shell">
+          <header class="tpv-receipt__head">
+            <div class="tpv-receipt__head-row">
+              <span class="tpv-receipt__eyebrow">Ticket activo</span>
+              <p id="tpv-stock-hint" class="tpv-receipt__stock"></p>
+            </div>
+            <div id="tpv-selected-label" class="tpv-receipt__product">Selecciona un producto</div>
+          </header>
+          <input type="hidden" id="tpv-selected-product" value="" />
+
+          <div class="tpv-receipt__body">
+            <section class="tpv-receipt__cart" aria-labelledby="tpv-lbl-cart">
+              <div class="tpv-receipt__cart-bar">
+                <h3 class="tpv-receipt__section-label" id="tpv-lbl-cart">Pedido</h3>
+                <button type="button" class="tpv-receipt__text-btn" id="tpv-clear-cart">Vaciar</button>
+              </div>
+              <div id="tpv-cart-list" class="tpv-receipt__lines"></div>
+              <div class="tpv-receipt__total">
+                <span class="tpv-receipt__total-label">Total</span>
+                <strong id="tpv-cart-total" class="tpv-receipt__total-value">0,00 €</strong>
+              </div>
+            </section>
+
+            <section class="tpv-receipt__composer">
+              <div class="tpv-receipt__member" aria-labelledby="tpv-lbl-socio">
+                <h3 class="tpv-receipt__section-label" id="tpv-lbl-socio">Socio</h3>
+                <div class="tpv-receipt__member-search tpv-member-field">
+                  <label class="visually-hidden" for="tpv-member-search">Buscar socio</label>
+                  <input
+                    type="search"
+                    id="tpv-member-search"
+                    class="tpv-receipt__input"
+                    placeholder="Buscar socio…"
+                    autocomplete="off"
+                  />
+                  <button type="button" class="tpv-receipt__icon-btn" id="tpv-member-clear" title="Quitar socio">×</button>
+                  <div id="tpv-member-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
+                </div>
+                <input type="hidden" id="tpv-selected-member" value="" />
+                <div id="tpv-member-chip-wrap" class="tpv-receipt__member-chip tpv-member-chip-wrap is-hidden" hidden>
+                  <div class="tpv-member-chip-avatar" aria-hidden="true">
+                    <img id="tpv-member-chip-img" class="tpv-member-chip-img is-hidden" src="" alt="" />
+                    <span id="tpv-member-chip-initials" class="tpv-member-chip-initials">?</span>
+                  </div>
+                  <p id="tpv-member-chip" class="tpv-member-chip"></p>
+                </div>
+                <details class="tpv-receipt__wallet-panel" id="tpv-wallet-funds" hidden>
+                  <summary>Monedero del socio</summary>
+                  <div class="tpv-wallet-funds">
+                    <p id="tpv-wallet-funds-balance" class="hint tpv-wallet-funds-balance"></p>
+                    <label class="tpv-wallet-funds-cash-toggle">
+                      <input type="checkbox" id="tpv-wallet-funds-cash" checked />
+                      Afecta caja del turno
+                    </label>
+                    <div class="tpv-wallet-funds__row">
+                      <input class="tpv-receipt__input" id="tpv-wallet-funds-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="€" />
+                      <input class="tpv-receipt__input" id="tpv-wallet-funds-notes" type="text" placeholder="Motivo" autocomplete="off" />
+                      <button type="button" class="btn btn--small" id="tpv-wallet-funds-add">+</button>
+                      <button type="button" class="btn btn--ghost btn--small" id="tpv-wallet-funds-sub">−</button>
+                    </div>
+                    <p id="tpv-wallet-funds-status" class="msg tpv-wallet-funds-status" role="status"></p>
+                  </div>
+                </details>
+              </div>
+
+              <div class="tpv-receipt__qty" aria-labelledby="tpv-lbl-grams">
+                <h3 class="tpv-receipt__section-label" id="tpv-lbl-grams">Cantidad</h3>
+                <div class="tpv-receipt__qty-grid" id="tpv-qty-grid">
+                  <label class="tpv-receipt__field">
+                    <span id="tpv-label-charged">Ticket</span>
+                    <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-charged" inputmode="decimal" placeholder="0,5" />
+                  </label>
+                  <label class="tpv-receipt__field" id="tpv-field-real">
+                    <span id="tpv-label-real">Reales</span>
+                    <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-dispensed" inputmode="decimal" placeholder="0,52" />
+                  </label>
+                  <label class="tpv-receipt__field tpv-receipt__field--price">
+                    <span>Precio €</span>
+                    <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" />
+                  </label>
+                </div>
+                <p id="tpv-margin-hint" class="tpv-receipt__hint"></p>
+                <div class="tpv-receipt__stepper" id="tpv-stepper" aria-label="Ajuste rápido">
+                  <button type="button" class="tpv-receipt__step" data-tpv-step="-0.1">−0,1</button>
+                  <button type="button" class="tpv-receipt__step" data-tpv-step="-0.05">−0,05</button>
+                  <button type="button" class="tpv-receipt__step" data-tpv-step="0.05">+0,05</button>
+                  <button type="button" class="tpv-receipt__step" data-tpv-step="0.1">+0,1</button>
+                </div>
+              </div>
+
+              <div class="tpv-receipt__pay" aria-labelledby="tpv-lbl-pay-method">
+                <h3 class="tpv-receipt__section-label" id="tpv-lbl-pay-method">Pago</h3>
+                <div class="tpv-receipt__pay-row">
+                  <label class="tpv-receipt__pay-opt">
+                    <input type="radio" name="tpv-payment-method" value="cash" checked />
+                    <span>Efectivo</span>
+                  </label>
+                  <label class="tpv-receipt__pay-opt">
+                    <input type="radio" name="tpv-payment-method" value="wallet" />
+                    <span>Monedero</span>
+                  </label>
+                </div>
+                <p id="tpv-wallet-balance" class="tpv-receipt__hint tpv-wallet-balance is-hidden" hidden></p>
+                <p id="tpv-wallet-preview" class="tpv-receipt__hint tpv-wallet-preview is-hidden" hidden></p>
+                <label class="tpv-receipt__field tpv-receipt__field--note">
+                  <span class="visually-hidden">Nota</span>
+                  <input class="tpv-receipt__input" id="tpv-notes" placeholder="Nota opcional…" autocomplete="off" />
+                </label>
+              </div>
+            </section>
+
+            <div class="tpv-ticket-stock-wrap visually-hidden" aria-hidden="true"></div>
+          </div>
+
+          <footer class="tpv-receipt__footer">
+            <button type="button" class="tpv-receipt__cobrar" id="tpv-submit">
+              <span class="tpv-receipt__cobrar-label">Cobrar</span>
+              <span class="tpv-receipt__cobrar-amount" id="tpv-cobrar-amount">0,00 €</span>
+            </button>
+            <p id="tpv-status" class="tpv-receipt__status msg" role="status" aria-live="polite"></p>
+          </footer>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <details class="tpv-pos__recent sc-collapse">
+    <summary>Últimas ventas</summary>
+    <div class="table-wrap tpv-recent-table-wrap">
+      <table class="table-compact">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Dispensador</th>
+            <th>Producto</th>
+            <th>Socio</th>
+            <th>Cant. ticket / real</th>
+            <th>Precio</th>
+            <th>Nota</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tpv-recent-tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <div id="tpv-success-overlay" class="tpv-overlay is-hidden" aria-hidden="true">
+    <div class="tpv-overlay__icon" aria-hidden="true">✓</div>
+    <p class="tpv-overlay__title">Venta registrada</p>
+    <p id="tpv-overlay-detail" class="tpv-overlay__sub"></p>
+  </div>
+</div>
