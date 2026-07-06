@@ -568,7 +568,7 @@ body.club-app.has-club-topnav {
   grid-column: 1 / -1;
 }
 
-.sc-home-shortcuts {
+/* Settings grid */
 .sc-settings-grid {
   grid-template-columns: repeat(12, 1fr);
 }
@@ -637,16 +637,18 @@ body.club-app.has-club-topnav {
 .sc-home-kpis-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .sc-home-kpi {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: var(--space-3);
+  justify-content: center;
+  gap: 6px;
+  min-height: 5.5rem;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-surface);
   text-align: left;
   font-family: inherit;
