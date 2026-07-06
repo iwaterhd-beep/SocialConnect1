@@ -9,8 +9,8 @@
     <link rel="icon" href="assets/img/logo-socialconnect.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/logo-socialconnect.png?v=2" />
     <link rel="stylesheet" href="css/theme.css?v=28" />
-    <link rel="stylesheet" href="css/dashboard-club.css?v=26" />
-    <link rel="stylesheet" href="css/sc-dashboard.css?v=16" />
+    <link rel="stylesheet" href="css/dashboard-club.css?v=27" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=17" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=7" />
   </head>
   <body class="club-app has-club-topnav">
@@ -79,6 +79,13 @@
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
             <span class="app-nav-item__label">Finanzas</span>
+          </button>
+          <button type="button" class="club-tab app-nav-item" data-view="settings" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+            <span class="app-nav-item__label">Ajustes</span>
           </button>
         </nav>
 
@@ -152,6 +159,10 @@
           <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
             <p class="hint club-partial-placeholder">Cargando…</p>
           </div>
+
+          <div id="club-view-settings" class="club-view is-hidden" data-view="settings" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
         </main>
       </div>
     </div>
@@ -211,7 +222,7 @@
             <p>Los datos personales facilitados se utilizarán exclusivamente para:</p>
             <ul>
               <li>Gestión y control de acceso de socios al club.</li>
-              <li>Verificación de la mayoría de edad (obligatorio, ≥ 18 años).</li>
+              <li>Verificación de la mayoría de edad (obligatorio, ≥ <span id="member-terms-min-age-privacy">18</span> años).</li>
               <li>Cumplimiento de obligaciones legales y fiscales.</li>
               <li>Comunicaciones internas de la asociación.</li>
             </ul>
@@ -234,7 +245,7 @@
             </div>
             <h4 class="member-terms-panel__h">Requisitos para ser socio</h4>
             <ul>
-              <li>Ser mayor de 18 años. La verificación de identidad es obligatoria.</li>
+              <li>Ser mayor de <span id="member-terms-min-age-statutes">18</span> años. La verificación de identidad es obligatoria.</li>
               <li>Ser presentado por un socio existente (si aplica según estatutos internos).</li>
               <li>Consumidor habitual de cannabis antes de la incorporación al club.</li>
               <li>Aceptar íntegramente los presentes estatutos y normas de convivencia.</li>
@@ -253,7 +264,7 @@
           <div class="member-terms-panel" id="member-terms-panel-conducta" role="tabpanel" hidden>
             <h4 class="member-terms-panel__h">Normas de conducta y uso</h4>
             <ul>
-              <li>Queda estrictamente prohibido el acceso o consumo a menores de 18 años.</li>
+              <li>Queda estrictamente prohibido el acceso o consumo a menores de <span id="member-terms-min-age-conduct">18</span> años.</li>
               <li>No se permite la entrada bajo los efectos evidentes de otras sustancias.</li>
               <li>Las cantidades asignadas son para consumo personal dentro del recinto.</li>
               <li>Está prohibido sacar producto del local para su distribución a terceros.</li>
@@ -282,7 +293,7 @@
             </label>
             <label class="member-terms-check">
               <input type="checkbox" id="member-terms-chk2" />
-              <span>Declaro ser <strong>mayor de 18 años</strong>, consumidor habitual de cannabis y acepto los Estatutos del club.</span>
+              <span>Declaro ser <strong>mayor de <span id="member-terms-chk2-age">18</span> años</strong>, consumidor habitual de cannabis y acepto los Estatutos del club.</span>
             </label>
             <label class="member-terms-check">
               <input type="checkbox" id="member-terms-chk3" />
@@ -304,10 +315,10 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
     <script src="js/dashboard-club-partials.js"></script>
-    <script src="js/club-inventory-tpv.js?v=38"></script>
+    <script src="js/club-inventory-tpv.js?v=39"></script>
     <script src="js/club-stock.js?v=24"></script>
-    <script src="js/club-socios-finance.js?v=31"></script>
-    <script src="js/dashboard-club.js?v=34"></script>
+    <script src="js/club-socios-finance.js?v=32"></script>
+    <script src="js/dashboard-club.js?v=36"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

@@ -215,16 +215,16 @@
 
         <div class="member-form-sc__grid">
           <div class="form__row">
-            <label for="member-first-name">Nombre</label>
-            <input class="input" id="member-first-name" type="text" autocomplete="given-name" placeholder="Nombre" />
+            <label for="member-first-name">Nombre <span class="field-required" aria-hidden="true">*</span></label>
+            <input class="input input--uppercase" id="member-first-name" type="text" autocomplete="given-name" placeholder="NOMBRE" required />
           </div>
           <div class="form__row">
-            <label for="member-last-name">Apellidos</label>
-            <input class="input" id="member-last-name" type="text" autocomplete="family-name" placeholder="Apellidos" />
+            <label for="member-last-name">Apellidos <span class="field-required" aria-hidden="true">*</span></label>
+            <input class="input input--uppercase" id="member-last-name" type="text" autocomplete="family-name" placeholder="APELLIDOS" required />
           </div>
           <div class="form__row">
-            <label for="member-dni">DNI / NIE</label>
-            <input class="input" id="member-dni" type="text" inputmode="text" autocomplete="off" placeholder="Opcional" />
+            <label for="member-dni">DNI / NIE <span class="field-required" aria-hidden="true">*</span></label>
+            <input class="input input--uppercase" id="member-dni" type="text" inputmode="text" autocomplete="off" placeholder="12345678A" required />
           </div>
           <div class="form__row">
             <label for="member-birth">Fecha nacimiento</label>

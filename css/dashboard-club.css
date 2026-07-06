@@ -3292,7 +3292,19 @@ body.club-dark .member-wallet-adjust {
   font-weight: 700;
 }
 
-/* ---------- Datos legales (Inicio) ---------- */
+.input--uppercase {
+  text-transform: uppercase;
+}
+
+.field-required {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+body.club-dark .field-required {
+  color: #f87171;
+}
+
 .sc-home-legal .sc-section-head__meta {
   margin-top: 0.25rem;
 }

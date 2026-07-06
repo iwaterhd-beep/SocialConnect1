@@ -2562,6 +2562,10 @@
     await loadMembersForTpv();
   };
 
+  function formatTpvMemberName(name) {
+    return String(name || '').trim().toLocaleUpperCase('es-ES');
+  }
+
   function formatTpvMemberCode(m) {
     if (!m) return '';
     const num = m.member_number != null ? Number(m.member_number) : NaN;
@@ -2679,7 +2683,7 @@
     if (chip) {
       const code = formatTpvMemberCode(m);
       const codeTxt = code ? ` (${code})` : '';
-      chip.textContent = `Socio: ${m.display_name || '—'}${codeTxt}${tpvMemberTierSuffix(m)}`;
+      chip.textContent = `Socio: ${formatTpvMemberName(m.display_name) || '—'}${codeTxt}${tpvMemberTierSuffix(m)}`;
     }
     if (initials) initials.textContent = tpvChipMemberInitials(m);
     if (!img) return;
@@ -2721,7 +2725,7 @@
       const code = formatTpvMemberCode(m);
       const codeTxt = code ? ` · ${code}` : '';
       const tier = tpvMemberTierSuffix(m);
-      b.textContent = `${m.display_name}${codeTxt}${tier}`;
+      b.textContent = `${formatTpvMemberName(m.display_name)}${codeTxt}${tier}`;
       if (isTpvActiveVipMember(m)) b.classList.add('tpv-member-dropdown__item--vip');
       b.addEventListener('click', (ev) => {
         ev.preventDefault();

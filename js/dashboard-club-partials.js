@@ -36,6 +36,7 @@
       inject('#club-view-stock', 'club-view-stock.html'),
       inject('#club-view-members', 'club-view-members.html'),
       inject('#club-view-finance', 'club-view-finance.html'),
+      inject('#club-view-settings', 'club-view-settings.html'),
     ]);
   };
 })();

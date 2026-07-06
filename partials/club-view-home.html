@@ -1,38 +1,4 @@
 <div class="club-view-stage sc-home-grid">
-<section
-  class="card-section sc-home-legal"
-  id="club-legal-section"
-  hidden
-  aria-labelledby="club-legal-title"
->
-  <div class="sc-section-head">
-    <h2 id="club-legal-title">Datos legales del club</h2>
-    <p class="hint sc-section-head__meta">Aparecen en el aviso legal al dar de alta un socio.</p>
-  </div>
-  <div class="grid grid--2 sc-compact-grid">
-    <div class="form__row">
-      <label for="club-legal-name">Nombre del club</label>
-      <input class="input" id="club-legal-name" type="text" autocomplete="organization" placeholder="Asociación cannábica…" />
-    </div>
-    <div class="form__row">
-      <label for="club-legal-cif">CIF</label>
-      <input class="input" id="club-legal-cif" type="text" autocomplete="off" placeholder="G12345678" />
-    </div>
-    <div class="form__row">
-      <label for="club-legal-email">Email de contacto (RGPD)</label>
-      <input class="input" id="club-legal-email" type="email" autocomplete="email" placeholder="info@club.es" />
-    </div>
-    <div class="form__row">
-      <label for="club-legal-address">Domicilio social</label>
-      <input class="input" id="club-legal-address" type="text" autocomplete="street-address" placeholder="Calle, número, ciudad…" />
-    </div>
-  </div>
-  <div class="row-actions">
-    <button type="button" class="btn btn--small" id="club-legal-save">Guardar datos legales</button>
-  </div>
-  <p id="club-legal-msg" class="msg" role="status" aria-live="polite"></p>
-</section>
-
 <section class="card-section sc-home-summary sc-card--flat sc-home-shortcuts" aria-labelledby="home-next-title">
   <h2 id="home-next-title">Accesos rápidos</h2>
   <nav class="sc-quick-nav" aria-label="Ir a sección">
@@ -70,6 +36,13 @@
       </span>
       <span class="sc-quick-nav__label">Finanzas</span>
       <span class="sc-quick-nav__desc">Resumen</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="settings">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Ajustes</span>
+      <span class="sc-quick-nav__desc">Club y cuenta</span>
     </button>
   </nav>
 </section>
@@ -140,73 +113,5 @@
       <tbody id="shifts-tbody"></tbody>
     </table>
   </div>
-</section>
-
-<section
-  class="card-section sc-home-team"
-  id="club-team-section"
-  hidden
-  aria-labelledby="club-team-title"
->
-  <h2 id="club-team-title">Trabajadores</h2>
-  <p class="hint">
-    Crea el perfil de empleado. Se genera una contraseña: comunícala de forma segura.
-  </p>
-  <div class="grid grid--2 sc-compact-grid">
-    <div class="form__row">
-      <label for="team-worker-email">Email del trabajador</label>
-      <input
-        class="input"
-        id="team-worker-email"
-        type="email"
-        autocomplete="off"
-        placeholder="nombre@ejemplo.com"
-      />
-    </div>
-    <div class="form__row">
-      <label for="team-worker-password">Contraseña generada</label>
-      <input class="input" id="team-worker-password" readonly placeholder="Pulsa «Generar contraseña»" />
-    </div>
-  </div>
-  <div class="row-actions">
-    <button type="button" class="btn btn--ghost btn--small" id="team-gen-pwd">Generar contraseña</button>
-    <button type="button" class="btn" id="team-create-worker">Crear trabajador</button>
-  </div>
-  <p id="club-team-msg" class="msg" role="status" aria-live="polite"></p>
-  <div class="table-wrap">
-    <table class="table-compact">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Rol</th>
-          <th>Editar inventario</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="club-team-tbody"></tbody>
-    </table>
-  </div>
-</section>
-
-<section class="card-section sc-home-password" aria-labelledby="password-settings-title">
-  <h2 id="password-settings-title">Contraseña</h2>
-  <form id="password-settings-form" novalidate>
-    <div class="grid grid--2 sc-compact-grid">
-      <div class="form__row">
-        <label for="password-current">Contraseña actual</label>
-        <input class="input" id="password-current" type="password" autocomplete="current-password" required />
-      </div>
-      <div class="form__row">
-        <label for="password-new">Nueva contraseña</label>
-        <input class="input" id="password-new" type="password" autocomplete="new-password" required minlength="6" />
-      </div>
-    </div>
-    <div class="form__row">
-      <label for="password-confirm">Repetir nueva contraseña</label>
-      <input class="input" id="password-confirm" type="password" autocomplete="new-password" required minlength="6" />
-    </div>
-    <button type="submit" class="btn btn--small">Guardar</button>
-    <p id="password-settings-msg" class="msg" role="status" aria-live="polite"></p>
-  </form>
 </section>
 </div>

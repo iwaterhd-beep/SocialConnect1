@@ -27,11 +27,23 @@
       return null;
     }
 
-    const { data: club, error } = await sb()
+    let { data: club, error } = await sb()
       .from('clubs')
-      .select('id, name, cif, email, address, is_active')
+      .select('id, name, cif, email, address, member_min_age, is_active')
       .eq('id', gate.profile.club_id)
       .maybeSingle();
+
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').includes('member_min_age'))
+    ) {
+      ({ data: club, error } = await sb()
+        .from('clubs')
+        .select('id, name, cif, email, address, is_active')
+        .eq('id', gate.profile.club_id)
+        .maybeSingle());
+      if (club) club.member_min_age = 18;
+    }
 
     if (error) throw error;
     if (!club || !club.is_active) {
@@ -41,6 +53,9 @@
         window.location.href = 'index.html';
       }, 2500);
       return null;
+    }
+    if (club.member_min_age == null || Number.isNaN(Number(club.member_min_age))) {
+      club.member_min_age = 18;
     }
 
     $('club-name-display').textContent = club.name;
@@ -263,6 +278,10 @@
     if ($('club-legal-cif')) $('club-legal-cif').value = club?.cif || '';
     if ($('club-legal-email')) $('club-legal-email').value = club?.email || '';
     if ($('club-legal-address')) $('club-legal-address').value = club?.address || '';
+    if ($('club-legal-min-age')) {
+      const age = club?.member_min_age != null ? Number(club.member_min_age) : 18;
+      $('club-legal-min-age').value = Number.isFinite(age) && age >= 1 ? String(Math.trunc(age)) : '18';
+    }
   }
 
   function initClubLegalSection(ctx) {
@@ -279,6 +298,8 @@
       const cif = ($('club-legal-cif')?.value || '').trim();
       const email = ($('club-legal-email')?.value || '').trim();
       const address = ($('club-legal-address')?.value || '').trim();
+      const minAgeRaw = ($('club-legal-min-age')?.value || '').trim();
+      const member_min_age = minAgeRaw === '' ? 18 : Number(minAgeRaw);
 
       if (!name) {
         setClubLegalMsg('Indica el nombre del club.', true);
@@ -288,20 +309,26 @@
         setClubLegalMsg('El email no parece válido.', true);
         return;
       }
+      if (!Number.isFinite(member_min_age) || member_min_age < 1 || member_min_age > 120) {
+        setClubLegalMsg('La edad mínima debe ser un número entre 1 y 120.', true);
+        return;
+      }
 
       setClubLegalMsg('Guardando…', false);
       const { data, error } = await sb()
         .from('clubs')
-        .update({ name, cif, email, address })
+        .update({ name, cif, email, address, member_min_age: Math.trunc(member_min_age) })
         .eq('id', ctx.club.id)
-        .select('id, name, cif, email, address, is_active')
+        .select('id, name, cif, email, address, member_min_age, is_active')
         .single();
 
       if (error) {
         const msg =
           error.code === '42501' || /policy/i.test(error.message || '')
-            ? 'Ejecuta en Supabase la migración 042_clubs_admin_update_legal.sql.'
-            : error.message || 'No se pudieron guardar los datos.';
+            ? 'Ejecuta en Supabase las migraciones 042 y 043 en el SQL Editor.'
+            : error.code === '42703' || String(error.message || '').includes('member_min_age')
+              ? 'Ejecuta en Supabase la migración 043_club_member_min_age.sql.'
+              : error.message || 'No se pudieron guardar los datos.';
         setClubLegalMsg(msg, true);
         return;
       }
@@ -315,11 +342,13 @@
   }
 
   window.scClubGetLegalInfo = function () {
+    const minAge = ctxRef?.club?.member_min_age != null ? Number(ctxRef.club.member_min_age) : 18;
     return {
       name: ctxRef?.club?.name || '',
       cif: ctxRef?.club?.cif || '',
       email: ctxRef?.club?.email || '',
       address: ctxRef?.club?.address || '',
+      member_min_age: Number.isFinite(minAge) && minAge >= 1 ? Math.trunc(minAge) : 18,
     };
   };
 
@@ -1300,6 +1329,10 @@
     if (viewName === 'finance' && typeof window.scClubRefreshFinance === 'function') {
       void window.scClubRefreshFinance();
     }
+    if (viewName === 'settings' && ctxRef?.profile?.role === 'admin_club') {
+      fillClubLegalForm(ctxRef.club);
+      void refreshClubTeamTable(ctxRef.club.id, ctxRef.profile.id);
+    }
   }
 
   const PAGE_TITLES = {
@@ -1309,6 +1342,7 @@
     stock: 'Stock por turno',
     members: 'Socios',
     finance: 'Finanzas',
+    settings: 'Ajustes',
   };
 
   function setPageTitle(viewName) {
@@ -1344,7 +1378,7 @@
     }
   }
 
-  const VIEW_IDS = ['home', 'tpv', 'inventory', 'stock', 'members', 'finance'];
+  const VIEW_IDS = ['home', 'tpv', 'inventory', 'stock', 'members', 'finance', 'settings'];
 
   function viewFromHash() {
     const h = (location.hash || '').replace(/^#/, '').toLowerCase();

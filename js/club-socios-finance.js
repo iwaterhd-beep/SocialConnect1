@@ -430,6 +430,43 @@
     return { first, last };
   }
 
+  function formatMemberName(value) {
+    return String(value || '').trim().toLocaleUpperCase('es-ES');
+  }
+
+  function formatMemberDisplayName(m) {
+    const { first, last } = getMemberNames(m);
+    const combined = [first, last].filter(Boolean).join(' ').trim();
+    if (combined) return formatMemberName(combined);
+    return formatMemberName(m?.display_name || '');
+  }
+
+  function getClubMinAge() {
+    if (typeof window.scClubGetLegalInfo === 'function') {
+      const n = Number(window.scClubGetLegalInfo()?.member_min_age);
+      if (Number.isFinite(n) && n >= 1) return Math.trunc(n);
+    }
+    const n = Number(ctx?.club?.member_min_age);
+    return Number.isFinite(n) && n >= 1 ? Math.trunc(n) : 18;
+  }
+
+  function memberAgeFromBirthIso(iso) {
+    if (!iso) return null;
+    const raw = String(iso).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]) - 1;
+    const d = Number(parts[2]);
+    const birth = new Date(y, mo, d);
+    if (Number.isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const mDiff = today.getMonth() - birth.getMonth();
+    if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  }
+
   function formatMemberCode(m) {
     if (!m) return '—';
     const num = m.member_number != null ? Number(m.member_number) : NaN;
@@ -454,11 +491,11 @@
   function fillMemberViewSummary(m) {
     const { first, last } = getMemberNames(m);
     const title = $('member-profile-view-title');
-    if (title) title.textContent = m.display_name || 'Perfil del socio';
-    if ($('member-view-first-name')) $('member-view-first-name').textContent = first || '—';
-    if ($('member-view-last-name')) $('member-view-last-name').textContent = last || '—';
+    if (title) title.textContent = formatMemberDisplayName(m) || 'Perfil del socio';
+    if ($('member-view-first-name')) $('member-view-first-name').textContent = formatMemberName(first) || '—';
+    if ($('member-view-last-name')) $('member-view-last-name').textContent = formatMemberName(last) || '—';
     if ($('member-view-dni')) {
-      $('member-view-dni').textContent = m.dni != null && String(m.dni).trim() !== '' ? String(m.dni).trim() : '—';
+      $('member-view-dni').textContent = m.dni != null && String(m.dni).trim() !== '' ? formatMemberName(m.dni) : '—';
     }
     if ($('member-view-code')) {
       $('member-view-code').textContent = formatMemberCode(m);
@@ -665,14 +702,14 @@
       return;
     }
     $('member-edit-id').value = row.id;
-    $('member-first-name').value = row.first_name || '';
-    $('member-last-name').value = row.last_name || '';
+    $('member-first-name').value = formatMemberName(row.first_name || '');
+    $('member-last-name').value = formatMemberName(row.last_name || '');
     if (
       !($('member-first-name').value || '').trim() &&
       !($('member-last-name').value || '').trim() &&
       row.display_name
     ) {
-      const dn = String(row.display_name).trim();
+      const dn = formatMemberName(row.display_name);
       const sp = dn.indexOf(' ');
       if (sp > 0) {
         $('member-first-name').value = dn.slice(0, sp).trim();
@@ -681,7 +718,7 @@
         $('member-first-name').value = dn;
       }
     }
-    $('member-dni').value = row.dni || '';
+    $('member-dni').value = formatMemberName(row.dni || '');
     $('member-birth').value = row.birth_date ? String(row.birth_date).slice(0, 10) : '';
     $('member-phone').value = row.phone || '';
     $('member-email').value = row.email || '';
@@ -914,7 +951,7 @@
       if (selectedMemberId === m.id) tr.classList.add('is-selected');
       const dni =
         m.dni != null && String(m.dni).trim() !== ''
-          ? String(m.dni).trim()
+          ? formatMemberName(m.dni)
           : '—';
       const wallet =
         m.wallet_balance_eur != null && !Number.isNaN(Number(m.wallet_balance_eur))
@@ -924,7 +961,7 @@
         m.wallet_balance_eur != null && Number(m.wallet_balance_eur) < 0 ? ' member-wallet-cell--neg' : '';
       tr.innerHTML = `
         <td class="member-code-cell">${escapeHtml(formatMemberCode(m))}</td>
-        <td>${escapeHtml(m.display_name)}</td>
+        <td>${escapeHtml(formatMemberDisplayName(m))}</td>
         <td>${escapeHtml(dni)}</td>
         <td>${memberTypePillHtml(m)}</td>
         <td class="member-wallet-cell member-wallet-cell--btn${walletNeg}" data-profile-member="${m.id}" title="Abrir perfil y monedero">${escapeHtml(wallet)}</td>
@@ -1324,10 +1361,10 @@
 
   function readMemberFormFields() {
     const id = ($('member-edit-id')?.value || '').trim();
-    const first = ($('member-first-name')?.value || '').trim();
-    const last = ($('member-last-name')?.value || '').trim();
+    const first = formatMemberName($('member-first-name')?.value || '');
+    const last = formatMemberName($('member-last-name')?.value || '');
     const display_name = [first, last].filter(Boolean).join(' ').trim();
-    const dni = ($('member-dni')?.value || '').trim();
+    const dni = formatMemberName($('member-dni')?.value || '');
     const phone = ($('member-phone')?.value || '').trim();
     const email = ($('member-email')?.value || '').trim();
     const birthRaw = ($('member-birth')?.value || '').trim();
@@ -1364,8 +1401,24 @@
     if (Number.isNaN(f.enrollment_fee_eur) || f.enrollment_fee_eur < 0) {
       return { ok: false, message: 'Cuota de inscripción no válida.' };
     }
-    if (!f.display_name) {
-      return { ok: false, message: 'Indica al menos nombre o apellidos.' };
+    if (!f.first) {
+      return { ok: false, message: 'Indica el nombre.' };
+    }
+    if (!f.last) {
+      return { ok: false, message: 'Indica los apellidos.' };
+    }
+    if (!f.dni) {
+      return { ok: false, message: 'Indica el DNI / NIE.' };
+    }
+    if (f.birthRaw) {
+      const age = memberAgeFromBirthIso(f.birthRaw);
+      const minAge = getClubMinAge();
+      if (age == null) {
+        return { ok: false, message: 'Fecha de nacimiento no válida.' };
+      }
+      if (age < minAge) {
+        return { ok: false, message: `El socio debe tener al menos ${minAge} años cumplidos.` };
+      }
     }
     return { ok: true, fields: f };
   }
@@ -1379,6 +1432,7 @@
       cif: ctx?.club?.cif || '',
       email: ctx?.club?.email || '',
       address: ctx?.club?.address || '',
+      member_min_age: getClubMinAge(),
     };
   }
 
@@ -1400,6 +1454,13 @@
     if ($('member-terms-club-cif')) $('member-terms-club-cif').textContent = cif;
     if ($('member-terms-club-email')) $('member-terms-club-email').textContent = email;
     if ($('member-terms-club-address')) $('member-terms-club-address').textContent = address;
+    const minAge = String(getClubMinAge());
+    ['member-terms-min-age-privacy', 'member-terms-min-age-statutes', 'member-terms-min-age-conduct', 'member-terms-chk2-age'].forEach(
+      (id) => {
+        const el = $(id);
+        if (el) el.textContent = minAge;
+      },
+    );
   }
 
   function updateMemberTermsConfirmBtn() {
@@ -2856,7 +2917,7 @@
   }
 
   function splitNombreDisplay(full) {
-    const t = full.trim();
+    const t = formatMemberName(full);
     if (!t) return { first_name: '', last_name: '', display_name: '' };
     const sp = t.indexOf(' ');
     if (sp <= 0) return { first_name: t, last_name: '', display_name: t };
@@ -2919,8 +2980,11 @@
     const lines = [headers.join(',')];
     (data || []).forEach((m) => {
       const nombre =
-        (m.display_name && String(m.display_name).trim()) ||
-        [m.first_name, m.last_name].filter(Boolean).join(' ').trim();
+        formatMemberDisplayName(m) ||
+        formatMemberName(
+          (m.display_name && String(m.display_name).trim()) ||
+            [m.first_name, m.last_name].filter(Boolean).join(' ').trim(),
+        );
       const birthIso =
         m.birth_date != null && String(m.birth_date).trim() !== ''
           ? String(m.birth_date).slice(0, 10)
@@ -3004,7 +3068,7 @@
         member_type_valid_until = parseBirthDateCsv(tipoVigRaw);
       }
       const activo = normalizeEstadoImport(csvCell(row, idx, 'estado'));
-      const dni = csvCell(row, idx, 'dni').trim();
+      const dni = formatMemberName(csvCell(row, idx, 'dni').trim());
       const cuota = parseCuotaEuros(csvCell(row, idx, 'cuota'));
       const rawAlta = csvCell(row, idx, 'alta').trim();
       const rawFechaNac = csvCell(row, idx, 'fecha_nacimiento').trim();
@@ -3226,8 +3290,27 @@
       });
     });
 
+    ['member-first-name', 'member-last-name', 'member-dni'].forEach((id) => {
+      $(id)?.addEventListener('input', function () {
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const upper = formatMemberName(this.value);
+        if (this.value !== upper) {
+          this.value = upper;
+          if (start != null && end != null) this.setSelectionRange(start, end);
+        }
+        if (id === 'member-first-name' || id === 'member-last-name') updateMemberAvatarInitials();
+      });
+    });
+
     ['member-first-name', 'member-last-name'].forEach((id) => {
-      $(id)?.addEventListener('input', () => updateMemberAvatarInitials());
+      $(id)?.addEventListener('blur', () => {
+        const el = $(id);
+        if (el) el.value = formatMemberName(el.value);
+      });
+    });
+    $('member-dni')?.addEventListener('blur', function () {
+      this.value = formatMemberName(this.value);
     });
 
     document.querySelectorAll('[data-member-slot][data-member-mode]').forEach((btn) => {
