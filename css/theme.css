@@ -565,7 +565,7 @@ a:focus-visible {
   border-radius: 6px;
 }
 
-/* Marca — logo SocialConnect (vertical: icono + wordmark) */
+/* Marca — icono SocialConnect (recortado) + wordmark HTML donde haga falta */
 .sc-logo {
   display: block;
   height: auto;
@@ -573,36 +573,40 @@ a:focus-visible {
   object-fit: contain;
 }
 
-.sc-logo--sidebar,
 .sc-logo--sidebar-mark {
-  width: min(118px, calc(100% - 4px));
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .sc-logo--auth-card {
-  width: min(148px, 100%);
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .sc-logo--hero {
-  width: min(200px, 88%);
+  width: 88px;
+  height: 88px;
   border-radius: 0;
   box-shadow: none;
 }
 
 .sc-logo--admin {
-  width: min(96px, 100%);
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .sc-logo--menu {
-  width: min(112px, 46vw);
+  width: 32px;
+  height: 32px;
   border-radius: 0;
   box-shadow: none;
 }
