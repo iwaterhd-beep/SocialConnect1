@@ -568,6 +568,35 @@ body.club-app.has-club-topnav {
   grid-column: 1 / -1;
 }
 
+.sc-home-grid .sc-home-legal {
+  grid-column: 1 / -1;
+}
+
+.sc-home-legal .sc-section-head {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sc-home-legal .grid.grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sc-home-legal .form__row {
+  min-width: 0;
+}
+
+.sc-home-legal .form__row .input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .sc-home-legal .grid.grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .sc-home-shortcuts {
   padding: var(--space-3) var(--space-4) !important;
 }
