@@ -11,6 +11,7 @@
   let ctx = null;
   let membersUiBound = false;
   let memberTermsUiBound = false;
+  let memberSaving = false;
   let membersCache = [];
   let membersSearch = '';
   let membersTypeFilter = '';
@@ -219,6 +220,20 @@
     if (!el) return;
     el.textContent = text || '';
     el.classList.toggle('msg--error', Boolean(isError));
+    if (text) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function setMemberSavingUi(saving) {
+    memberSaving = saving;
+    const saveBtn = $('member-save');
+    const confirmBtn = $('member-terms-confirm');
+    if (saveBtn) saveBtn.disabled = saving;
+    if (confirmBtn && !saving) updateMemberTermsConfirmBtn();
+    else if (confirmBtn && saving) confirmBtn.disabled = true;
+  }
+
+  function memberIdEquals(a, b) {
+    return String(a || '') === String(b || '');
   }
 
   function setFinanceMsg(text, isError) {
@@ -769,7 +784,7 @@
   }
 
   async function showMemberProfile(memberId) {
-    const m = membersCache.find((x) => x.id === memberId);
+    const m = membersCache.find((x) => memberIdEquals(x.id, memberId));
     if (!m) {
       selectedMemberId = '';
       closeMemberModals();
@@ -1027,7 +1042,7 @@
     membersCache = data || [];
     renderMembersTable();
     if (selectedMemberId) {
-      if (membersCache.some((m) => m.id === selectedMemberId)) {
+      if (membersCache.some((m) => memberIdEquals(m.id, selectedMemberId))) {
         /* Mantener selección en tabla; no reabrir modal automáticamente */
       } else {
         selectedMemberId = '';
@@ -1510,15 +1525,35 @@
     }
     fillMemberTermsClubInfo();
     resetMemberTermsModal();
-    modal.classList.remove('is-hidden');
+    modal.classList.remove('is-hidden', 'is-leaving');
+    modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
   }
 
   function closeMemberTermsModal() {
     const modal = $('member-terms-modal');
-    if (!modal) return;
-    modal.classList.add('is-hidden');
-    modal.setAttribute('aria-hidden', 'true');
+    if (!modal || modal.classList.contains('is-hidden')) return;
+    modal.classList.add('is-leaving');
+    const finish = () => {
+      modal.classList.remove('is-leaving');
+      modal.classList.add('is-hidden');
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    };
+    modal.addEventListener('animationend', finish, { once: true });
+    window.setTimeout(finish, 280);
+  }
+
+  async function confirmMemberTermsAndSave() {
+    if (memberSaving) return;
+    const validation = validateMemberFormFields();
+    if (!validation.ok) {
+      closeMemberTermsModal();
+      setMemberMsg(validation.message, true);
+      return;
+    }
+    closeMemberTermsModal();
+    await saveMember();
   }
 
   function bindMemberTermsUi() {
@@ -1557,8 +1592,7 @@
     });
 
     $('member-terms-confirm')?.addEventListener('click', () => {
-      closeMemberTermsModal();
-      void saveMember();
+      void confirmMemberTermsAndSave();
     });
 
     document.querySelectorAll('[data-member-terms-close]').forEach((el) => {
@@ -1573,6 +1607,7 @@
   }
 
   async function requestSaveMember() {
+    if (memberSaving) return;
     const validation = validateMemberFormFields();
     if (!validation.ok) {
       setMemberMsg(validation.message, true);
@@ -1587,11 +1622,15 @@
   }
 
   async function saveMember() {
+    if (memberSaving) return;
     const validation = validateMemberFormFields();
     if (!validation.ok) {
       setMemberMsg(validation.message, true);
       return;
     }
+    const isNew = !validation.fields.id;
+    setMemberSavingUi(true);
+    try {
     const {
       id,
       first,
@@ -1681,6 +1720,11 @@
       return;
     }
 
+    if (!memberId) {
+      setMemberMsg('No se pudo obtener el identificador del socio guardado.', true);
+      return;
+    }
+
     const hadPending = Object.keys(SLOT_TO_COL).some((s) => memberPendingFiles[s]);
     if (memberId && hadPending) {
       const up = await uploadPendingAssets(memberId);
@@ -1731,12 +1775,13 @@
     setMemberMsg(
       savedWithoutValidUntilColumn
         ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
-        : id
-          ? 'Socio actualizado.'
-          : 'Socio creado.',
+        : isNew
+          ? 'Socio creado.'
+          : 'Socio actualizado.',
       false,
     );
     selectedMemberId = memberId;
+    closeMemberTermsModal();
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -1744,7 +1789,20 @@
     if (typeof window.scClubRefreshHomeKpis === 'function') {
       void window.scClubRefreshHomeKpis();
     }
-    await showMemberProfile(memberId);
+    const savedMember = membersCache.find((m) => memberIdEquals(m.id, memberId));
+    if (savedMember) {
+      await showMemberProfile(memberId);
+    } else if (isNew) {
+      closeMemberModals();
+      clearMemberForm();
+    } else {
+      closeMemberModals();
+    }
+    } catch (err) {
+      setMemberMsg(err?.message || 'Error inesperado al guardar el socio.', true);
+    } finally {
+      setMemberSavingUi(false);
+    }
   }
 
   function startOfDay(d) {

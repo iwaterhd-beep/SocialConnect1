@@ -1057,7 +1057,69 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
 }
 
 .shift-modal.is-hidden {
-  display: none;
+  display: none !important;
+  pointer-events: none;
+}
+
+.shift-modal.is-leaving {
+  pointer-events: none;
+}
+
+.shift-modal:not(.is-hidden):not(.is-leaving) {
+  animation: scModalBackdropIn 0.24s ease both;
+}
+
+.shift-modal:not(.is-hidden):not(.is-leaving) .shift-modal__panel {
+  animation: scModalPanelIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.shift-modal.is-leaving {
+  animation: scModalBackdropOut 0.22s ease forwards;
+}
+
+.shift-modal.is-leaving .shift-modal__panel {
+  animation: scModalPanelOut 0.22s ease forwards;
+}
+
+@keyframes scModalBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scModalBackdropOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes scModalPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scModalPanelOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shift-modal:not(.is-hidden),
+  .shift-modal.is-leaving,
+  .shift-modal:not(.is-hidden) .shift-modal__panel,
+  .shift-modal.is-leaving .shift-modal__panel {
+    animation: none;
+  }
 }
 
 .shift-modal__backdrop {
@@ -1073,7 +1135,10 @@ body.club-dark .tpv-ticket-paper.tpv-ticket-paper--vip .tpv-member-chip-initials
   max-width: 28rem;
   width: 100%;
   margin: 0;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.04),
+    0 18px 48px rgba(15, 23, 42, 0.14);
 }
 
 .shift-modal__panel--wide {
