@@ -901,7 +901,7 @@
   function shiftBannerLabel(open) {
     return open
       ? 'Turno abierto — puedes registrar ventas.'
-      : 'No hay turno abierto. Ve a Inicio y abre un turno para usar el TPV.';
+      : 'No hay turno abierto. Ve a Inicio y abre un turno para usar el POS.';
   }
 
   async function refreshTpvShiftState() {
@@ -1059,7 +1059,7 @@
     }
     const delta = sign < 0 ? -amt : amt;
     const notesRaw = ($('tpv-wallet-funds-notes')?.value || '').trim();
-    const defaultNote = sign < 0 ? 'Retirada desde TPV' : 'Recarga desde TPV';
+    const defaultNote = sign < 0 ? 'Retirada desde POS' : 'Recarga desde POS';
     setTpvWalletFundsStatus('Aplicando…', false);
     const { data, error } = await rpcMemberWalletAdjust(
       memberId,
@@ -2020,7 +2020,7 @@
         tr.querySelector('[data-del]').addEventListener('click', async () => {
           if (
             !confirm(
-              `¿Eliminar el producto «${p.name}»? Si tiene ventas TPV o movimientos +/- de stock, se archivará y dejará de mostrarse; el histórico se conserva.`,
+              `¿Eliminar el producto «${p.name}»? Si tiene ventas POS o movimientos +/- de stock, se archivará y dejará de mostrarse; el histórico se conserva.`,
             )
           )
             return;
@@ -2053,7 +2053,7 @@
             }
             setMsg(
               'inv-status',
-              'Producto archivado (tenía ventas o ajustes; ya no aparece en inventario ni TPV).',
+              'Producto archivado (tenía ventas o ajustes; ya no aparece en inventario ni POS).',
               false,
             );
             clearProductForm();

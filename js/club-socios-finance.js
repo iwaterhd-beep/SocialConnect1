@@ -1093,8 +1093,8 @@
 
   function walletLedgerKindLabel(kind) {
     const k = String(kind || '').toLowerCase();
-    if (k === 'tpv_sale') return 'Venta TPV';
-    if (k === 'tpv_void') return 'Anulación TPV';
+    if (k === 'tpv_sale') return 'Venta POS';
+    if (k === 'tpv_void') return 'Anulación POS';
     return 'Ajuste';
   }
 
@@ -1108,7 +1108,7 @@
   function walletLedgerNoteFromDispense(disp) {
     if (!disp) return '';
     const stored = (disp.notes || '').trim();
-    if (stored && !/^(venta tpv)$/i.test(stored)) return stored;
+    if (stored && !/^(venta (tpv|pos))$/i.test(stored)) return stored;
     const prod = Array.isArray(disp.inventory_products)
       ? disp.inventory_products[0]
       : disp.inventory_products;
@@ -1126,7 +1126,7 @@
 
   function walletLedgerNoteLabel(row) {
     const notes = (row.notes || '').trim();
-    const generic = /^(venta tpv|anulación venta tpv|anulación tpv)$/i;
+    const generic = /^(venta (tpv|pos)|anulación venta (tpv|pos)|anulación (tpv|pos))$/i;
     if (notes && !generic.test(notes)) return notes;
     const disp = row._dispense || row.tpv_dispenses;
     const dispRow = Array.isArray(disp) ? disp[0] : disp;
@@ -2164,7 +2164,7 @@
     }
     const detailEl = $('finance-kpi-detail');
     if (detailEl) {
-      const cashLine = `Hoy en TPV: ${formatMoney(cashToday)} efectivo · ${formatMoney(walletToday)} monedero.`;
+      const cashLine = `Hoy en POS: ${formatMoney(cashToday)} efectivo · ${formatMoney(walletToday)} monedero.`;
       const recLine =
         Math.abs(walletCashToday) > 0.005
           ? ` Recargas/retiradas en caja hoy: ${walletCashToday >= 0 ? '+' : ''}${formatMoney(walletCashToday)}.`
@@ -3246,7 +3246,7 @@
     if (!ctx?.club?.id) return;
     const msg =
       '¿Eliminar TODOS los socios de este club?\n\n' +
-      'Las ventas del TPV no se borran, pero quedarán sin socio vinculado.\n' +
+      'Las ventas del POS no se borran, pero quedarán sin socio vinculado.\n' +
       'No se puede deshacer.';
     if (!window.confirm(msg)) return;
     if (!window.confirm('Confirma de nuevo: borrar todos los socios.')) return;

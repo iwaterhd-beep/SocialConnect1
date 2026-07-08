@@ -749,8 +749,8 @@
 
   function walletLedgerKindLabel(kind) {
     const k = String(kind || '').toLowerCase();
-    if (k === 'tpv_sale') return 'Venta TPV (monedero)';
-    if (k === 'tpv_void') return 'Anulación TPV';
+    if (k === 'tpv_sale') return 'Venta POS (monedero)';
+    if (k === 'tpv_void') return 'Anulación POS';
     return 'Ajuste monedero';
   }
 
@@ -1021,7 +1021,7 @@
       <div class="shift-summary-section">
         <h4 class="hint" style="margin:0 0 0.5rem;font-weight:700">Caja</h4>
         <p style="margin:0">Cambio al abrir: <strong>${escapeHtml(formatMoneyEUR(opening))}</strong></p>
-        <p style="margin:0.35rem 0 0">Ventas en efectivo (TPV): <strong>${escapeHtml(formatMoneyEUR(cashSales))}</strong></p>
+        <p style="margin:0.35rem 0 0">Ventas en efectivo (POS): <strong>${escapeHtml(formatMoneyEUR(cashSales))}</strong></p>
         ${
           walletSales > 0.005
             ? `<p style="margin:0.35rem 0 0">Ventas con monedero (no entran en caja): <strong>${escapeHtml(formatMoneyEUR(walletSales))}</strong></p>`
@@ -1039,7 +1039,7 @@
             ? `<p style="margin:0.35rem 0 0" class="shift-cash-diff ${cashDiffClass}">Diferencia (contado − esperado): <strong>${escapeHtml(cashDiff >= 0 ? `+${formatMoneyEUR(cashDiff)}` : formatMoneyEUR(cashDiff))}</strong></p>`
             : ''
         }
-        <p style="margin:0.35rem 0 0">Total ventas TPV (efectivo + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
+        <p style="margin:0.35rem 0 0">Total ventas POS (efectivo + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
         <p style="margin:0.35rem 0 0">Cambio dejado para el siguiente turno: <strong>${floatFwd !== null ? escapeHtml(formatMoneyEUR(floatFwd)) : '—'}</strong></p>
         ${denHtml ? `<p class="hint" style="margin:0.5rem 0 0">Desglose anotado:</p>${denHtml}` : ''}
       </div>
@@ -1146,7 +1146,7 @@
       ? 'hint shift-arqueo-diff shift-arqueo-diff--ok'
       : 'hint shift-arqueo-diff shift-arqueo-diff--warn';
     diffEl.textContent = ok
-      ? 'Cuadra con el efectivo esperado según el TPV.'
+      ? 'Cuadra con el efectivo esperado según el POS.'
       : `Diferencia: ${diff >= 0 ? '+' : ''}${formatMoneyEUR(diff)} (contado − esperado).`;
   }
 
@@ -1337,7 +1337,7 @@
 
   const PAGE_TITLES = {
     home: 'Inicio',
-    tpv: 'TPV',
+    tpv: 'POS',
     inventory: 'Inventario',
     stock: 'Stock por turno',
     members: 'Socios',

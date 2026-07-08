@@ -16,6 +16,7 @@
     splash.classList.remove('is-leaving', 'is-blinking');
     authPage.classList.remove('auth-page--splash-hidden');
     document.body.classList.remove('auth-splash-open');
+    window.dispatchEvent(new CustomEvent('socialconnect:landing-ready'));
   }
 
   function enterWithAnimation() {

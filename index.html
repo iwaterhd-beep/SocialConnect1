@@ -7,7 +7,7 @@
     <title>SocialConnect — Software de gestión para clubes</title>
     <meta
       name="description"
-      content="SocialConnect: TPV, inventario, socios, finanzas y cierres de turno para tu club. Panel web todo en uno. Conecta, comparte, crece."
+      content="SocialConnect: POS, inventario, socios ilimitados, finanzas y cierres de turno para tu club. Desde 50 €/mes. Panel web profesional todo en uno."
     />
     <meta name="application-name" content="SocialConnect" />
     <link rel="canonical" href="https://www.socialconnectcs.com/" />
@@ -20,14 +20,14 @@
     <meta property="og:title" content="SocialConnect — Gestión integral de tu club" />
     <meta
       property="og:description"
-      content="TPV, inventario, socios, finanzas y control de stock por turno en un solo panel."
+      content="POS, inventario, socios, finanzas y control de stock por turno en un solo panel. Plan Club desde 50 €/mes."
     />
     <meta property="og:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SocialConnect — Gestión integral de tu club" />
     <meta
       name="twitter:description"
-      content="TPV, inventario, socios, finanzas y control de stock por turno en un solo panel."
+      content="POS, inventario, socios, finanzas y control de stock por turno en un solo panel."
     />
     <meta name="twitter:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8" />
     <script type="application/ld+json">
@@ -38,13 +38,37 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
         "url": "https://www.socialconnectcs.com/",
-        "description": "Software de gestión para clubes: TPV, inventario, socios, finanzas y cierres de turno.",
+        "description": "Software de gestión para clubes: POS, inventario, socios, finanzas y cierres de turno.",
         "image": "https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+        "sameAs": [
+          "https://www.instagram.com/socialconnectcs",
+          "https://vm.tiktok.com/ZNREfoE2n/"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+34-623-037-639",
+          "email": "socialconnectcs@gmail.com",
+          "contactType": "customer service",
+          "areaServed": "ES",
+          "availableLanguage": "Spanish"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Plan Club",
+          "price": "50",
+          "priceCurrency": "EUR",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "50",
+            "priceCurrency": "EUR",
+            "billingDuration": "P1M"
+          }
+        }
       }
     </script>
-    <link rel="stylesheet" href="css/sc-auth.css?v=12" />
     <link rel="stylesheet" href="css/theme.css?v=34" />
+    <link rel="stylesheet" href="css/sc-auth.css?v=13" />
+    <link rel="stylesheet" href="css/sc-landing.css?v=4" />
   </head>
   <body class="auth-splash-open">
     <div id="auth-splash" class="auth-splash is-blinking" role="dialog" aria-modal="true" aria-label="SocialConnect">
@@ -59,93 +83,606 @@
           decoding="async"
         />
       </button>
-      <p class="auth-splash__hint" id="auth-splash-hint">Pulsa el logo para entrar</p>
+      <p class="auth-splash__hint" id="auth-splash-hint">Pulsa el logo para descubrir SocialConnect</p>
     </div>
 
-    <div class="auth-page auth-page--splash-hidden" id="auth-page">
-      <aside class="auth-hero" aria-hidden="true">
-        <div class="auth-hero__logo">
-          <img
-            class="sc-logo sc-logo--hero"
-            src="assets/img/logo-socialconnect-hero.png?v=1"
-            alt="SocialConnect — Cannabis System"
-            width="140"
-            height="140"
-            decoding="async"
-          />
-        </div>
-        <h2>Gestión integral de tu club</h2>
-        <p>TPV, inventario, socios, finanzas y control de stock por turno en un solo panel.</p>
-        <ul class="auth-features">
-          <li>
-            <span class="auth-features__icon" aria-hidden="true">🛒</span>
-            <span><strong>TPV y monedero</strong>Ventas rápidas vinculadas al turno de caja.</span>
-          </li>
-          <li>
-            <span class="auth-features__icon" aria-hidden="true">📦</span>
-            <span><strong>Inventario en tiempo real</strong>Stock, alertas y menú tablet público.</span>
-          </li>
-          <li>
-            <span class="auth-features__icon" aria-hidden="true">📊</span>
-            <span><strong>Cierres de turno</strong>Arqueo, descuadres y resumen automático.</span>
-          </li>
-        </ul>
-      </aside>
-
-      <main class="auth-main">
-        <div class="auth-card">
-          <header class="auth-card__brand auth-card__brand--logo">
+    <div class="landing auth-page auth-page--splash-hidden" id="auth-page">
+      <header class="landing-header" id="landing-header">
+        <div class="landing-header__inner">
+          <a class="landing-brand" href="#inicio">
             <img
-              class="sc-logo sc-logo--auth-card"
+              class="landing-brand__logo"
               src="assets/img/logo-socialconnect-square.png?v=8"
-              alt="SocialConnect"
-              width="52"
-              height="52"
+              alt=""
+              width="36"
+              height="36"
               decoding="async"
             />
-            <div class="auth-card__titles">
-              <h1 id="login-title">Acceso al panel</h1>
-              <p>TPV, inventario, socios y finanzas de tu club en un solo lugar.</p>
-            </div>
-          </header>
+            <span class="landing-brand__text">SocialConnect</span>
+          </a>
 
-          <form id="login-form" novalidate>
-            <div class="form__row">
-              <label for="username">Email</label>
-              <input
-                class="input"
-                id="username"
-                name="username"
-                type="email"
-                autocomplete="username"
-                placeholder="tu@email.com"
-                required
-              />
-            </div>
-            <div class="form__row">
-              <label for="password">Contraseña</label>
-              <input
-                class="input"
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn--block">Entrar</button>
-            <p id="login-message" class="msg" role="status" aria-live="polite"></p>
-          </form>
+          <nav class="landing-nav" aria-label="Principal">
+            <a href="#funciones">Funciones</a>
+            <a href="#como-funciona">Cómo funciona</a>
+            <a href="#precios">Precios</a>
+            <a href="#acceso">Acceso</a>
+          </nav>
+
+          <div class="landing-header__actions">
+            <a class="landing-btn landing-btn--primary" href="#acceso">
+              <span class="landing-btn__label landing-btn__label--long">Iniciar sesión</span>
+              <span class="landing-btn__label landing-btn__label--short">Entrar</span>
+            </a>
+            <button
+              type="button"
+              class="landing-menu-btn"
+              id="landing-menu-btn"
+              aria-expanded="false"
+              aria-controls="landing-mobile-nav"
+              aria-label="Abrir menú"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+          </div>
         </div>
+      </header>
+
+      <nav class="landing-mobile-nav" id="landing-mobile-nav" aria-label="Menú móvil">
+        <a href="#funciones">Funciones</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#precios">Precios</a>
+        <a href="#acceso">Acceso al panel</a>
+      </nav>
+
+      <main>
+        <section class="landing-hero" id="inicio" aria-labelledby="hero-title">
+          <div class="landing-hero__bg" aria-hidden="true"></div>
+          <div class="landing-hero__grid">
+            <div class="landing-hero__copy" data-reveal>
+              <p class="landing-eyebrow">Software de gestión para clubes</p>
+              <h1 class="landing-hero__title" id="hero-title">
+                Todo lo que tu club necesita, en <span>un solo panel</span>
+              </h1>
+              <p class="landing-hero__lead">
+                SocialConnect centraliza ventas en POS, inventario, socios, monedero, finanzas y cierres de turno.
+                Diseñado para equipos que quieren trabajar con orden, rapidez y control total del día a día.
+              </p>
+              <div class="landing-hero__cta">
+                <a class="landing-btn landing-btn--primary" href="#precios">Ver planes</a>
+                <a class="landing-btn landing-btn--outline" href="#funciones">Explorar funciones</a>
+              </div>
+              <div class="landing-hero__stats">
+                <div class="landing-hero__stat">
+                  <strong>50 €/mes</strong>
+                  <span>Plan Club con todo incluido</span>
+                </div>
+                <div class="landing-hero__stat">
+                  <strong>∞ socios</strong>
+                  <span>Sin límite de fichas activas</span>
+                </div>
+                <div class="landing-hero__stat">
+                  <strong>100 % web</strong>
+                  <span>Acceso desde cualquier dispositivo</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="landing-hero__visual" data-reveal="right">
+              <div class="landing-mock">
+                <div class="landing-mock__bar" aria-hidden="true">
+                  <span class="landing-mock__dot"></span>
+                  <span class="landing-mock__dot"></span>
+                  <span class="landing-mock__dot"></span>
+                </div>
+                <div class="landing-mock__kpis">
+                  <div class="landing-mock__kpi">
+                    <small>Ventas hoy</small>
+                    <strong>1.248 €</strong>
+                  </div>
+                  <div class="landing-mock__kpi">
+                    <small>Socios activos</small>
+                    <strong>186</strong>
+                  </div>
+                  <div class="landing-mock__kpi">
+                    <small>Stock bajo</small>
+                    <strong>3</strong>
+                  </div>
+                  <div class="landing-mock__kpi">
+                    <small>Turno</small>
+                    <strong>Abierto</strong>
+                  </div>
+                </div>
+                <div class="landing-mock__list">
+                  <div class="landing-mock__row"><span>POS · ticket multi-línea</span><span>En vivo</span></div>
+                  <div class="landing-mock__row"><span>Monedero socio #00042</span><span>+25,00 €</span></div>
+                  <div class="landing-mock__row"><span>Cierre turno tarde</span><span>Cuadra</span></div>
+                </div>
+              </div>
+              <div class="landing-mock__badge" aria-hidden="true">
+                <strong>Turno vinculado</strong>
+                Cada venta queda registrada con efectivo, monedero y responsable.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section landing-section--tight landing-trust" aria-label="Ventajas principales">
+          <div class="landing-wrap">
+            <div class="landing-trust__grid" data-reveal-stagger>
+              <div class="landing-trust__item" data-reveal>
+                <div class="landing-trust__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Datos seguros</strong>
+                  <span>Infraestructura en la nube con acceso por roles.</span>
+                </div>
+              </div>
+              <div class="landing-trust__item" data-reveal>
+                <div class="landing-trust__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Tiempo real</strong>
+                  <span>Stock, ventas y monedero actualizados al instante.</span>
+                </div>
+              </div>
+              <div class="landing-trust__item" data-reveal>
+                <div class="landing-trust__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Equipo coordinado</strong>
+                  <span>Admin y personal con permisos diferenciados.</span>
+                </div>
+              </div>
+              <div class="landing-trust__item" data-reveal>
+                <div class="landing-trust__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>POS profesional</strong>
+                  <span>Ticket, categorías, efectivo y monedero integrados.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section" id="funciones" aria-labelledby="features-title">
+          <div class="landing-wrap">
+            <header class="landing-section-head landing-section-head--center" data-reveal>
+              <p class="landing-eyebrow">Funciones</p>
+              <h2 class="landing-title" id="features-title">Una plataforma completa para gestionar tu club</h2>
+              <p class="landing-lead">
+                Desde la venta en mostrador hasta el cierre de caja: cada módulo está pensado para el flujo real de un
+                club, con la misma estética limpia y profesional en todo el panel.
+              </p>
+            </header>
+
+            <div class="landing-features__grid" data-reveal-stagger>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
+                  </svg>
+                </div>
+                <h3>POS y monedero</h3>
+                <p>
+                  Rejilla de productos, ticket multi-línea, cobro en efectivo o monedero del socio y recargas desde el
+                  propio punto de venta.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                  </svg>
+                </div>
+                <h3>Inventario</h3>
+                <p>
+                  Productos por categorías, precios €/g o €/ud, alertas de stock bajo, ajustes +/- y menú tablet público
+                  para socios.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+                  </svg>
+                </div>
+                <h3>Socios sin límite</h3>
+                <p>
+                  Altas con términos legales, códigos secuenciales, perfiles VIP, documentos, historial de consumo y
+                  vinculación automática a ventas.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                  </svg>
+                </div>
+                <h3>Finanzas</h3>
+                <p>
+                  KPIs del día, ventas POS, movimientos de monedero, ajustes de inventario y trazabilidad completa por
+                  fechas y filtros.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                  </svg>
+                </div>
+                <h3>Stock por turno</h3>
+                <p>
+                  Contaje al abrir y cerrar turno, comparación con el sistema y detección de diferencias para un
+                  control riguroso.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                  </svg>
+                </div>
+                <h3>Cierres de turno</h3>
+                <p>
+                  Apertura con cambio inicial, registro de quién opera y arqueo final con resumen de ventas en efectivo
+                  y monedero.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" />
+                  </svg>
+                </div>
+                <h3>Menú tablet</h3>
+                <p>
+                  Carta digital sincronizada con inventario y precios del POS para que los socios consulten el catálogo
+                  actualizado.
+                </p>
+              </article>
+              <article class="landing-feature-card" data-reveal>
+                <div class="landing-feature-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2" />
+                  </svg>
+                </div>
+                <h3>Ajustes y roles</h3>
+                <p>
+                  Datos del club, modo oscuro, gestión de personal y permisos para administradores y empleados del
+                  mostrador.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section landing-detail" aria-labelledby="detail-title">
+          <div class="landing-wrap">
+            <header class="landing-section-head landing-section-head--center" data-reveal>
+              <p class="landing-eyebrow">En detalle</p>
+              <h2 class="landing-title" id="detail-title">Diseñado para el día a día de tu club</h2>
+              <p class="landing-lead">
+                No es solo un POS: es el sistema nervioso de tu operativa. Cada acción deja rastro y cada dato tiene
+                contexto para tomar decisiones con confianza.
+              </p>
+            </header>
+
+            <div class="landing-detail__list">
+              <article class="landing-detail__item" data-reveal>
+                <div class="landing-detail__copy">
+                  <h3>Vende rápido, con control total</h3>
+                  <p>
+                    El POS está optimizado para mostrador: categorías visuales, búsqueda instantánea, ticket con varias
+                    líneas y cobro en un clic. Las ventas se vinculan al turno abierto y al socio seleccionado.
+                  </p>
+                </div>
+                <div class="landing-detail__panel">
+                  <h3>Incluye</h3>
+                  <ul class="landing-detail__bullets">
+                    <li>Ticket multi-producto con cantidades en gramos o unidades</li>
+                    <li>Pago en efectivo o monedero del socio</li>
+                    <li>Recargas y retiradas de saldo desde el POS</li>
+                    <li>Historial reciente con opción de anular ventas</li>
+                    <li>Sincronización automática con stock e inventario</li>
+                  </ul>
+                </div>
+              </article>
+
+              <article class="landing-detail__item landing-detail__item--reverse" data-reveal>
+                <div class="landing-detail__copy">
+                  <h3>Socios y monedero bajo control</h3>
+                  <p>
+                    Gestiona fichas completas con documentación, niveles VIP, términos legales en el alta y consumo
+                    histórico. El monedero refleja cada movimiento con notas claras y saldo en tiempo real.
+                  </p>
+                </div>
+                <div class="landing-detail__panel">
+                  <h3>Incluye</h3>
+                  <ul class="landing-detail__bullets">
+                    <li>Socios ilimitados en el Plan Club</li>
+                    <li>Códigos secuenciales y búsqueda rápida en POS</li>
+                    <li>Perfil con ventas, monedero y datos de contacto</li>
+                    <li>Validación de edad mínima y aceptación de términos</li>
+                    <li>Archivos adjuntos y foto de perfil del socio</li>
+                  </ul>
+                </div>
+              </article>
+
+              <article class="landing-detail__item" data-reveal>
+                <div class="landing-detail__copy">
+                  <h3>Finanzas que cuadran</h3>
+                  <p>
+                    Visualiza el rendimiento del club con indicadores diarios, listados de ventas filtrables, libro de
+                    monedero y cierres de turno con arqueo. Todo queda documentado para auditoría interna.
+                  </p>
+                </div>
+                <div class="landing-detail__panel">
+                  <h3>Incluye</h3>
+                  <ul class="landing-detail__bullets">
+                    <li>Resumen de ventas, socios activos y alertas de stock</li>
+                    <li>Cierres de turno con efectivo esperado vs. real</li>
+                    <li>Listado de ventas POS por rango, categoría y búsqueda</li>
+                    <li>Movimientos de monedero y ajustes de inventario</li>
+                    <li>Valoración de stock y coste de inventario (admin)</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section landing-steps" id="como-funciona" aria-labelledby="steps-title">
+          <div class="landing-wrap">
+            <header class="landing-section-head landing-section-head--center" data-reveal>
+              <p class="landing-eyebrow">Cómo funciona</p>
+              <h2 class="landing-title" id="steps-title">Tres pasos para operar con orden</h2>
+              <p class="landing-lead">
+                Un flujo claro que tu equipo aprende en minutos y que mantiene la trazabilidad desde la primera venta del
+                día hasta el cierre.
+              </p>
+            </header>
+
+            <div class="landing-steps__grid" data-reveal-stagger>
+              <article class="landing-step" data-reveal>
+                <span class="landing-step__num" aria-hidden="true">1</span>
+                <h3>Abre el turno</h3>
+                <p>
+                  Indica el cambio inicial en caja, registra quién abre y deja el sistema listo para vender con el turno
+                  vinculado.
+                </p>
+              </article>
+              <article class="landing-step" data-reveal>
+                <span class="landing-step__num" aria-hidden="true">2</span>
+                <h3>Vende y gestiona</h3>
+                <p>
+                  Usa el POS, actualiza inventario, atiende socios y consulta KPIs en tiempo real desde cualquier
+                  dispositivo con navegador.
+                </p>
+              </article>
+              <article class="landing-step" data-reveal>
+                <span class="landing-step__num" aria-hidden="true">3</span>
+                <h3>Cierra con arqueo</h3>
+                <p>
+                  Cierra turno con resumen de ventas, revisa descuadres, contabiliza stock y deja el histórico listo en
+                  Finanzas.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section landing-pricing" id="precios" aria-labelledby="pricing-title">
+          <div class="landing-wrap">
+            <header class="landing-section-head landing-section-head--center" data-reveal>
+              <p class="landing-eyebrow">Precios</p>
+              <h2 class="landing-title" id="pricing-title">Planes claros, sin sorpresas</h2>
+              <p class="landing-lead">
+                Elige el plan que encaja con tu operativa. El Plan Club incluye todo para gestionar un club de principio
+                a fin. Si operas varios locales, el plan Personalizado se adapta a ti.
+              </p>
+            </header>
+
+            <div class="landing-pricing__grid" data-reveal-stagger>
+              <article class="landing-price-card landing-price-card--featured" data-reveal>
+                <span class="landing-price-card__badge">Recomendado</span>
+                <h3>Plan Club</h3>
+                <p class="landing-price-card__desc">
+                  Todo lo necesario para gestionar tu club con profesionalidad. Un precio fijo, todas las funciones.
+                </p>
+                <div class="landing-price-card__amount">
+                  <strong>50 €</strong>
+                  <span>/ mes</span>
+                </div>
+                <p class="landing-price-card__note">IVA no incluido · facturación mensual</p>
+                <ul class="landing-price-card__list">
+                  <li>POS completo con efectivo y monedero</li>
+                  <li>Inventario, categorías y menú tablet</li>
+                  <li>Socios ilimitados con fichas completas</li>
+                  <li>Finanzas, ventas y cierres de turno</li>
+                  <li>Control de stock por turno</li>
+                  <li>Roles para admin y personal</li>
+                  <li>Soporte y actualizaciones incluidas</li>
+                </ul>
+                <a class="landing-btn landing-btn--primary landing-btn--block" href="#acceso">Empezar con Plan Club</a>
+              </article>
+
+              <article class="landing-price-card" data-reveal>
+                <h3>Plan Personalizado</h3>
+                <p class="landing-price-card__desc">
+                  Para grupos o gestores con varios clubes. Precio a medida según el número de locales y un perfil
+                  específico para supervisar todo desde un mismo acceso.
+                </p>
+                <div class="landing-price-card__amount">
+                  <strong>A medida</strong>
+                </div>
+                <p class="landing-price-card__note">Presupuesto según clubes y necesidades</p>
+                <ul class="landing-price-card__list">
+                  <li>Todo lo del Plan Club por cada local</li>
+                  <li>Perfil multi-club para control centralizado</li>
+                  <li>Visión unificada de movimientos y operativa</li>
+                  <li>Configuración adaptada a tu estructura</li>
+                  <li>Escalable a nuevos clubes cuando crezcas</li>
+                  <li>Acompañamiento en el despliegue</li>
+                  <li>Condiciones comerciales personalizadas</li>
+                </ul>
+                <a class="landing-btn landing-btn--outline landing-btn--block" href="mailto:socialconnectcs@gmail.com?subject=Plan%20Personalizado%20SocialConnect">Solicitar presupuesto</a>
+                <a
+                  class="landing-btn landing-btn--primary landing-btn--block"
+                  href="https://wa.me/34623037639?text=Hola%20SocialConnect%2C%20me%20interesa%20el%20Plan%20Personalizado%20para%20varios%20clubes.%20%C2%BFPod%C3%A9is%20enviarme%20un%20presupuesto%3F%20%C2%A1Gracias!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >WhatsApp — presupuesto</a
+                >
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-section landing-login" id="acceso" aria-labelledby="login-section-title">
+          <div class="landing-wrap">
+            <div class="landing-login__grid">
+              <div class="landing-login__copy" data-reveal="left">
+                <p class="landing-eyebrow">Acceso</p>
+                <h2 class="landing-title" id="login-section-title">Entra a tu panel</h2>
+                <p class="landing-lead">
+                  Si ya tienes cuenta, inicia sesión con el email y la contraseña que te facilitó tu administrador. Serás
+                  redirigido automáticamente al panel de tu club o al perfil multi-club.
+                </p>
+                <ul class="landing-login__points">
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Acceso seguro desde navegador, sin instalaciones
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Compatible con ordenador, tablet y móvil
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    ¿Nuevo cliente? Consulta los planes o escríbenos
+                  </li>
+                </ul>
+                <div class="landing-contact-links">
+                  <a href="mailto:socialconnectcs@gmail.com">socialconnectcs@gmail.com</a>
+                  <a
+                    href="https://wa.me/34623037639?text=Hola%2C%20me%20interesa%20SocialConnect.%20Quiero%20informaci%C3%B3n%20sobre%20el%20software%20de%20gesti%C3%B3n%20para%20mi%20club.%20%C2%A1Gracias!"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >623 03 76 39</a
+                  >
+                  <a
+                    href="https://www.instagram.com/socialconnectcs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >@socialconnectcs</a
+                  >
+                  <a href="https://vm.tiktok.com/ZNREfoE2n/" target="_blank" rel="noopener noreferrer">TikTok</a>
+                </div>
+              </div>
+
+              <div class="auth-card" data-reveal="right">
+                <header class="auth-card__brand auth-card__brand--logo">
+                  <img
+                    class="sc-logo sc-logo--auth-card"
+                    src="assets/img/logo-socialconnect-square.png?v=8"
+                    alt="SocialConnect"
+                    width="52"
+                    height="52"
+                    decoding="async"
+                  />
+                  <div class="auth-card__titles">
+                    <h1 id="login-title">Acceso al panel</h1>
+                    <p>Introduce tus credenciales para continuar.</p>
+                  </div>
+                </header>
+
+                <form id="login-form" novalidate>
+                  <div class="form__row">
+                    <label for="username">Email</label>
+                    <input
+                      class="input"
+                      id="username"
+                      name="username"
+                      type="email"
+                      autocomplete="username"
+                      placeholder="tu@email.com"
+                      required
+                    />
+                  </div>
+                  <div class="form__row">
+                    <label for="password">Contraseña</label>
+                    <input
+                      class="input"
+                      id="password"
+                      name="password"
+                      type="password"
+                      autocomplete="current-password"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                  <button type="submit" class="btn btn--block">Entrar</button>
+                  <p id="login-message" class="msg" role="status" aria-live="polite"></p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+
+      <footer class="landing-footer">
+        <div class="landing-footer__inner">
+          <div class="landing-footer__brand">
+            <img src="assets/img/logo-socialconnect-square.png?v=8" alt="" width="28" height="28" decoding="async" />
+            <span>SocialConnect</span>
+          </div>
+          <p>© SocialConnect — Conecta, comparte, crece.</p>
+          <div class="landing-footer__links">
+            <a href="#funciones">Funciones</a>
+            <a href="#precios">Precios</a>
+            <a href="#acceso">Acceso</a>
+            <a href="mailto:socialconnectcs@gmail.com">Contacto</a>
+            <a
+              href="https://wa.me/34623037639?text=Hola%2C%20me%20interesa%20SocialConnect.%20Quiero%20informaci%C3%B3n%20sobre%20el%20software%20de%20gesti%C3%B3n%20para%20mi%20club.%20%C2%A1Gracias!"
+              target="_blank"
+              rel="noopener noreferrer"
+              >WhatsApp</a
+            >
+            <a href="https://www.instagram.com/socialconnectcs" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://vm.tiktok.com/ZNREfoE2n/" target="_blank" rel="noopener noreferrer">TikTok</a>
+          </div>
+        </div>
+      </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
-    <script src="js/auth-splash.js?v=1"></script>
+    <script src="js/auth-splash.js?v=2"></script>
+    <script src="js/landing-animations.js?v=3"></script>
     <script src="js/login.js?v=2"></script>
   </body>
 </html>

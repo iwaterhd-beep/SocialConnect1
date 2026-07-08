@@ -35,7 +35,11 @@ body.auth-splash-open {
   align-items: center;
   justify-content: center;
   gap: 1.25rem;
-  padding: 1.5rem;
+  padding:
+    max(1.5rem, env(safe-area-inset-top))
+    max(1.5rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1.5rem, env(safe-area-inset-left));
   background: #ffffff;
   transition: opacity 0.55s ease, visibility 0.55s ease;
 }
@@ -261,7 +265,8 @@ body.auth-splash-open {
   box-shadow: 0 6px 16px rgba(22, 163, 74, 0.28);
 }
 
-.auth-card__titles h1 {
+.auth-card .auth-card__titles h1,
+.auth-card .auth-card__titles h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
@@ -412,7 +417,8 @@ body.auth-splash-open {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   }
 
-  .auth-card__titles h1 {
+  .auth-card .auth-card__titles h1,
+  .auth-card .auth-card__titles h3 {
     color: #f1f5f9;
   }
 
