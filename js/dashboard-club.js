@@ -1329,6 +1329,9 @@
     if (viewName === 'finance' && typeof window.scClubRefreshFinance === 'function') {
       void window.scClubRefreshFinance();
     }
+    if (viewName === 'membership' && typeof window.scClubRefreshMembership === 'function') {
+      void window.scClubRefreshMembership();
+    }
     if (viewName === 'settings' && ctxRef?.profile?.role === 'admin_club') {
       fillClubLegalForm(ctxRef.club);
       void refreshClubTeamTable(ctxRef.club.id, ctxRef.profile.id);
@@ -1342,6 +1345,7 @@
     stock: 'Stock por turno',
     members: 'Socios',
     finance: 'Finanzas',
+    membership: 'Membresía',
     settings: 'Ajustes',
   };
 
@@ -1378,7 +1382,7 @@
     }
   }
 
-  const VIEW_IDS = ['home', 'tpv', 'inventory', 'stock', 'members', 'finance', 'settings'];
+  const VIEW_IDS = ['home', 'tpv', 'inventory', 'stock', 'members', 'finance', 'membership', 'settings'];
 
   function viewFromHash() {
     const h = (location.hash || '').replace(/^#/, '').toLowerCase();
@@ -1503,6 +1507,14 @@
     if (typeof window.scInitClubSociosFinance === 'function') {
       try {
         await window.scInitClubSociosFinance(ctx);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (typeof window.scInitClubMembership === 'function') {
+      try {
+        await window.scInitClubMembership(ctx);
       } catch (e) {
         console.error(e);
       }

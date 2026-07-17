@@ -9,9 +9,10 @@
     <link rel="icon" href="assets/img/favicon.png?v=8" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=33" />
-    <link rel="stylesheet" href="css/dashboard-club.css?v=28" />
+    <link rel="stylesheet" href="css/dashboard-club.css?v=29" />
     <link rel="stylesheet" href="css/sc-dashboard.css?v=22" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=7" />
+    <link rel="stylesheet" href="css/sc-membership.css?v=1" />
   </head>
   <body class="club-app has-club-topnav">
     <div class="app-shell">
@@ -79,6 +80,12 @@
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
             <span class="app-nav-item__label">Finanzas</span>
+          </button>
+          <button type="button" class="club-tab app-nav-item" data-view="membership" role="tab" aria-selected="false">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6L12 2z" />
+            </svg>
+            <span class="app-nav-item__label">Membresía</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="settings" role="tab" aria-selected="false">
             <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -157,6 +164,10 @@
           </div>
 
           <div id="club-view-finance" class="club-view is-hidden" data-view="finance" role="tabpanel" hidden>
+            <p class="hint club-partial-placeholder">Cargando…</p>
+          </div>
+
+          <div id="club-view-membership" class="club-view is-hidden" data-view="membership" role="tabpanel" hidden>
             <p class="hint club-partial-placeholder">Cargando…</p>
           </div>
 
@@ -315,10 +326,11 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
     <script src="js/dashboard-club-partials.js"></script>
-    <script src="js/club-inventory-tpv.js?v=41"></script>
+    <script src="js/club-inventory-tpv.js?v=42"></script>
     <script src="js/club-stock.js?v=24"></script>
-    <script src="js/club-socios-finance.js?v=35"></script>
-    <script src="js/dashboard-club.js?v=37"></script>
+    <script src="js/club-socios-finance.js?v=36"></script>
+    <script src="js/club-membership.js?v=1"></script>
+    <script src="js/dashboard-club.js?v=38"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

@@ -2686,8 +2686,18 @@
 
   function tpvMemberTierSuffix(m) {
     const t = m?.member_type || 'standard';
-    if (t === 'vip') return tpvMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
-    if (t === 'premium') return tpvMemberTierExpired(m) ? ' · Prem. cad.' : ' · Premium';
+    if (t === 'vip') {
+      const name = typeof window.scClubMembershipTierLabel === 'function'
+        ? window.scClubMembershipTierLabel('vip')
+        : 'VIP';
+      return tpvMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
+    }
+    if (t === 'premium') {
+      const name = typeof window.scClubMembershipTierLabel === 'function'
+        ? window.scClubMembershipTierLabel('premium')
+        : 'Premium';
+      return tpvMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
+    }
     return '';
   }
 

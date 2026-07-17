@@ -2281,21 +2281,21 @@ body.club-dark .finance-kpi__value {
 }
 
 .member-type-pill--standard {
-  background: rgba(148, 163, 184, 0.2);
-  color: var(--tx3);
-  border-color: rgba(148, 163, 184, 0.35);
+  background: color-mix(in srgb, var(--pill-color, var(--member-tier-standard, #64748b)) 18%, #fff);
+  color: var(--pill-color, var(--member-tier-standard, #475569));
+  border-color: color-mix(in srgb, var(--pill-color, var(--member-tier-standard, #64748b)) 40%, #fff);
 }
 
 .member-type-pill--premium {
-  background: rgba(234, 179, 8, 0.22);
-  color: #854d0e;
-  border-color: rgba(234, 179, 8, 0.45);
+  background: color-mix(in srgb, var(--pill-color, var(--member-tier-premium, #0d9488)) 18%, #fff);
+  color: var(--pill-color, var(--member-tier-premium, #0f766e));
+  border-color: color-mix(in srgb, var(--pill-color, var(--member-tier-premium, #0d9488)) 40%, #fff);
 }
 
 .member-type-pill--vip {
-  background: rgba(139, 92, 246, 0.2);
-  color: #5b21b6;
-  border-color: rgba(139, 92, 246, 0.4);
+  background: color-mix(in srgb, var(--pill-color, var(--member-tier-vip, #ca8a04)) 20%, #fff);
+  color: var(--pill-color, var(--member-tier-vip, #a16207));
+  border-color: color-mix(in srgb, var(--pill-color, var(--member-tier-vip, #ca8a04)) 45%, #fff);
 }
 
 .member-type-pill--expired {

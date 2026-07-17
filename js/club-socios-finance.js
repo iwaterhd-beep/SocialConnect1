@@ -341,6 +341,9 @@
   }
 
   function memberTypeLabel(t) {
+    if (typeof window.scClubMembershipTierLabel === 'function') {
+      return window.scClubMembershipTierLabel(t);
+    }
     if (t === 'premium') return 'Premium';
     if (t === 'vip') return 'VIP';
     return 'Estándar';
@@ -526,8 +529,14 @@
 
   function memberTypeShortSuffix(m) {
     const t = m.member_type || 'standard';
-    if (t === 'vip') return isMemberTierExpired(m) ? ' · VIP cad.' : ' · VIP';
-    if (t === 'premium') return isMemberTierExpired(m) ? ' · Prem. cad.' : ' · Premium';
+    if (t === 'vip') {
+      const name = memberTypeLabel('vip');
+      return isMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
+    }
+    if (t === 'premium') {
+      const name = memberTypeLabel('premium');
+      return isMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
+    }
     return '';
   }
 
@@ -541,7 +550,12 @@
     else if (t === 'premium') cls += ' member-type-pill--premium';
     else cls += ' member-type-pill--standard';
     if (expired) cls += ' member-type-pill--expired';
-    return `<span class="${cls}">${escapeHtml(label)}</span>`;
+    const color =
+      typeof window.scClubMembershipTierColor === 'function'
+        ? window.scClubMembershipTierColor(t)
+        : '';
+    const style = color ? ` style="--pill-color:${escapeHtml(color)}"` : '';
+    return `<span class="${cls}"${style}>${escapeHtml(label)}</span>`;
   }
 
   function memberTierDetailLine(m) {
@@ -898,6 +912,8 @@
       const on = btn.getAttribute('data-member-type') === v;
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const key = btn.getAttribute('data-member-type') || 'standard';
+      btn.textContent = memberTypeLabel(key);
     });
     const wrap = $('member-type-valid-wrap');
     const show = v === 'premium' || v === 'vip';
@@ -907,6 +923,23 @@
     }
     if (!show && $('member-type-valid-until')) $('member-type-valid-until').value = '';
   }
+
+  function syncMembershipLabelsInUi() {
+    document.querySelectorAll('[data-members-type-filter]').forEach((btn) => {
+      const key = btn.getAttribute('data-members-type-filter') || '';
+      if (!key || key === 'expired') return;
+      btn.textContent = memberTypeLabel(key);
+    });
+    document.querySelectorAll('[data-member-type]').forEach((btn) => {
+      const key = btn.getAttribute('data-member-type') || 'standard';
+      btn.textContent = memberTypeLabel(key);
+    });
+    renderMembersTable();
+  }
+
+  window.scClubOnMembershipUpdated = function () {
+    syncMembershipLabelsInUi();
+  };
 
   function updateMemberAvatarInitials() {
     const el = $('member-avatar-initials');

@@ -1,0 +1,113 @@
+<div class="club-view-stage sc-membership">
+  <section class="card-section" aria-labelledby="membership-title">
+    <div class="sc-section-head">
+      <h2 id="membership-title">Membresía</h2>
+      <p class="hint sc-section-head__meta">
+        Configura niveles, colores, umbrales de gasto y regalos. Solo administradores pueden editar.
+      </p>
+    </div>
+    <p id="membership-status" class="msg" role="status" aria-live="polite"></p>
+    <p id="membership-gate" class="hint is-hidden" hidden>
+      Esta sección es solo para administradores del club.
+    </p>
+  </section>
+
+  <div id="membership-admin" class="sc-membership-admin is-hidden" hidden>
+    <section class="card-section" aria-labelledby="membership-tiers-title">
+      <div class="sc-section-head">
+        <h2 id="membership-tiers-title">Niveles</h2>
+        <p class="hint sc-section-head__meta">
+          Edita el nombre, color, beneficios y reglas de activación automática.
+        </p>
+      </div>
+      <div id="membership-tiers-grid" class="sc-membership-tiers" data-reveal-stagger></div>
+      <div class="row-actions" style="margin-top: 1rem">
+        <button type="button" class="btn" id="membership-tiers-save">Guardar niveles</button>
+      </div>
+    </section>
+
+    <section class="card-section" aria-labelledby="membership-rewards-title">
+      <div class="sc-section-head">
+        <h2 id="membership-rewards-title">Regalos y objetivos</h2>
+        <p class="hint sc-section-head__meta">
+          Premios que el equipo puede entregar al cumplir un objetivo (upgrade, gasto, cumpleaños…).
+        </p>
+      </div>
+
+      <div class="sc-membership-reward-form">
+        <div class="sc-membership-reward-form__grid">
+          <div class="form__row">
+            <label for="reward-title">Título del regalo</label>
+            <input class="input" id="reward-title" type="text" placeholder="Ej. 1 g de bienvenida VIP" autocomplete="off" />
+          </div>
+          <div class="form__row">
+            <label for="reward-tier">Nivel asociado</label>
+            <select class="input" id="reward-tier">
+              <option value="">Cualquiera</option>
+              <option value="standard">Estándar</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+          <div class="form__row">
+            <label for="reward-trigger">Cuándo se aplica</label>
+            <select class="input" id="reward-trigger">
+              <option value="on_upgrade">Al subir de nivel</option>
+              <option value="spend_threshold">Por gasto acumulado</option>
+              <option value="birthday">Cumpleaños</option>
+              <option value="manual">Manual / nota interna</option>
+            </select>
+          </div>
+          <div class="form__row" id="reward-spend-wrap">
+            <label for="reward-spend">Gasto objetivo (€)</label>
+            <input class="input" id="reward-spend" type="number" min="0" step="0.01" placeholder="Ej. 200" />
+          </div>
+        </div>
+        <div class="form__row">
+          <label for="reward-desc">Descripción / instrucciones</label>
+          <input
+            class="input"
+            id="reward-desc"
+            type="text"
+            placeholder="Qué entregar y cómo anotarlo"
+            autocomplete="off"
+          />
+        </div>
+        <div class="row-actions">
+          <button type="button" class="btn" id="reward-add">Añadir regalo</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 1rem">
+        <table class="table-compact">
+          <thead>
+            <tr>
+              <th>Regalo</th>
+              <th>Nivel</th>
+              <th>Trigger</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="membership-rewards-tbody">
+            <tr>
+              <td colspan="5" class="hint">Cargando…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card-section" aria-labelledby="membership-tips-title">
+      <h2 id="membership-tips-title">Ideas que puedes configurar</h2>
+      <ul class="sc-membership-tips">
+        <li><strong>Auto-VIP por gasto:</strong> activa VIP si el socio supera el umbral en la ventana de días.</li>
+        <li><strong>Beneficios por nivel:</strong> describe ventajas (prioridad, descuentos internos, etc.).</li>
+        <li><strong>Regalo al subir:</strong> marca un premio al pasar a Premium o VIP.</li>
+        <li><strong>Objetivo de gasto:</strong> “Al llegar a 200 € este mes → recarga monedero”.</li>
+        <li><strong>Cumpleaños:</strong> nota para el equipo de entregar un detalle el día del socio.</li>
+        <li><strong>VIP manual:</strong> si asignas VIP a mano en Socios, la regla automática no lo baja.</li>
+      </ul>
+    </section>
+  </div>
+</div>
