@@ -1,5 +1,17 @@
 /* Membresía — panel de configuración de niveles y regalos */
 
+.sc-membership-hero__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+}
+
+.sc-membership-hero__row .btn {
+  flex-shrink: 0;
+}
+
 .sc-membership-tiers {
   display: grid;
   grid-template-columns: 1fr;
@@ -8,11 +20,14 @@
 
 .sc-membership-tier {
   border: 1px solid var(--bd, #e5e7eb);
-  border-radius: 16px;
+  border-radius: 18px;
   background: #fff;
-  padding: 1.15rem 1.1rem;
+  padding: 1.2rem 1.15rem 1.15rem;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  border-top: 4px solid var(--tier-color, #64748b);
+  border-top: 5px solid var(--tier-color, #64748b);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
 .sc-membership-tier__head {
@@ -20,32 +35,60 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
 }
 
-.sc-membership-tier__badge {
+.sc-membership-tier__preview {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: -0.02em;
-}
-
-.sc-membership-tier__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--tier-color, #64748b);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier-color, #64748b) 22%, transparent);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--tier-color, #64748b) 16%, #fff);
+  color: var(--tier-color, #475569);
+  border: 1px solid color-mix(in srgb, var(--tier-color, #64748b) 35%, #fff);
 }
 
 .sc-membership-tier__key {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--tx3, #6b7280);
+  white-space: nowrap;
+}
+
+.sc-membership-tier__name-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.sc-membership-tier__name-row .form__row {
+  margin: 0;
+}
+
+.sc-membership-tier__name-row label {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.sc-membership-tier__name-row input[type='text'] {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  min-height: 44px;
+}
+
+.sc-membership-tier__color {
+  width: 3.25rem;
+  min-height: 44px;
+  padding: 0.2rem;
+  cursor: pointer;
 }
 
 .sc-membership-tier__grid {
@@ -62,14 +105,20 @@
   font-size: 0.78rem;
 }
 
+.sc-membership-tier__grid textarea.input {
+  min-height: 4.5rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
 .sc-membership-tier__auto {
   display: grid;
   gap: 0.65rem;
-  margin-top: 0.75rem;
   padding: 0.85rem;
   border-radius: 12px;
   background: var(--bg, #f9fafb);
   border: 1px solid var(--bd, #e5e7eb);
+  margin-top: auto;
 }
 
 .sc-membership-tier__auto-title {
@@ -91,6 +140,13 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.sc-membership-tier__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--tx3, #6b7280);
 }
 
 .sc-membership-reward-form {
@@ -124,9 +180,23 @@
   opacity: 0.55;
 }
 
+.sc-membership-empty {
+  margin: 0;
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--tx3, #6b7280);
+  border: 1px dashed var(--bd, #e5e7eb);
+  border-radius: 14px;
+  background: var(--bg, #f9fafb);
+}
+
 @media (min-width: 700px) {
   .sc-membership-tier__grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .sc-membership-tier__grid .form__row--full {
+    grid-column: 1 / -1;
   }
 
   .sc-membership-reward-form__grid {
@@ -137,11 +207,13 @@
 @media (min-width: 960px) {
   .sc-membership-tiers {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
   }
 }
 
 body.club-dark .sc-membership-tier,
-body.club-dark .sc-membership-reward-form {
+body.club-dark .sc-membership-reward-form,
+body.club-dark .sc-membership-empty {
   background: #1e293b;
   border-color: #334155;
 }
@@ -149,4 +221,9 @@ body.club-dark .sc-membership-reward-form {
 body.club-dark .sc-membership-tier__auto {
   background: #0f172a;
   border-color: #334155;
+}
+
+body.club-dark .sc-membership-tier__preview {
+  background: color-mix(in srgb, var(--tier-color, #64748b) 28%, #0f172a);
+  border-color: color-mix(in srgb, var(--tier-color, #64748b) 45%, #334155);
 }

@@ -934,11 +934,19 @@
       const key = btn.getAttribute('data-member-type') || 'standard';
       btn.textContent = memberTypeLabel(key);
     });
-    renderMembersTable();
+    try {
+      if ($('members-tbody')) renderMembersTable();
+    } catch (_) {
+      /* socios aún no listos */
+    }
   }
 
   window.scClubOnMembershipUpdated = function () {
-    syncMembershipLabelsInUi();
+    try {
+      syncMembershipLabelsInUi();
+    } catch (_) {
+      /* no bloquear Membresía */
+    }
   };
 
   function updateMemberAvatarInitials() {

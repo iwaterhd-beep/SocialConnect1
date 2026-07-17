@@ -1,10 +1,13 @@
 <div class="club-view-stage sc-membership">
-  <section class="card-section" aria-labelledby="membership-title">
-    <div class="sc-section-head">
-      <h2 id="membership-title">Membresía</h2>
-      <p class="hint sc-section-head__meta">
-        Configura niveles, colores, umbrales de gasto y regalos. Solo administradores pueden editar.
-      </p>
+  <section class="card-section sc-membership-hero" aria-labelledby="membership-title">
+    <div class="sc-membership-hero__row">
+      <div class="sc-section-head" style="margin: 0">
+        <h2 id="membership-title">Membresía</h2>
+        <p class="hint sc-section-head__meta">
+          Personaliza nombres, colores, umbrales de gasto y regalos. Solo administradores.
+        </p>
+      </div>
+      <button type="button" class="btn" id="membership-tiers-save">Guardar cambios</button>
     </div>
     <p id="membership-status" class="msg" role="status" aria-live="polite"></p>
     <p id="membership-gate" class="hint is-hidden" hidden>
@@ -15,14 +18,14 @@
   <div id="membership-admin" class="sc-membership-admin is-hidden" hidden>
     <section class="card-section" aria-labelledby="membership-tiers-title">
       <div class="sc-section-head">
-        <h2 id="membership-tiers-title">Niveles</h2>
+        <h2 id="membership-tiers-title">Niveles del club</h2>
         <p class="hint sc-section-head__meta">
-          Edita el nombre, color, beneficios y reglas de activación automática.
+          Cambia el <strong>nombre</strong> que verás en Socios y POS (ej. “Oro”, “Platino”). El código interno
+          (standard / premium / vip) no cambia.
         </p>
       </div>
-      <div id="membership-tiers-grid" class="sc-membership-tiers" data-reveal-stagger></div>
-      <div class="row-actions" style="margin-top: 1rem">
-        <button type="button" class="btn" id="membership-tiers-save">Guardar niveles</button>
+      <div id="membership-tiers-grid" class="sc-membership-tiers" aria-live="polite">
+        <p class="hint" id="membership-tiers-loading">Cargando niveles…</p>
       </div>
     </section>
 
@@ -58,7 +61,7 @@
               <option value="manual">Manual / nota interna</option>
             </select>
           </div>
-          <div class="form__row" id="reward-spend-wrap">
+          <div class="form__row is-hidden" id="reward-spend-wrap" hidden>
             <label for="reward-spend">Gasto objetivo (€)</label>
             <input class="input" id="reward-spend" type="number" min="0" step="0.01" placeholder="Ej. 200" />
           </div>
@@ -84,14 +87,14 @@
             <tr>
               <th>Regalo</th>
               <th>Nivel</th>
-              <th>Trigger</th>
+              <th>Cuándo</th>
               <th>Estado</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="membership-rewards-tbody">
             <tr>
-              <td colspan="5" class="hint">Cargando…</td>
+              <td colspan="5" class="hint">Sin regalos todavía.</td>
             </tr>
           </tbody>
         </table>
@@ -99,14 +102,14 @@
     </section>
 
     <section class="card-section" aria-labelledby="membership-tips-title">
-      <h2 id="membership-tips-title">Ideas que puedes configurar</h2>
+      <h2 id="membership-tips-title">Ideas útiles</h2>
       <ul class="sc-membership-tips">
-        <li><strong>Auto-VIP por gasto:</strong> activa VIP si el socio supera el umbral en la ventana de días.</li>
-        <li><strong>Beneficios por nivel:</strong> describe ventajas (prioridad, descuentos internos, etc.).</li>
-        <li><strong>Regalo al subir:</strong> marca un premio al pasar a Premium o VIP.</li>
-        <li><strong>Objetivo de gasto:</strong> “Al llegar a 200 € este mes → recarga monedero”.</li>
-        <li><strong>Cumpleaños:</strong> nota para el equipo de entregar un detalle el día del socio.</li>
-        <li><strong>VIP manual:</strong> si asignas VIP a mano en Socios, la regla automática no lo baja.</li>
+        <li><strong>Renombra niveles:</strong> “Estándar → Socio”, “Premium → Oro”, “VIP → Platino”.</li>
+        <li><strong>Auto-VIP por gasto:</strong> el socio sube a VIP al superar el umbral en la ventana de días.</li>
+        <li><strong>Beneficios:</strong> describe ventajas para que el equipo sepa qué ofrecer.</li>
+        <li><strong>Regalo al subir:</strong> premio al pasar a Premium o VIP.</li>
+        <li><strong>Objetivo de gasto:</strong> “Al llegar a 200 € → recarga monedero”.</li>
+        <li><strong>VIP manual:</strong> si lo asignas a mano en Socios, la regla automática no lo baja.</li>
       </ul>
     </section>
   </div>
