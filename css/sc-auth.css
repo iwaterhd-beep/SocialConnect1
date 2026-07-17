@@ -40,7 +40,7 @@ body.auth-splash-open {
     max(1.5rem, env(safe-area-inset-right))
     max(1.5rem, env(safe-area-inset-bottom))
     max(1.5rem, env(safe-area-inset-left));
-  background: #ffffff;
+  background: #000000;
   transition: opacity 0.55s ease, visibility 0.55s ease;
 }
 
@@ -67,7 +67,7 @@ body.auth-splash-open {
   border: 0;
   background: transparent;
   cursor: pointer;
-  border-radius: 20px;
+  border-radius: 0;
   outline: none;
   transition: transform 0.25s ease;
 }
@@ -77,15 +77,21 @@ body.auth-splash-open {
 }
 
 .auth-splash__trigger:focus-visible {
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.45);
+  outline: 3px solid rgba(34, 197, 94, 0.55);
+  outline-offset: 6px;
 }
 
 .auth-splash__logo {
   display: block;
-  width: min(72vw, 280px);
+  width: min(88vw, 420px);
   height: auto;
+  aspect-ratio: 1024 / 682;
   object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(15, 23, 42, 0.12));
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 0 28px rgba(34, 197, 94, 0.18));
   transform-origin: center center;
 }
 
@@ -117,7 +123,7 @@ body.auth-splash-open {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 @keyframes splashBlink {
@@ -125,12 +131,12 @@ body.auth-splash-open {
   100% {
     opacity: 1;
     transform: scale(1);
-    filter: drop-shadow(0 8px 24px rgba(15, 23, 42, 0.12)) drop-shadow(0 0 0 rgba(34, 197, 94, 0));
+    filter: drop-shadow(0 0 0 rgba(34, 197, 94, 0));
   }
   50% {
-    opacity: 0.78;
+    opacity: 0.82;
     transform: scale(0.97);
-    filter: drop-shadow(0 8px 24px rgba(15, 23, 42, 0.1)) drop-shadow(0 0 24px rgba(34, 197, 94, 0.28));
+    filter: drop-shadow(0 0 28px rgba(34, 197, 94, 0.32));
   }
 }
 
