@@ -587,8 +587,21 @@
       m.member_number != null ? String(m.member_number) : '',
       formatMemberCode(m) !== '—' ? formatMemberCode(m) : '',
       m.email,
+      m.rfid_uid,
     ];
     return fields.some((x) => String(x || '').toLowerCase().includes(t));
+  }
+
+  function normalizeRfidUid(raw) {
+    return String(raw || '').trim();
+  }
+
+  function findMemberByExactRfid(query) {
+    const t = normalizeRfidUid(query).toLowerCase();
+    if (!t) return null;
+    return (
+      (membersCache || []).find((m) => normalizeRfidUid(m.rfid_uid).toLowerCase() === t) || null
+    );
   }
 
   function setMemberProfilePlaceholder(text) {
@@ -741,6 +754,7 @@
       const fc = formatMemberCode(row);
       return fc === '—' ? '' : fc;
     })();
+    if ($('member-rfid')) $('member-rfid').value = normalizeRfidUid(row.rfid_uid);
     $('member-enrollment-fee').value =
       row.enrollment_fee_eur != null && row.enrollment_fee_eur !== '' ? String(row.enrollment_fee_eur) : '';
     if ($('member-wallet-balance')) {
@@ -915,6 +929,7 @@
     $('member-phone').value = '';
     $('member-email').value = '';
     $('member-code').value = '';
+    if ($('member-rfid')) $('member-rfid').value = '';
     $('member-enrollment-fee').value = '';
     if ($('member-wallet-balance')) $('member-wallet-balance').value = '0';
     memberWalletLoadedBalance = 0;
@@ -1394,6 +1409,7 @@
     }
     const feeRaw = ($('member-enrollment-fee')?.value || '').trim();
     let enrollment_fee_eur = feeRaw === '' ? 0 : Number(feeRaw);
+    const rfid_uid = normalizeRfidUid($('member-rfid')?.value || '');
     return {
       id,
       first,
@@ -1408,6 +1424,7 @@
       member_type,
       member_type_valid_until,
       enrollment_fee_eur,
+      rfid_uid,
     };
   }
 
@@ -1645,6 +1662,7 @@
       member_type,
       member_type_valid_until,
       enrollment_fee_eur,
+      rfid_uid,
     } = validation.fields;
 
     setMemberMsg('Guardando…', false);
@@ -1662,6 +1680,7 @@
       member_type,
       member_type_valid_until,
       enrollment_fee_eur,
+      rfid_uid,
     };
 
     if (member_type !== 'vip') {
@@ -1672,6 +1691,7 @@
 
     let memberId = id;
     let error;
+    let savedWithoutRfidColumn = false;
 
     async function tryPersist(payload) {
       if (id) return sb().from('club_members').update(payload).eq('id', id);
@@ -1697,6 +1717,17 @@
       r = await tryPersist(row3);
       error = r.error;
     }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('rfid_uid'))
+    ) {
+      const row4 = { ...row };
+      delete row4.rfid_uid;
+      delete row4.vip_rule_period_start;
+      r = await tryPersist(row4);
+      error = r.error;
+      if (!error) savedWithoutRfidColumn = true;
+    }
 
     if (!error) {
       if (id) memberId = id;
@@ -1714,6 +1745,11 @@
           'Ejecuta la migración 011_club_members_profile.sql en Supabase para guardar el perfil completo.',
           true,
         );
+      } else if (
+        error.code === '23505' &&
+        String(error.message || '').toLowerCase().includes('rfid')
+      ) {
+        setMemberMsg('Esa chapa RFID ya está asignada a otro socio de este club.', true);
       } else {
         setMemberMsg(error.message || 'No se pudo guardar.', true);
       }
@@ -1773,12 +1809,14 @@
     }
 
     setMemberMsg(
-      savedWithoutValidUntilColumn
-        ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
-        : isNew
-          ? 'Socio creado.'
-          : 'Socio actualizado.',
-      false,
+      savedWithoutRfidColumn
+        ? 'Socio guardado. Ejecuta en Supabase 045_club_members_rfid.sql para poder guardar la chapa RFID.'
+        : savedWithoutValidUntilColumn
+          ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
+          : isNew
+            ? 'Socio creado.'
+            : 'Socio actualizado.',
+      savedWithoutRfidColumn || savedWithoutValidUntilColumn,
     );
     selectedMemberId = memberId;
     closeMemberTermsModal();
@@ -3329,6 +3367,22 @@
     $('members-search')?.addEventListener('input', () => {
       membersSearch = $('members-search')?.value || '';
       renderMembersTable();
+    });
+    $('members-search')?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const q = $('members-search')?.value || '';
+      membersSearch = q;
+      renderMembersTable();
+      const byRfid = findMemberByExactRfid(q);
+      if (byRfid) {
+        void showMemberProfile(byRfid.id);
+        return;
+      }
+      const matches = (membersCache || []).filter(
+        (m) => memberMatchesSearch(m, q) && memberMatchesType(m),
+      );
+      if (matches.length === 1) void showMemberProfile(matches[0].id);
     });
 
     document.querySelectorAll('[data-members-type-filter]').forEach((btn) => {

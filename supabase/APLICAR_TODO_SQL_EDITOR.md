@@ -19,6 +19,7 @@ Ejecuta **una por una**, en este orden:
 15. **`supabase/migrations/034_menu_sort_by_price.sql`** — productos del menú ordenados por precio (menor a mayor).
 16. **`supabase/migrations/035_menu_price_fallback.sql`** — muestra precio aunque solo esté en TPV / última venta.
 17. **`supabase/migrations/039_shift_stock_events_club_access_rls.sql`** — permite leer contajes de stock a trabajadores en `club_access` y vincula ajustes +/- al turno abierto.
+18. **`supabase/migrations/045_club_members_rfid.sql`** — chapa RFID/NFC por socio (`rfid_uid`), única por club.
 
 ---
 

@@ -2487,12 +2487,26 @@
     let query = sb()
       .from('club_members')
       .select(
-        'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+        'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
       )
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
       .order('member_number', { ascending: true });
     let { data, error } = await query;
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('rfid_uid'))
+    ) {
+      query = sb()
+        .from('club_members')
+        .select(
+          'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+        )
+        .eq('club_id', state.ctx.club.id)
+        .eq('is_active', true)
+        .order('member_number', { ascending: true });
+      ({ data, error } = await query);
+    }
     if (
       error &&
       (error.code === '42703' ||
@@ -2579,6 +2593,20 @@
     return t;
   }
 
+  function normalizeTpvRfidUid(raw) {
+    return String(raw || '').trim();
+  }
+
+  function findTpvMemberByExactRfid(query) {
+    const t = normalizeTpvRfidUid(query).toLowerCase();
+    if (!t) return null;
+    return (
+      (state.tpvMembers || []).find(
+        (m) => normalizeTpvRfidUid(m.rfid_uid).toLowerCase() === t,
+      ) || null
+    );
+  }
+
   function filterTpvMembers(query) {
     const t = (query || '').trim().toLowerCase();
     if (!t) return state.tpvMembers || [];
@@ -2586,8 +2614,27 @@
       const n = (m.display_name || '').toLowerCase();
       const c = formatTpvMemberCode(m).toLowerCase();
       const raw = (m.member_code || '').toLowerCase();
-      return n.includes(t) || c.includes(t) || raw.includes(t);
+      const rfid = normalizeTpvRfidUid(m.rfid_uid).toLowerCase();
+      return n.includes(t) || c.includes(t) || raw.includes(t) || (rfid && rfid.includes(t));
     });
+  }
+
+  async function trySelectTpvMemberFromScan(query) {
+    const q = String(query || '').trim();
+    if (!q) return false;
+    const byRfid = findTpvMemberByExactRfid(q);
+    if (byRfid) {
+      await selectTpvMember(byRfid);
+      setMsg('tpv-status', `Socio seleccionado por chapa RFID.`, false);
+      return true;
+    }
+    const matches = filterTpvMembers(q);
+    if (matches.length === 1) {
+      await selectTpvMember(matches[0]);
+      return true;
+    }
+    renderTpvMemberDropdown(matches);
+    return false;
   }
 
   function tpvMemberTierExpired(m) {
@@ -3424,7 +3471,20 @@
 
     $('tpv-member-search')?.addEventListener('input', () => {
       const q = $('tpv-member-search')?.value || '';
+      const byRfid = findTpvMemberByExactRfid(q);
+      if (byRfid && normalizeTpvRfidUid(q).length >= 4) {
+        void selectTpvMember(byRfid).then(() => {
+          setMsg('tpv-status', 'Socio seleccionado por chapa RFID.', false);
+        });
+        return;
+      }
       renderTpvMemberDropdown(filterTpvMembers(q));
+    });
+    $('tpv-member-search')?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const q = $('tpv-member-search')?.value || '';
+      void trySelectTpvMemberFromScan(q);
     });
     $('tpv-member-clear')?.addEventListener('click', () => clearTpvMember());
 

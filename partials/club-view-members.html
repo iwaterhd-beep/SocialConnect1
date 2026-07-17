@@ -32,7 +32,7 @@
       type="search"
       id="members-search"
       class="input"
-      placeholder="Buscar nº socio, nombre, DNI, teléfono…"
+      placeholder="Buscar nº, chapa RFID, nombre, DNI…"
       autocomplete="off"
     />
   </div>
@@ -241,6 +241,20 @@
           <div class="form__row">
             <label for="member-code">Nº socio</label>
             <input class="input" id="member-code" type="text" autocomplete="off" readonly placeholder="Se asigna al guardar (ej. #00001)" />
+          </div>
+          <div class="form__row">
+            <label for="member-rfid">Chapa RFID</label>
+            <input
+              class="input"
+              id="member-rfid"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Pasa la chapa aquí o escribe el UID"
+            />
+            <p class="hint hint--small" style="margin-top: 0.35rem">
+              Opcional. En POS o en Buscar socio, pasa la chapa para abrir el perfil al instante.
+            </p>
           </div>
           <div class="form__row">
             <label for="member-enrollment-fee">Cuota inscripción (€)</label>
