@@ -1633,7 +1633,7 @@ body.club-dark .card-section {
   -webkit-backdrop-filter: blur(18px);
 }
 
-body.club-dark .club-tabs {
+body.club-dark:not(.club-app) .club-tabs {
   background: rgba(15, 23, 42, 0.45);
   border-color: rgba(148, 163, 184, 0.2);
   box-shadow:
@@ -1641,16 +1641,16 @@ body.club-dark .club-tabs {
     0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
-body.club-dark .club-tab {
+body.club-dark:not(.club-app) .club-tab {
   color: var(--tx3);
 }
 
-body.club-dark .club-tab:hover {
+body.club-dark:not(.club-app) .club-tab:hover {
   color: var(--tx);
   background: rgba(255, 255, 255, 0.06);
 }
 
-body.club-dark .club-tab.is-active {
+body.club-dark:not(.club-app) .club-tab.is-active {
   background: linear-gradient(135deg, #22c55e 0%, #0d9488 100%);
   color: #fff;
   box-shadow:
@@ -3526,6 +3526,67 @@ body.club-dark .field-required {
 
 .sc-home-legal .sc-section-head__meta {
   margin-top: 0.25rem;
+}
+
+/* ---------- Modal aviso DNI socio ---------- */
+.member-dni-warn-modal {
+  z-index: 265;
+}
+
+.member-dni-warn-modal__panel {
+  max-width: 28rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+.member-dni-warn-modal__head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1.25rem 1.35rem 0.5rem;
+}
+
+.member-dni-warn-modal__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.member-dni-warn-modal__subtitle {
+  margin: 0.35rem 0 0;
+}
+
+.member-dni-warn-modal__body {
+  padding: 0 1.35rem 0.25rem;
+}
+
+.member-dni-warn-modal__text {
+  margin: 0;
+  color: var(--tx2, #475569);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.member-dni-warn-modal__actions {
+  padding: 0.85rem 1.35rem 1.25rem;
+  justify-content: flex-end;
+}
+
+body.club-dark .member-dni-warn-modal__icon {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+body.club-dark .member-dni-warn-modal__text {
+  color: #94a3b8;
 }
 
 /* ---------- Modal términos alta socio ---------- */

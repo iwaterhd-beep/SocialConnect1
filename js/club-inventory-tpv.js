@@ -2796,6 +2796,10 @@
 
   async function selectTpvMember(m) {
     if (!m || !m.id) return;
+    if (typeof window.scConfirmMemberMissingDni === 'function') {
+      const ok = await window.scConfirmMemberMissingDni(m);
+      if (!ok) return;
+    }
     if ($('tpv-selected-member')) $('tpv-selected-member').value = m.id;
     if ($('tpv-member-search')) $('tpv-member-search').value = '';
     const dd = $('tpv-member-dropdown');

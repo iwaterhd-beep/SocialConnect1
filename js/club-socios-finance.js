@@ -452,6 +452,40 @@
     return String(value || '').trim().toLocaleUpperCase('es-ES');
   }
 
+  function splitMemberSurnames(lastName) {
+    const parts = String(lastName || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    return {
+      first: parts[0] ? formatMemberName(parts[0]) : '',
+      second: parts.length > 1 ? formatMemberName(parts.slice(1).join(' ')) : '',
+    };
+  }
+
+  function combineMemberSurnames(firstSurname, secondSurname) {
+    return [formatMemberName(firstSurname || ''), formatMemberName(secondSurname || '')]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  }
+
+  function fillMemberNameFieldsFromRow(row) {
+    let first = formatMemberName(row.first_name || '');
+    let surnames = splitMemberSurnames(row.last_name || '');
+    if (!first && !surnames.first && !surnames.second && row.display_name) {
+      const parts = formatMemberName(row.display_name).split(/\s+/).filter(Boolean);
+      first = parts[0] || '';
+      surnames = {
+        first: parts[1] ? formatMemberName(parts[1]) : '',
+        second: parts.length > 2 ? formatMemberName(parts.slice(2).join(' ')) : '',
+      };
+    }
+    if ($('member-first-name')) $('member-first-name').value = first;
+    if ($('member-last-name')) $('member-last-name').value = surnames.first;
+    if ($('member-second-last-name')) $('member-second-last-name').value = surnames.second;
+  }
+
   function formatMemberDisplayName(m) {
     const { first, last } = getMemberNames(m);
     const combined = [first, last].filter(Boolean).join(' ').trim();
@@ -795,8 +829,6 @@
   }
 
   async function editMemberFromRow(memberId) {
-    selectedMemberId = memberId || '';
-    setMemberUiMode('edit');
     const { data: row, error: e2 } = await sb()
       .from('club_members')
       .select('*')
@@ -806,23 +838,14 @@
       setMemberMsg(e2?.message || 'No se pudo cargar.', true);
       return;
     }
-    $('member-edit-id').value = row.id;
-    $('member-first-name').value = formatMemberName(row.first_name || '');
-    $('member-last-name').value = formatMemberName(row.last_name || '');
-    if (
-      !($('member-first-name').value || '').trim() &&
-      !($('member-last-name').value || '').trim() &&
-      row.display_name
-    ) {
-      const dn = formatMemberName(row.display_name);
-      const sp = dn.indexOf(' ');
-      if (sp > 0) {
-        $('member-first-name').value = dn.slice(0, sp).trim();
-        $('member-last-name').value = dn.slice(sp + 1).trim();
-      } else {
-        $('member-first-name').value = dn;
-      }
+    if (typeof window.scConfirmMemberMissingDni === 'function') {
+      const ok = await window.scConfirmMemberMissingDni(row);
+      if (!ok) return;
     }
+    selectedMemberId = memberId || '';
+    setMemberUiMode('edit');
+    $('member-edit-id').value = row.id;
+    fillMemberNameFieldsFromRow(row);
     $('member-dni').value = formatMemberName(row.dni || '');
     const avName = row.avalista != null ? String(row.avalista).trim() : '';
     if ($('member-avalista-name')) $('member-avalista-name').value = avName;
@@ -906,6 +929,10 @@
       selectedMemberId = '';
       closeMemberModals();
       return;
+    }
+    if (typeof window.scConfirmMemberMissingDni === 'function') {
+      const ok = await window.scConfirmMemberMissingDni(m);
+      if (!ok) return;
     }
     selectedMemberId = memberId;
     setMemberUiMode('profile');
@@ -1121,6 +1148,7 @@
     $('member-edit-id').value = '';
     $('member-first-name').value = '';
     $('member-last-name').value = '';
+    if ($('member-second-last-name')) $('member-second-last-name').value = '';
     $('member-dni').value = '';
     clearAvalistaForm();
     $('member-birth').value = '';
@@ -1590,7 +1618,9 @@
   function readMemberFormFields() {
     const id = ($('member-edit-id')?.value || '').trim();
     const first = formatMemberName($('member-first-name')?.value || '');
-    const last = formatMemberName($('member-last-name')?.value || '');
+    const firstSurname = formatMemberName($('member-last-name')?.value || '');
+    const secondSurname = formatMemberName($('member-second-last-name')?.value || '');
+    const last = combineMemberSurnames(firstSurname, secondSurname);
     const display_name = [first, last].filter(Boolean).join(' ').trim();
     const dni = formatMemberName($('member-dni')?.value || '');
     const phone = ($('member-phone')?.value || '').trim();
@@ -1611,6 +1641,8 @@
     return {
       id,
       first,
+      firstSurname,
+      secondSurname,
       last,
       display_name,
       dni,
@@ -1634,11 +1666,8 @@
     if (!f.first) {
       return { ok: false, message: 'Indica el nombre.' };
     }
-    if (!f.last) {
-      return { ok: false, message: 'Indica los apellidos.' };
-    }
-    if (!f.dni) {
-      return { ok: false, message: 'Indica el DNI / NIE.' };
+    if (!f.firstSurname) {
+      return { ok: false, message: 'Indica el primer apellido.' };
     }
     if (f.birthRaw) {
       const age = memberAgeFromBirthIso(f.birthRaw);
@@ -3654,7 +3683,7 @@
       });
     });
 
-    ['member-first-name', 'member-last-name', 'member-dni'].forEach((id) => {
+    ['member-first-name', 'member-last-name', 'member-second-last-name', 'member-dni'].forEach((id) => {
       $(id)?.addEventListener('input', function () {
         const start = this.selectionStart;
         const end = this.selectionEnd;
@@ -3667,7 +3696,7 @@
       });
     });
 
-    ['member-first-name', 'member-last-name'].forEach((id) => {
+    ['member-first-name', 'member-last-name', 'member-second-last-name'].forEach((id) => {
       $(id)?.addEventListener('blur', () => {
         const el = $(id);
         if (el) el.value = formatMemberName(el.value);

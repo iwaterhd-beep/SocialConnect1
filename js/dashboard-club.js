@@ -1092,6 +1092,65 @@
   };
   window.scClubCloseShiftSummaryModal = closeSummaryModal;
 
+  let memberDniWarnResolver = null;
+
+  function memberHasDni(member) {
+    return member && member.dni != null && String(member.dni).trim() !== '';
+  }
+
+  function memberDniWarnLabel(member) {
+    const name =
+      member?.display_name ||
+      [member?.first_name, member?.last_name].filter(Boolean).join(' ').trim() ||
+      'Este socio';
+    return String(name).trim() || 'Este socio';
+  }
+
+  function closeMemberDniWarnModal(accepted) {
+    const modal = $('member-dni-warn-modal');
+    if (modal) {
+      modal.classList.add('is-hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    const resolve = memberDniWarnResolver;
+    memberDniWarnResolver = null;
+    if (resolve) resolve(Boolean(accepted));
+  }
+
+  function openMemberDniWarnModal(member) {
+    return new Promise((resolve) => {
+      const modal = $('member-dni-warn-modal');
+      const nameEl = $('member-dni-warn-name');
+      if (nameEl) nameEl.textContent = memberDniWarnLabel(member);
+      if (!modal) {
+        resolve(window.confirm('Este socio no tiene DNI / NIE. ¿Continuar de todos modos?'));
+        return;
+      }
+      memberDniWarnResolver = resolve;
+      modal.classList.remove('is-hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      $('member-dni-warn-accept')?.focus();
+    });
+  }
+
+  window.scConfirmMemberMissingDni = async function (member) {
+    if (memberHasDni(member)) return true;
+    return openMemberDniWarnModal(member);
+  };
+
+  function bindMemberDniWarnModal() {
+    $('member-dni-warn-accept')?.addEventListener('click', () => closeMemberDniWarnModal(true));
+    document.querySelectorAll('[data-member-dni-warn-cancel]').forEach((el) => {
+      el.addEventListener('click', () => closeMemberDniWarnModal(false));
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('member-dni-warn-modal');
+      if (!modal || modal.classList.contains('is-hidden')) return;
+      closeMemberDniWarnModal(false);
+    });
+  }
+
   function renderWizardStockQuestion() {
     setShiftWizardPanelWide(false);
     $('shift-wizard-title').textContent = 'Antes de cerrar';
@@ -1464,6 +1523,7 @@
     initNav();
     initSidebarUi();
     initClubDarkMode();
+    bindMemberDniWarnModal();
 
     try {
       await refreshShiftsUI(ctx);
