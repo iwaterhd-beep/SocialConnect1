@@ -53,6 +53,8 @@
     stream: null,
     devices: [],
     deviceIndex: 0,
+    facingMode: 'environment',
+    useFacingToggle: false,
   };
 
   let memberCameraUiBound = false;
@@ -160,7 +162,85 @@
   async function listMemberVideoDevices() {
     if (!navigator.mediaDevices?.enumerateDevices) return [];
     const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices.filter((device) => device.kind === 'videoinput');
+    const seen = new Set();
+    return devices.filter((device) => {
+      if (device.kind !== 'videoinput') return false;
+      const key = device.groupId || device.deviceId;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function defaultMemberFacingMode(slot) {
+    return slot === 'avatar' ? 'user' : 'environment';
+  }
+
+  function memberFacingModeLabel(mode) {
+    return mode === 'user' ? 'frontal' : 'trasera';
+  }
+
+  async function startMemberCameraStream(options = {}) {
+    stopMemberCameraStream();
+    const base = { audio: false };
+    let constraints;
+    if (options.deviceId) {
+      constraints = { ...base, video: { deviceId: { ideal: options.deviceId } } };
+    } else if (options.facingMode) {
+      constraints = { ...base, video: { facingMode: { exact: options.facingMode } } };
+    } else {
+      const facing = defaultMemberFacingMode(memberCameraState.slot);
+      constraints = { ...base, video: { facingMode: { ideal: facing } } };
+    }
+    try {
+      memberCameraState.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (_) {
+      if (options.facingMode) {
+        try {
+          memberCameraState.stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: { facingMode: options.facingMode },
+          });
+        } catch {
+          memberCameraState.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+      } else if (options.deviceId) {
+        memberCameraState.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { deviceId: options.deviceId },
+        });
+      } else {
+        memberCameraState.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+    }
+    const video = $('member-camera-video');
+    if (video) {
+      video.srcObject = memberCameraState.stream;
+      await video.play();
+    }
+    const track = memberCameraState.stream?.getVideoTracks?.()[0];
+    const settings = track?.getSettings?.() || {};
+    if (settings.facingMode === 'user' || settings.facingMode === 'environment') {
+      memberCameraState.facingMode = settings.facingMode;
+    }
+  }
+
+  function syncMemberCameraSwitchUi() {
+    const switchBtn = $('member-camera-switch');
+    if (!switchBtn) return;
+    const count = memberCameraState.devices.length;
+    switchBtn.hidden = false;
+    if (count > 1) {
+      const current = memberCameraState.devices[memberCameraState.deviceIndex];
+      const label = (current?.label || `Cámara ${memberCameraState.deviceIndex + 1}`).trim();
+      switchBtn.textContent = count > 2 ? `Cambiar cámara (${label})` : 'Cambiar cámara';
+      return;
+    }
+    if (memberCameraState.facingMode === 'user') {
+      switchBtn.textContent = 'Usar cámara trasera';
+    } else {
+      switchBtn.textContent = 'Usar cámara frontal';
+    }
   }
 
   function preferredMemberCameraIndex(devices) {
@@ -174,43 +254,6 @@
     );
     if (memberCameraState.slot === 'avatar' && frontIdx >= 0) return frontIdx;
     return 0;
-  }
-
-  async function startMemberCameraStream(deviceId) {
-    stopMemberCameraStream();
-    const base = { audio: false };
-    let constraints;
-    if (deviceId) {
-      constraints = { ...base, video: { deviceId: { exact: deviceId } } };
-    } else if (memberCameraState.slot === 'avatar') {
-      constraints = { ...base, video: { facingMode: 'user' } };
-    } else {
-      constraints = { ...base, video: { facingMode: { ideal: 'environment' } } };
-    }
-    try {
-      memberCameraState.stream = await navigator.mediaDevices.getUserMedia(constraints);
-    } catch (_) {
-      memberCameraState.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    }
-    const video = $('member-camera-video');
-    if (video) {
-      video.srcObject = memberCameraState.stream;
-      await video.play();
-    }
-  }
-
-  function syncMemberCameraSwitchUi() {
-    const switchBtn = $('member-camera-switch');
-    if (!switchBtn) return;
-    const count = memberCameraState.devices.length;
-    switchBtn.hidden = count <= 1;
-    if (count > 1) {
-      const current = memberCameraState.devices[memberCameraState.deviceIndex];
-      const label = (current?.label || `Cámara ${memberCameraState.deviceIndex + 1}`).trim();
-      switchBtn.textContent = count > 2 ? `Cambiar cámara (${label})` : 'Cambiar cámara';
-    } else {
-      switchBtn.textContent = 'Cambiar cámara';
-    }
   }
 
   async function refreshMemberCameraDevices() {
@@ -242,6 +285,8 @@
     memberCameraState.slot = slot;
     memberCameraState.deviceIndex = 0;
     memberCameraState.devices = [];
+    memberCameraState.facingMode = defaultMemberFacingMode(slot);
+    memberCameraState.useFacingToggle = false;
 
     const modal = $('member-camera-modal');
     const title = $('member-camera-title');
@@ -253,12 +298,17 @@
     }
 
     try {
-      await startMemberCameraStream(null);
+      await startMemberCameraStream({ facingMode: memberCameraState.facingMode });
       await refreshMemberCameraDevices();
-      memberCameraState.deviceIndex = preferredMemberCameraIndex(memberCameraState.devices);
-      const device = memberCameraState.devices[memberCameraState.deviceIndex];
-      if (device?.deviceId) {
-        await startMemberCameraStream(device.deviceId);
+      if (memberCameraState.devices.length > 1) {
+        memberCameraState.useFacingToggle = false;
+        memberCameraState.deviceIndex = preferredMemberCameraIndex(memberCameraState.devices);
+        const device = memberCameraState.devices[memberCameraState.deviceIndex];
+        if (device?.deviceId) {
+          await startMemberCameraStream({ deviceId: device.deviceId });
+        }
+      } else {
+        memberCameraState.useFacingToggle = true;
       }
       syncMemberCameraSwitchUi();
       setMemberCameraStatus('');
@@ -271,15 +321,31 @@
 
   async function switchMemberCamera() {
     const count = memberCameraState.devices.length;
-    if (count <= 1) return;
-    memberCameraState.deviceIndex = (memberCameraState.deviceIndex + 1) % count;
-    const device = memberCameraState.devices[memberCameraState.deviceIndex];
     try {
-      await startMemberCameraStream(device?.deviceId || null);
+      if (count > 1) {
+        memberCameraState.useFacingToggle = false;
+        memberCameraState.deviceIndex = (memberCameraState.deviceIndex + 1) % count;
+        const device = memberCameraState.devices[memberCameraState.deviceIndex];
+        await startMemberCameraStream({ deviceId: device?.deviceId || null });
+      } else {
+        memberCameraState.useFacingToggle = true;
+        memberCameraState.facingMode =
+          memberCameraState.facingMode === 'user' ? 'environment' : 'user';
+        await startMemberCameraStream({ facingMode: memberCameraState.facingMode });
+      }
       syncMemberCameraSwitchUi();
-      setMemberCameraStatus('');
+      setMemberCameraStatus(
+        count > 1
+          ? ''
+          : `Cámara ${memberFacingModeLabel(memberCameraState.facingMode)} activa.`,
+      );
     } catch (err) {
-      setMemberCameraStatus(err?.message || 'No se pudo cambiar de cámara.');
+      setMemberCameraStatus(
+        err?.message ||
+          (count > 1
+            ? 'No se pudo cambiar de cámara.'
+            : 'Este dispositivo no tiene otra cámara disponible.'),
+      );
     }
   }
 
@@ -326,6 +392,8 @@
     memberCameraState.slot = null;
     memberCameraState.devices = [];
     memberCameraState.deviceIndex = 0;
+    memberCameraState.facingMode = 'environment';
+    memberCameraState.useFacingToggle = false;
     setMemberCameraStatus('');
     const modal = $('member-camera-modal');
     if (modal) {
