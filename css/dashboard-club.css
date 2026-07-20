@@ -1615,6 +1615,7 @@ body.club-dark {
   --ink: #e2e8f0;
   --ink-muted: #94a3b8;
   --gbg: rgba(22, 163, 74, 0.12);
+  color-scheme: dark;
   animation: none;
   background: var(--bg);
 }
@@ -1769,6 +1770,16 @@ body.club-dark .select {
   color: var(--tx);
 }
 
+body.club-dark .input::placeholder {
+  color: var(--tx4);
+}
+
+body.club-dark textarea.input {
+  background: var(--bg);
+  border-color: var(--bd);
+  color: var(--tx);
+}
+
 body.club-dark .btn--ghost {
   background: transparent;
   border-color: var(--bd);
@@ -1782,15 +1793,25 @@ body.club-dark .btn--ghost:hover {
 
 body.club-dark table th {
   background: var(--bg2);
+  color: var(--tx3);
 }
 
 body.club-dark table th,
 body.club-dark table td {
   border-bottom-color: var(--bd);
+  color: var(--tx);
+}
+
+body.club-dark tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+body.club-dark tbody tr:nth-child(odd) td {
+  background: transparent;
 }
 
 body.club-dark tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .club-dark-toggle {
@@ -3106,14 +3127,70 @@ body.club-dark .has-club-topnav .finance-ventas-toolbar {
 
 body.club-dark .has-club-topnav .input,
 body.club-dark .has-club-topnav .select {
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   border-color: rgba(148, 163, 184, 0.28);
   color: #f1f5f9;
 }
 
+body.club-dark .has-club-topnav .input::placeholder {
+  color: #64748b;
+}
+
+body.club-dark .has-club-topnav .input:-webkit-autofill,
+body.club-dark .has-club-topnav .input:-webkit-autofill:hover,
+body.club-dark .has-club-topnav .input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f1f5f9;
+  caret-color: #f1f5f9;
+  box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.92) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
 body.club-dark .has-club-topnav .table-wrap {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.55);
   border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body.club-dark .has-club-topnav .table-wrap th {
+  background: rgba(15, 23, 42, 0.92);
+  color: #94a3b8;
+}
+
+body.club-dark .has-club-topnav .table-wrap td {
+  color: #e2e8f0;
+}
+
+body.club-dark .has-club-topnav .table-wrap tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.club-dark .has-club-topnav .table-wrap tbody tr:nth-child(odd) td {
+  background: transparent;
+}
+
+body.club-dark .has-club-topnav .table-wrap tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.club-dark .has-club-topnav .form__row label {
+  color: #cbd5e1;
+}
+
+body.club-dark .has-club-topnav .hint {
+  color: #94a3b8;
+}
+
+body.club-dark .has-club-topnav .btn--ghost {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+}
+
+body.club-dark .has-club-topnav .btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
 }
 
 body.club-dark .status-pill {

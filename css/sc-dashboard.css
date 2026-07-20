@@ -913,6 +913,7 @@ body.club-dark.club-app {
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --green-50: rgba(22, 163, 74, 0.12);
+  color-scheme: dark;
 }
 
 body.club-dark.club-app .app-sidebar,
@@ -1812,4 +1813,73 @@ body.club-dark.club-app .shift-modal__panel {
 
 body.club-dark.club-app .sc-members-list tbody tr.is-selected {
   background: var(--green-50) !important;
+}
+
+body.club-dark.club-app .input,
+body.club-dark.club-app .select,
+body.club-dark.club-app textarea.input {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+body.club-dark.club-app .input::placeholder {
+  color: var(--text-muted);
+}
+
+body.club-dark.club-app .form__row label {
+  color: var(--text-secondary);
+}
+
+body.club-dark.club-app .table-wrap {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .table-wrap th {
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text-muted);
+}
+
+body.club-dark.club-app .table-wrap td {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .table-wrap tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+body.club-dark.club-app .table-wrap tbody tr:nth-child(odd) td {
+  background: transparent;
+}
+
+body.club-dark.club-app .table-wrap tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+body.club-dark.club-app .sc-home-kpi__label,
+body.club-dark.club-app .sc-quick-nav__desc,
+body.club-dark.club-app .sc-section-head__meta {
+  color: var(--text-secondary);
+}
+
+body.club-dark.club-app .sc-quick-nav__label,
+body.club-dark.club-app .sc-section-head h2 {
+  color: var(--text-primary);
+}
+
+body.club-dark.club-app .badge-stock--ok {
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+}
+
+body.club-dark.club-app .badge-stock--low {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde68a;
+}
+
+body.club-dark.club-app .badge-stock--out {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fecaca;
 }
