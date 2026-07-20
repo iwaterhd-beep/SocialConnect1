@@ -48,6 +48,15 @@
     passport: null,
   };
 
+  const memberCameraState = {
+    slot: null,
+    stream: null,
+    devices: [],
+    deviceIndex: 0,
+  };
+
+  let memberCameraUiBound = false;
+
   let memberLoadedPaths = {
     avatar_path: '',
     doc_dni_front_path: '',
@@ -124,6 +133,223 @@
     if (f) f.textContent = docLabelText('dni_front');
     if (b) b.textContent = docLabelText('dni_back');
     if (p) p.textContent = docLabelText('passport');
+  }
+
+  function memberCameraSlotLabel(slot) {
+    if (slot === 'avatar') return 'Foto del socio';
+    if (slot === 'dni_front') return 'DNI delante';
+    if (slot === 'dni_back') return 'DNI detrás';
+    if (slot === 'passport') return 'Pasaporte';
+    return 'Tomar foto';
+  }
+
+  function setMemberCameraStatus(text) {
+    const el = $('member-camera-status');
+    if (el) el.textContent = text || '';
+  }
+
+  function stopMemberCameraStream() {
+    if (memberCameraState.stream) {
+      memberCameraState.stream.getTracks().forEach((track) => track.stop());
+      memberCameraState.stream = null;
+    }
+    const video = $('member-camera-video');
+    if (video) video.srcObject = null;
+  }
+
+  async function listMemberVideoDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) return [];
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter((device) => device.kind === 'videoinput');
+  }
+
+  function preferredMemberCameraIndex(devices) {
+    if (!devices.length) return 0;
+    const backIdx = devices.findIndex((device) =>
+      /back|rear|environment|trasera|posterior/i.test(device.label || ''),
+    );
+    if (backIdx >= 0) return backIdx;
+    const frontIdx = devices.findIndex((device) =>
+      /front|user|frontal|selfie/i.test(device.label || ''),
+    );
+    if (memberCameraState.slot === 'avatar' && frontIdx >= 0) return frontIdx;
+    return 0;
+  }
+
+  async function startMemberCameraStream(deviceId) {
+    stopMemberCameraStream();
+    const base = { audio: false };
+    let constraints;
+    if (deviceId) {
+      constraints = { ...base, video: { deviceId: { exact: deviceId } } };
+    } else if (memberCameraState.slot === 'avatar') {
+      constraints = { ...base, video: { facingMode: 'user' } };
+    } else {
+      constraints = { ...base, video: { facingMode: { ideal: 'environment' } } };
+    }
+    try {
+      memberCameraState.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (_) {
+      memberCameraState.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    }
+    const video = $('member-camera-video');
+    if (video) {
+      video.srcObject = memberCameraState.stream;
+      await video.play();
+    }
+  }
+
+  function syncMemberCameraSwitchUi() {
+    const switchBtn = $('member-camera-switch');
+    if (!switchBtn) return;
+    const count = memberCameraState.devices.length;
+    switchBtn.hidden = count <= 1;
+    if (count > 1) {
+      const current = memberCameraState.devices[memberCameraState.deviceIndex];
+      const label = (current?.label || `Cámara ${memberCameraState.deviceIndex + 1}`).trim();
+      switchBtn.textContent = count > 2 ? `Cambiar cámara (${label})` : 'Cambiar cámara';
+    } else {
+      switchBtn.textContent = 'Cambiar cámara';
+    }
+  }
+
+  async function refreshMemberCameraDevices() {
+    memberCameraState.devices = await listMemberVideoDevices();
+    if (!memberCameraState.devices.length) {
+      memberCameraState.deviceIndex = 0;
+      syncMemberCameraSwitchUi();
+      return;
+    }
+    if (memberCameraState.deviceIndex >= memberCameraState.devices.length) {
+      memberCameraState.deviceIndex = 0;
+    }
+    syncMemberCameraSwitchUi();
+  }
+
+  async function openMemberCamera(slot) {
+    if (!slot) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      const input = $(slotToFileId(slot));
+      if (input) {
+        input.setAttribute('capture', slot === 'avatar' ? 'user' : 'environment');
+        input.click();
+      } else {
+        setMemberMsg('Tu navegador no permite usar la cámara.', true);
+      }
+      return;
+    }
+
+    memberCameraState.slot = slot;
+    memberCameraState.deviceIndex = 0;
+    memberCameraState.devices = [];
+
+    const modal = $('member-camera-modal');
+    const title = $('member-camera-title');
+    if (title) title.textContent = memberCameraSlotLabel(slot);
+    setMemberCameraStatus('Preparando cámara…');
+    if (modal) {
+      modal.classList.remove('is-hidden');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    try {
+      await startMemberCameraStream(null);
+      await refreshMemberCameraDevices();
+      memberCameraState.deviceIndex = preferredMemberCameraIndex(memberCameraState.devices);
+      const device = memberCameraState.devices[memberCameraState.deviceIndex];
+      if (device?.deviceId) {
+        await startMemberCameraStream(device.deviceId);
+      }
+      syncMemberCameraSwitchUi();
+      setMemberCameraStatus('');
+      $('member-camera-capture')?.focus();
+    } catch (err) {
+      closeMemberCamera();
+      setMemberMsg(err?.message || 'No se pudo acceder a la cámara.', true);
+    }
+  }
+
+  async function switchMemberCamera() {
+    const count = memberCameraState.devices.length;
+    if (count <= 1) return;
+    memberCameraState.deviceIndex = (memberCameraState.deviceIndex + 1) % count;
+    const device = memberCameraState.devices[memberCameraState.deviceIndex];
+    try {
+      await startMemberCameraStream(device?.deviceId || null);
+      syncMemberCameraSwitchUi();
+      setMemberCameraStatus('');
+    } catch (err) {
+      setMemberCameraStatus(err?.message || 'No se pudo cambiar de cámara.');
+    }
+  }
+
+  function captureMemberPhoto() {
+    const video = $('member-camera-video');
+    const slot = memberCameraState.slot;
+    if (!video || !slot) return;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    if (!width || !height) {
+      setMemberCameraStatus('Espera a que la cámara enfoque…');
+      return;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, width, height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setMemberCameraStatus('No se pudo capturar la foto.');
+          return;
+        }
+        if (blob.size > MAX_FILE_BYTES) {
+          setMemberCameraStatus('La foto supera 5 MB. Acerca o reduce la resolución.');
+          return;
+        }
+        const file = new File([blob], `${slot}-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        memberPendingFiles[slot] = file;
+        if (slot === 'avatar') void refreshAvatarPreview();
+        else updateAllDocLabels();
+        closeMemberCamera();
+        setMemberMsg('', false);
+      },
+      'image/jpeg',
+      0.9,
+    );
+  }
+
+  function closeMemberCamera() {
+    stopMemberCameraStream();
+    memberCameraState.slot = null;
+    memberCameraState.devices = [];
+    memberCameraState.deviceIndex = 0;
+    setMemberCameraStatus('');
+    const modal = $('member-camera-modal');
+    if (modal) {
+      modal.classList.add('is-hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function bindMemberCameraUi() {
+    if (memberCameraUiBound) return;
+    memberCameraUiBound = true;
+    $('member-camera-capture')?.addEventListener('click', () => captureMemberPhoto());
+    $('member-camera-switch')?.addEventListener('click', () => {
+      void switchMemberCamera();
+    });
+    document.querySelectorAll('[data-member-camera-close]').forEach((el) => {
+      el.addEventListener('click', () => closeMemberCamera());
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('member-camera-modal');
+      if (!modal || modal.classList.contains('is-hidden')) return;
+      closeMemberCamera();
+    });
   }
 
   async function refreshAvatarPreview() {
@@ -379,6 +605,7 @@
   }
 
   function closeMemberModals() {
+    closeMemberCamera();
     ['member-profile-modal', 'member-edit-modal'].forEach((id) => {
       const modal = $(id);
       if (!modal) return;
@@ -3724,10 +3951,10 @@
         const input = $(slotToFileId(slot));
         if (!input) return;
         if (mode === 'cam') {
-          input.setAttribute('capture', 'environment');
-        } else {
-          input.removeAttribute('capture');
+          void openMemberCamera(slot);
+          return;
         }
+        input.removeAttribute('capture');
         input.click();
       });
     });
@@ -3765,6 +3992,7 @@
   window.scInitClubSociosFinance = async function (c) {
     ctx = c;
     bindMemberTermsUi();
+    bindMemberCameraUi();
     bindMembersUi();
     bindMembersCsvUi();
     try {

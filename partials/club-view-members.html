@@ -334,6 +334,7 @@
               <span class="member-doc-row__state" id="member-doc-front-label">Sin archivo</span>
               <div class="member-doc-row__actions">
                 <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_front">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="dni_front">Foto</button>
                 <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_front">Quitar</button>
               </div>
             </div>
@@ -342,6 +343,7 @@
               <span class="member-doc-row__state" id="member-doc-back-label">Sin archivo</span>
               <div class="member-doc-row__actions">
                 <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="dni_back">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="dni_back">Foto</button>
                 <button type="button" class="btn btn--ghost btn--small" data-member-clear="dni_back">Quitar</button>
               </div>
             </div>
@@ -350,6 +352,7 @@
               <span class="member-doc-row__state" id="member-doc-pass-label">Sin archivo</span>
               <div class="member-doc-row__actions">
                 <button type="button" class="btn btn--ghost btn--small" data-member-mode="pick" data-member-slot="passport">Subir</button>
+                <button type="button" class="btn btn--ghost btn--small" data-member-mode="cam" data-member-slot="passport">Foto</button>
                 <button type="button" class="btn btn--ghost btn--small" data-member-clear="passport">Quitar</button>
               </div>
             </div>
@@ -379,4 +382,25 @@
       </div>
     </div>
   </section>
+</div>
+
+<div
+  id="member-camera-modal"
+  class="shift-modal member-camera-modal is-hidden"
+  aria-hidden="true"
+  aria-labelledby="member-camera-title"
+>
+  <div class="shift-modal__backdrop" data-member-camera-close></div>
+  <div class="shift-modal__panel card-section member-camera-modal__panel" role="dialog" aria-modal="true">
+    <h3 id="member-camera-title" class="shift-modal__title">Tomar foto</h3>
+    <p id="member-camera-status" class="hint member-camera-modal__status" role="status"></p>
+    <div class="member-camera-modal__viewport">
+      <video id="member-camera-video" autoplay playsinline muted></video>
+    </div>
+    <div class="row-actions member-camera-modal__actions">
+      <button type="button" class="btn btn--ghost" data-member-camera-close>Cancelar</button>
+      <button type="button" class="btn btn--ghost" id="member-camera-switch" hidden>Cambiar cámara</button>
+      <button type="button" class="btn" id="member-camera-capture">Capturar</button>
+    </div>
+  </div>
 </div>
