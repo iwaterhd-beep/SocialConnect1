@@ -622,10 +622,7 @@
   }
 
   function openShiftWizardModal() {
-    const el = $('shift-wizard-modal');
-    if (!el) return;
-    el.classList.remove('is-hidden');
-    el.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal($('shift-wizard-modal'));
   }
 
   function closeShiftWizardModal() {
@@ -642,12 +639,9 @@
   }
 
   function openSummaryModal(html) {
-    const modal = $('shift-summary-modal');
     const body = $('shift-summary-body');
     if (body) body.innerHTML = html;
-    if (!modal) return;
-    modal.classList.remove('is-hidden');
-    modal.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal($('shift-summary-modal'));
   }
 
   function closeSummaryModal() {
@@ -1127,8 +1121,7 @@
         return;
       }
       memberDniWarnResolver = resolve;
-      modal.classList.remove('is-hidden');
-      modal.setAttribute('aria-hidden', 'false');
+      window.scOpenShiftModal(modal);
       $('member-dni-warn-accept')?.focus();
     });
   }

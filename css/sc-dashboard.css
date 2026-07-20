@@ -1088,11 +1088,9 @@ body.club-dark.club-app .app-header__avatar {
 @keyframes scFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -1694,28 +1692,51 @@ body.club-dark.club-app .tpv-card {
   }
 }
 
-/* Modals */
+/* Modals — panel fijado arriba del viewport (independiente del scroll de la vista) */
 .club-app .shift-modal {
   z-index: 500;
-  padding: var(--space-4);
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.club-app .shift-modal:not(.is-hidden) {
+  position: fixed;
+  inset: 0;
 }
 
 .club-app .shift-modal__backdrop {
+  position: fixed;
+  inset: 0;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(6px);
 }
 
 .club-app .shift-modal__panel {
-  max-width: min(32rem, 100%);
+  position: fixed;
+  top: max(var(--space-4), env(safe-area-inset-top, 0px));
+  left: var(--space-4);
+  right: var(--space-4);
+  width: auto;
+  max-width: min(32rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  margin-inline: auto;
+  margin-block: 0;
+  z-index: 1;
   border-radius: var(--radius-card);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-md);
   padding: var(--space-5);
-  animation: scModalIn 0.2s var(--transition) both;
+  animation: scModalInOpacity 0.2s var(--transition) both;
+}
+
+.club-app .shift-modal:not(.is-hidden):not(.is-leaving) .shift-modal__panel {
+  animation: scModalInOpacity 0.2s var(--transition) both;
 }
 
 .club-app .shift-modal__panel--wide {
-  max-width: min(56rem, 100%);
+  max-width: min(56rem, calc(100vw - 2 * var(--space-4)));
 }
 
 .club-app .shift-modal__title {
@@ -1725,18 +1746,20 @@ body.club-dark.club-app .tpv-card {
 }
 
 .club-app .shift-modal__body--scroll {
-  max-height: min(70vh, 640px);
+  max-height: min(calc(100dvh - 12rem), 640px);
 }
 
-@keyframes scModalIn {
+@keyframes scModalInOpacity {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
+}
+
+body.club-app.club-modal-open .app-main {
+  overflow: hidden;
 }
 
 /* Member selection */

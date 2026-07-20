@@ -399,10 +399,7 @@
   }
 
   function openInvCatModal() {
-    const modal = $('inv-cat-modal');
-    if (!modal) return;
-    modal.classList.remove('is-hidden');
-    modal.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal($('inv-cat-modal'));
   }
 
   function closeInvCatModal() {
@@ -423,11 +420,8 @@
   }
 
   function openInvProductModal() {
-    const modal = $('inv-product-modal');
-    if (!modal) return;
     applyAdminInventoryPriceRows();
-    modal.classList.remove('is-hidden');
-    modal.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal($('inv-product-modal'));
   }
 
   function closeInvProductModal() {
@@ -461,10 +455,7 @@
     const ok = await ensureEmojiPickerLoaded();
     if (!ok) return;
     renderRecentEmojis();
-    const modal = $('inv-emoji-modal');
-    if (!modal) return;
-    modal.classList.remove('is-hidden');
-    modal.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal($('inv-emoji-modal'));
   }
 
   function closeInvEmojiModal() {
@@ -595,10 +586,7 @@
     if (note) note.value = '';
     dirAdd?.classList.add('is-active');
     dirRemove?.classList.remove('is-active');
-    if (modal) {
-      modal.classList.remove('is-hidden');
-      modal.setAttribute('aria-hidden', 'false');
-    }
+    window.scOpenShiftModal(modal);
     qty?.focus();
   }
 

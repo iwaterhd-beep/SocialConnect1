@@ -297,8 +297,7 @@
     if (title) title.textContent = memberCameraSlotLabel(slot);
     setMemberCameraStatus('Preparando cámara…');
     if (modal) {
-      modal.classList.remove('is-hidden');
-      modal.setAttribute('aria-hidden', 'false');
+      window.scOpenShiftModal(modal);
     }
 
     try {
@@ -697,9 +696,7 @@
         editModal.setAttribute('aria-hidden', 'true');
       }
       if (profileModal) {
-        profileModal.classList.remove('is-hidden');
-        profileModal.hidden = false;
-        profileModal.setAttribute('aria-hidden', 'false');
+        window.scOpenShiftModal(profileModal);
       }
       return;
     }
@@ -710,9 +707,7 @@
         profileModal.setAttribute('aria-hidden', 'true');
       }
       if (editModal) {
-        editModal.classList.remove('is-hidden');
-        editModal.hidden = false;
-        editModal.setAttribute('aria-hidden', 'false');
+        window.scOpenShiftModal(editModal);
       }
     }
   }
@@ -2120,9 +2115,7 @@
     }
     fillMemberTermsClubInfo();
     resetMemberTermsModal();
-    modal.classList.remove('is-hidden', 'is-leaving');
-    modal.hidden = false;
-    modal.setAttribute('aria-hidden', 'false');
+    window.scOpenShiftModal(modal);
   }
 
   function closeMemberTermsModal() {
