@@ -2520,8 +2520,6 @@
           });
           alertsEl.textContent = String(lowCount);
           alertsEl.classList.toggle('is-alert', lowCount > 0);
-          const badge = $('home-kpi-alerts-badge');
-          if (badge) badge.hidden = lowCount <= 0;
         })(),
       );
     }

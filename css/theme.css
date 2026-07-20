@@ -1,10 +1,10 @@
 /* Social Connect V2 — Tema alineado con SocialConnect (limpio, verde, DM Sans) */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:wght@700;800&display=swap");
 
 :root {
   color-scheme: light;
-  /* Brand */
+  /* Paleta tipo SocialConnect */
   --g: #16a34a;
   --gl: #22c55e;
   --gd: #15803d;
@@ -14,71 +14,29 @@
   --td: #0f766e;
   --r: #dc2626;
   --rs: #fee2e2;
-
-  /* Neutrals — rich gray scale */
-  --tx: #0f172a;
-  --tx2: #334155;
-  --tx3: #64748b;
-  --tx4: #94a3b8;
-  --bd: #e2e8f0;
-  --bg: #f4f6f9;
-  --bg2: #eef2f6;
-  --w: #ffffff;
-
-  /* Design system — spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-
-  /* Surfaces */
-  --surface-base: var(--bg);
-  --surface-raised: #ffffff;
-  --surface-sunken: #eef2f6;
-
-  /* Radii */
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 999px;
-
-  /* Shadows — layered */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 4px 8px rgba(15, 23, 42, 0.05), 0 24px 48px rgba(15, 23, 42, 0.1);
-  --shadow-brand: 0 2px 4px rgba(22, 163, 74, 0.18), 0 8px 20px rgba(22, 163, 74, 0.22);
-
-  /* Motion */
-  --duration-fast: 150ms;
-  --duration-normal: 200ms;
+  --tx: #111827;
+  --tx2: #374151;
+  --tx3: #6b7280;
+  --tx4: #9ca3af;
+  --bd: #e5e7eb;
+  --bg: #f9fafb;
+  --bg2: #f3f4f6;
+  --w: #fff;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-sm: 8px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
   --ring: rgba(22, 163, 74, 0.35);
 
-  /* Semantic status */
-  --color-success: #16a34a;
-  --color-success-soft: #ecfdf5;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fef2f2;
-  --color-warning: #d97706;
-  --color-warning-soft: #fffbeb;
-  --color-info-soft: #eff6ff;
-
-  /* Typography */
+  /* Compatibilidad con clases antiguas */
   --ink: var(--tx);
   --ink-muted: var(--tx3);
-  --font: "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font: "Inter", "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --radius: 14px;
-  --shadow: var(--shadow-xs);
-  --shadow-md-legacy: var(--shadow-md);
-  --shadow-lg-legacy: var(--shadow-lg);
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 24px 48px rgba(15, 23, 42, 0.1);
 }
 
 *,
@@ -289,14 +247,11 @@ body:not(.has-club-topnav) .shell--app {
   padding: 0.62rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--bd);
-  background: var(--surface-raised);
+  background: rgba(255, 255, 255, 0.96);
   font: inherit;
   font-size: 0.94rem;
   color: var(--tx);
-  transition:
-    border-color var(--duration-normal) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+  transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
 
 .input:hover:not(:focus) {
@@ -342,12 +297,10 @@ body:not(.has-club-topnav) .shell--app {
   line-height: 1.25;
   background: linear-gradient(180deg, var(--gl) 0%, var(--g) 100%);
   color: #fff;
-  box-shadow: var(--shadow-brand);
-  transition:
-    background var(--duration-normal) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out),
-    border-color var(--duration-normal) var(--ease-out);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 4px 14px rgba(22, 163, 74, 0.28);
+  transition: background 0.2s var(--ease-out), transform 0.15s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
 
 .btn:hover {

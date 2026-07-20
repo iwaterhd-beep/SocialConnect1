@@ -1,137 +1,124 @@
 <div class="club-view-stage sc-home-grid">
-  <section class="card-section sc-home-hero" aria-labelledby="home-hero-title">
-    <h2 id="home-hero-title" class="sc-section-title">Resumen del club</h2>
+<section class="card-section sc-home-summary sc-card--flat sc-home-shortcuts" aria-labelledby="home-next-title">
+  <h2 id="home-next-title">Accesos rápidos</h2>
+  <nav class="sc-quick-nav" aria-label="Ir a sección">
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="tpv">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">POS</span>
+      <span class="sc-quick-nav__desc">Ventas</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="inventory">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Inventario</span>
+      <span class="sc-quick-nav__desc">Productos</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="stock">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Stock</span>
+      <span class="sc-quick-nav__desc">Contaje turno</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="members">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Socios</span>
+      <span class="sc-quick-nav__desc">Fichas</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="finance">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Finanzas</span>
+      <span class="sc-quick-nav__desc">Resumen</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="membership" data-admin-only="1">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6L12 2z"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Membresía</span>
+      <span class="sc-quick-nav__desc">VIP y Premium</span>
+    </button>
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="settings">
+      <span class="sc-quick-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </span>
+      <span class="sc-quick-nav__label">Ajustes</span>
+      <span class="sc-quick-nav__desc">Club y cuenta</span>
+    </button>
+  </nav>
+</section>
 
-    <div class="sc-home-kpis-grid">
-      <button type="button" class="sc-home-kpi" data-quick-nav="finance">
-        <span class="sc-home-kpi__label">Ventas hoy</span>
-        <span class="sc-home-kpi__metric">
-          <span class="sc-home-kpi__value" id="home-kpi-sales">—</span>
-        </span>
-      </button>
-      <button type="button" class="sc-home-kpi" data-quick-nav="members">
-        <span class="sc-home-kpi__label">Socios activos</span>
-        <span class="sc-home-kpi__metric">
-          <span class="sc-home-kpi__value" id="home-kpi-members">—</span>
-        </span>
-      </button>
-      <button type="button" class="sc-home-kpi sc-home-kpi--alerts" data-quick-nav="inventory">
-        <span class="sc-home-kpi__label">Stock bajo</span>
-        <span class="sc-home-kpi__metric">
-          <span class="sc-home-kpi__value" id="home-kpi-alerts">—</span>
-          <span class="sc-kpi-badge sc-kpi-badge--danger" id="home-kpi-alerts-badge" hidden>Revisar</span>
-        </span>
-      </button>
-      <button type="button" class="sc-home-kpi sc-home-kpi--shift" data-quick-nav="home">
-        <span class="sc-home-kpi__label">Turno</span>
-        <span class="sc-home-kpi__metric">
-          <span class="sc-home-kpi__value sc-home-kpi__pill" id="home-kpi-shift">—</span>
-        </span>
-      </button>
+<section class="card-section sc-home-kpis" aria-labelledby="home-kpis-title">
+  <h2 id="home-kpis-title" class="visually-hidden">Resumen del día</h2>
+  <div class="sc-home-kpis-grid">
+    <button type="button" class="sc-home-kpi" data-quick-nav="finance">
+      <span class="sc-home-kpi__label">Ventas hoy</span>
+      <span class="sc-home-kpi__value" id="home-kpi-sales">—</span>
+    </button>
+    <button type="button" class="sc-home-kpi" data-quick-nav="members">
+      <span class="sc-home-kpi__label">Socios activos</span>
+      <span class="sc-home-kpi__value" id="home-kpi-members">—</span>
+    </button>
+    <button type="button" class="sc-home-kpi" data-quick-nav="inventory">
+      <span class="sc-home-kpi__label">Stock bajo</span>
+      <span class="sc-home-kpi__value" id="home-kpi-alerts">—</span>
+    </button>
+    <button type="button" class="sc-home-kpi sc-home-kpi--shift" data-quick-nav="home">
+      <span class="sc-home-kpi__label">Turno</span>
+      <span class="sc-home-kpi__value sc-home-kpi__pill" id="home-kpi-shift">—</span>
+    </button>
+  </div>
+</section>
+
+<section class="card-section sc-home-shift" aria-labelledby="shift-title">
+  <div class="sc-section-head">
+    <h2 id="shift-title">Turno de caja</h2>
+    <p id="shift-state" class="hint sc-section-head__meta">Cargando…</p>
+  </div>
+  <div class="grid grid--2 sc-compact-grid">
+    <div class="form__row">
+      <label for="opening-float-eur">Cambio inicial en caja (€)</label>
+      <input
+        class="input"
+        id="opening-float-eur"
+        inputmode="decimal"
+        placeholder="0"
+        autocomplete="off"
+      />
+      <p id="opening-float-hint" class="hint hint--small" style="margin-top: 0.35rem"></p>
     </div>
-
-    <div class="sc-home-divider" aria-hidden="true"></div>
-
-    <h3 class="sc-subsection-title">Accesos rápidos</h3>
-    <nav class="sc-quick-nav sc-quick-nav--home" aria-label="Ir a sección">
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="tpv">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">POS</span>
-        <span class="sc-quick-nav__desc">Ventas</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="inventory">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Inventario</span>
-        <span class="sc-quick-nav__desc">Productos</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="stock">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Stock</span>
-        <span class="sc-quick-nav__desc">Contaje turno</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="members">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Socios</span>
-        <span class="sc-quick-nav__desc">Fichas</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="finance">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Finanzas</span>
-        <span class="sc-quick-nav__desc">Resumen</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="membership" data-admin-only="1">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6L12 2z"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Membresía</span>
-        <span class="sc-quick-nav__desc">VIP y Premium</span>
-      </button>
-      <button type="button" class="sc-quick-nav__item" data-quick-nav="settings">
-        <span class="sc-quick-nav__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        </span>
-        <span class="sc-quick-nav__label">Ajustes</span>
-        <span class="sc-quick-nav__desc">Club y cuenta</span>
-      </button>
-    </nav>
-  </section>
-
-  <section class="card-section sc-home-shift" aria-labelledby="shift-title">
-    <h2 id="shift-title" class="sc-section-title">Turno de caja</h2>
-    <p id="shift-state" class="sc-shift-status">Cargando…</p>
-
-    <div class="sc-shift-form">
-      <div class="sc-shift-form__grid">
-        <div class="form__row">
-          <label for="opening-float-eur">Cambio inicial en caja (€)</label>
-          <input
-            class="input"
-            id="opening-float-eur"
-            inputmode="decimal"
-            placeholder="0"
-            autocomplete="off"
-          />
-          <p id="opening-float-hint" class="hint hint--small"></p>
-        </div>
-        <div class="form__row">
-          <label for="note-open">Nota al abrir (opcional)</label>
-          <input class="input" id="note-open" placeholder="Ej. Mañana" />
-        </div>
-        <div class="form__row sc-shift-form__full">
-          <label for="note-close">Nota al cerrar (opcional)</label>
-          <input class="input" id="note-close" placeholder="Ej. Arqueo OK" />
-        </div>
-      </div>
-
-      <div class="row-actions sc-shift-form__actions">
-        <button type="button" class="btn" id="btn-open-shift">Abrir turno</button>
-        <button type="button" class="btn btn--ghost" id="btn-close-shift" disabled>Cerrar turno</button>
-      </div>
+    <div class="form__row">
+      <label for="note-open">Nota al abrir (opcional)</label>
+      <input class="input" id="note-open" placeholder="Ej. Mañana" />
     </div>
-
-    <div class="table-wrap sc-data-table-wrap">
-      <table class="table-compact sc-data-table">
-        <thead>
-          <tr>
-            <th>Apertura</th>
-            <th>Cierre</th>
-            <th>Abierto por</th>
-            <th>Cerrado por</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="shifts-tbody"></tbody>
-      </table>
+    <div class="form__row">
+      <label for="note-close">Nota al cerrar (opcional)</label>
+      <input class="input" id="note-close" placeholder="Ej. Arqueo OK" />
     </div>
-  </section>
+  </div>
+  <div class="row-actions">
+    <button type="button" class="btn" id="btn-open-shift">Abrir turno</button>
+    <button type="button" class="btn btn--ghost" id="btn-close-shift" disabled>Cerrar turno</button>
+  </div>
+  <div class="table-wrap">
+    <table class="table-compact">
+      <thead>
+        <tr>
+          <th>Apertura</th>
+          <th>Cierre</th>
+          <th>Abierto por</th>
+          <th>Cerrado por</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="shifts-tbody"></tbody>
+    </table>
+  </div>
+</section>
 </div>
