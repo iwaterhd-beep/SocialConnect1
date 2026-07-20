@@ -59,6 +59,7 @@
     hasRetailPriceColumn: true,
     /** Listados activos: false si la BD no tiene columna is_archived (migración 024). */
     hasArchivedColumn: true,
+    hasArchivedMemberColumn: true,
     hasCannabisStrainColumn: true,
     hasMenuPriceColumn: true,
     hasProductImageColumn: true,
@@ -2472,27 +2473,35 @@
     } catch (_) {
       /* RPC opcional hasta migración 027 */
     }
-    let query = sb()
+    const archiveProbe = await sb().from('club_members').select('is_archived').limit(1);
+    state.hasArchivedMemberColumn = !archiveProbe.error;
+    const withArchiveFilter = (query) =>
+      state.hasArchivedMemberColumn ? query.eq('is_archived', false) : query;
+    let query = withArchiveFilter(
+      sb()
       .from('club_members')
       .select(
         'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
       )
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
-      .order('member_number', { ascending: true });
+      .order('member_number', { ascending: true }),
+    );
     let { data, error } = await query;
     if (
       error &&
       (error.code === '42703' || String(error.message || '').toLowerCase().includes('rfid_uid'))
     ) {
-      query = sb()
-        .from('club_members')
-        .select(
-          'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
-        )
-        .eq('club_id', state.ctx.club.id)
-        .eq('is_active', true)
-        .order('member_number', { ascending: true });
+      query = withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select(
+            'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+          )
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('member_number', { ascending: true }),
+      );
       ({ data, error } = await query);
     }
     if (
@@ -2500,14 +2509,16 @@
       (error.code === '42703' ||
         String(error.message || '').toLowerCase().includes('member_number'))
     ) {
-      query = sb()
-        .from('club_members')
-        .select(
-          'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
-        )
-        .eq('club_id', state.ctx.club.id)
-        .eq('is_active', true)
-        .order('display_name', { ascending: true });
+      query = withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select(
+            'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+          )
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('display_name', { ascending: true }),
+      );
       ({ data, error } = await query);
     }
     if (
@@ -2516,12 +2527,14 @@
         String(error.message || '').toLowerCase().includes('wallet_balance_eur') ||
         String(error.message || '').toLowerCase().includes('avatar_path'))
     ) {
-      const r0 = await sb()
-        .from('club_members')
-        .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
-        .eq('club_id', state.ctx.club.id)
-        .eq('is_active', true)
-        .order('display_name', { ascending: true });
+      const r0 = await withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('display_name', { ascending: true }),
+      );
       data = r0.data;
       error = r0.error;
     }
@@ -2529,12 +2542,14 @@
       error &&
       (error.code === '42703' || String(error.message || '').toLowerCase().includes('member_type_valid_until'))
     ) {
-      const r2 = await sb()
-        .from('club_members')
-        .select('id, display_name, member_code, member_type, avatar_path')
-        .eq('club_id', state.ctx.club.id)
-        .eq('is_active', true)
-        .order('display_name', { ascending: true });
+      const r2 = await withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select('id, display_name, member_code, member_type, avatar_path')
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('display_name', { ascending: true }),
+      );
       data = r2.data;
       error = r2.error;
     }
@@ -2542,12 +2557,14 @@
       error &&
       (error.code === '42703' || String(error.message || '').toLowerCase().includes('member_type'))
     ) {
-      const r3 = await sb()
-        .from('club_members')
-        .select('id, display_name, member_code')
-        .eq('club_id', state.ctx.club.id)
-        .eq('is_active', true)
-        .order('display_name', { ascending: true });
+      const r3 = await withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select('id, display_name, member_code')
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('display_name', { ascending: true }),
+      );
       data = r3.data;
       error = r3.error;
     }

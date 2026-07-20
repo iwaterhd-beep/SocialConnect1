@@ -15,6 +15,7 @@
   let membersCache = [];
   let membersSearch = '';
   let membersTypeFilter = '';
+  let hasArchivedMemberColumn = false;
   let selectedMemberId = '';
   let financeVentasRange = '30d';
   let financeVentasFrom = '';
@@ -913,9 +914,15 @@
     if (typeEl) typeEl.innerHTML = memberTypePillHtml(m);
     const statusEl = $('member-view-status');
     if (statusEl) {
-      statusEl.textContent = m.is_active ? 'Activo' : 'Inactivo';
-      statusEl.classList.toggle('member-view-status--inactive', !m.is_active);
+      if (isMemberArchived(m)) {
+        statusEl.textContent = 'Archivado';
+        statusEl.classList.add('member-view-status--inactive');
+      } else {
+        statusEl.textContent = m.is_active ? 'Activo' : 'Inactivo';
+        statusEl.classList.toggle('member-view-status--inactive', !m.is_active);
+      }
     }
+    updateMemberArchiveButtons(m);
     void renderMemberViewDocuments(m);
   }
 
@@ -1015,7 +1022,27 @@
     return parts.join(' · ');
   }
 
+  function isMemberArchived(m) {
+    return !!(m && m.is_archived);
+  }
+
+  function updateMemberArchiveButtons(memberOrId) {
+    const id =
+      typeof memberOrId === 'string' ? memberOrId : memberOrId?.id ? String(memberOrId.id) : '';
+    const m =
+      typeof memberOrId === 'object' && memberOrId
+        ? memberOrId
+        : membersCache.find((x) => memberIdEquals(x.id, id));
+    const canArchive = Boolean(id) && m && !isMemberArchived(m);
+    $('member-profile-archive-btn')?.classList.toggle('is-hidden', !canArchive);
+    $('member-archive')?.classList.toggle('is-hidden', !canArchive);
+  }
+
   function memberMatchesType(m) {
+    if (membersTypeFilter === 'archived') {
+      return isMemberArchived(m);
+    }
+    if (isMemberArchived(m)) return false;
     if (!membersTypeFilter) return true;
     if (membersTypeFilter === 'expired') {
       return isMemberTierExpired(m);
@@ -1050,7 +1077,9 @@
     const t = normalizeRfidUid(query).toLowerCase();
     if (!t) return null;
     return (
-      (membersCache || []).find((m) => normalizeRfidUid(m.rfid_uid).toLowerCase() === t) || null
+      (membersCache || []).find(
+        (m) => !isMemberArchived(m) && normalizeRfidUid(m.rfid_uid).toLowerCase() === t,
+      ) || null
     );
   }
 
@@ -1241,6 +1270,7 @@
     updateAllDocLabels();
     setMemberMsg('Editando socio.', false);
     memberEditInitialType = row.member_type || 'standard';
+    updateMemberArchiveButtons(row);
     renderMembersTable();
     document.querySelector('.sc-members-list tr.is-selected')?.scrollIntoView({ block: 'nearest' });
   }
@@ -1453,6 +1483,7 @@
     const editingId = ($('member-edit-id')?.value || '').trim();
     const hits = membersCache
       .filter((m) => {
+        if (isMemberArchived(m)) return false;
         if (editingId && m.id === editingId) return false;
         const hay = [m.display_name, m.dni, m.member_code, m.phone, m.email]
           .filter(Boolean)
@@ -1484,6 +1515,7 @@
 
   function clearMemberForm() {
     memberEditInitialType = 'standard';
+    updateMemberArchiveButtons('');
     $('member-edit-id').value = '';
     $('member-first-name').value = '';
     $('member-last-name').value = '';
@@ -1561,7 +1593,7 @@
         <td>${memberTypePillHtml(m)}</td>
         <td class="member-wallet-cell member-wallet-cell--btn${walletNeg}" data-profile-member="${m.id}" title="Abrir perfil y monedero">${escapeHtml(wallet)}</td>
         <td>${escapeHtml(m.phone || '—')}</td>
-        <td>${m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
+        <td>${isMemberArchived(m) ? '<span class="badge-stock badge-stock--out">Archivado</span>' : m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
           <button type="button" class="btn btn--ghost btn--small" data-profile-member="${m.id}">Perfil</button>
           <button type="button" class="btn btn--ghost btn--small" data-edit-member="${m.id}">Editar</button>
@@ -1600,6 +1632,9 @@
     } catch (_) {
       /* RPC opcional hasta aplicar migración 027 */
     }
+
+    const archiveProbe = await sb().from('club_members').select('is_archived').limit(1);
+    hasArchivedMemberColumn = !archiveProbe.error;
 
     let { data, error } = await sb()
       .from('club_members')
@@ -2861,7 +2896,21 @@
             .from('club_members')
             .select('id', { count: 'exact', head: true })
             .eq('club_id', clubId)
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .eq('is_archived', false);
+          if (
+            error &&
+            (error.code === '42703' ||
+              String(error.message || '').toLowerCase().includes('is_archived'))
+          ) {
+            const retry = await sb()
+              .from('club_members')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', clubId)
+              .eq('is_active', true);
+            membersEl.textContent = retry.error ? '—' : String(retry.count ?? 0);
+            return;
+          }
           membersEl.textContent = error ? '—' : String(count ?? 0);
         })(),
       );
@@ -3904,25 +3953,85 @@
     }
   }
 
+  async function archiveMember(memberId) {
+    if (!memberId || !ctx?.club?.id) return;
+    const m = membersCache.find((x) => memberIdEquals(x.id, memberId));
+    const label = formatMemberDisplayName(m) || 'este socio';
+    const msg =
+      `¿Eliminar a ${label}?\n\n` +
+      'Dejará de aparecer en la lista y en el POS, pero se conservará su historial (ventas, monedero y documentos).';
+    if (!window.confirm(msg)) return;
+
+    if (!hasArchivedMemberColumn) {
+      setMemberMsg(
+        'Ejecuta supabase/migrations/047_club_members_archived.sql en Supabase para eliminar socios conservando el historial.',
+        true,
+      );
+      return;
+    }
+
+    setMemberMsg('Eliminando socio…', false);
+    const payload = {
+      is_archived: true,
+      is_active: false,
+      archived_at: new Date().toISOString(),
+      rfid_uid: '',
+    };
+    const { error } = await sb()
+      .from('club_members')
+      .update(payload)
+      .eq('id', memberId)
+      .eq('club_id', ctx.club.id);
+    if (error) {
+      setMemberMsg(error.message || 'No se pudo eliminar el socio.', true);
+      return;
+    }
+
+    selectedMemberId = '';
+    closeMemberModals();
+    clearMemberForm();
+    setMemberMsg('Socio eliminado. El historial se ha conservado.', false);
+    await loadMembersTable();
+    if (typeof window.scClubInventoryReloadMembers === 'function') {
+      await window.scClubInventoryReloadMembers();
+    }
+  }
+
   async function deleteAllClubMembers() {
     if (!ctx?.club?.id) return;
     const msg =
-      '¿Eliminar TODOS los socios de este club?\n\n' +
-      'Las ventas del POS no se borran, pero quedarán sin socio vinculado.\n' +
-      'No se puede deshacer.';
+      '¿Eliminar TODOS los socios activos de este club?\n\n' +
+      'Dejarán de mostrarse en la lista y en el POS, pero se conservará el historial.\n' +
+      'Los socios ya archivados no se tocan.';
     if (!window.confirm(msg)) return;
-    if (!window.confirm('Confirma de nuevo: borrar todos los socios.')) return;
-    setMemberMsg('Borrando socios…', false);
+    if (!window.confirm('Confirma de nuevo: eliminar todos los socios activos.')) return;
+
+    if (!hasArchivedMemberColumn) {
+      setMemberMsg(
+        'Ejecuta supabase/migrations/047_club_members_archived.sql en Supabase para eliminar socios conservando el historial.',
+        true,
+      );
+      return;
+    }
+
+    setMemberMsg('Eliminando socios…', false);
+    const payload = {
+      is_archived: true,
+      is_active: false,
+      archived_at: new Date().toISOString(),
+      rfid_uid: '',
+    };
     const { error } = await sb()
       .from('club_members')
-      .delete()
-      .eq('club_id', ctx.club.id);
+      .update(payload)
+      .eq('club_id', ctx.club.id)
+      .eq('is_archived', false);
     if (error) {
-      setMemberMsg(error.message || 'No se pudo borrar el listado.', true);
+      setMemberMsg(error.message || 'No se pudo eliminar el listado.', true);
       return;
     }
     clearMemberForm();
-    setMemberMsg('Socios eliminados. Puedes importar el CSV de nuevo.', false);
+    setMemberMsg('Socios eliminados. El historial se ha conservado.', false);
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -3963,6 +4072,13 @@
     });
     $('member-profile-edit-btn')?.addEventListener('click', () => {
       if (selectedMemberId) void editMemberFromRow(selectedMemberId);
+    });
+    $('member-profile-archive-btn')?.addEventListener('click', () => {
+      if (selectedMemberId) void archiveMember(selectedMemberId);
+    });
+    $('member-archive')?.addEventListener('click', () => {
+      const id = ($('member-edit-id')?.value || '').trim();
+      if (id) void archiveMember(id);
     });
     $('member-wallet-adjust-add')?.addEventListener('click', () => {
       void applyMemberWalletAdjust(1);

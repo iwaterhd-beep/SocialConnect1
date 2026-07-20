@@ -21,6 +21,7 @@ Ejecuta **una por una**, en este orden:
 17. **`supabase/migrations/039_shift_stock_events_club_access_rls.sql`** — permite leer contajes de stock a trabajadores en `club_access` y vincula ajustes +/- al turno abierto.
 18. **`supabase/migrations/045_club_members_rfid.sql`** — chapa RFID/NFC por socio (`rfid_uid`), única por club.
 19. **`supabase/migrations/046_club_membership_tiers.sql`** — Membresía: niveles editables, umbral VIP, regalos/objetivos.
+20. **`supabase/migrations/047_club_members_archived.sql`** — Eliminar socios archivándolos (conserva ventas, monedero y documentos).
 
 ---
 

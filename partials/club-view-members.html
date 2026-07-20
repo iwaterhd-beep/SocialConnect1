@@ -20,8 +20,8 @@
       <button type="button" class="btn btn--ghost btn--small" id="members-new" title="Alta manual">
         Nuevo socio
       </button>
-      <button type="button" class="btn btn--ghost btn--small btn--danger" id="members-delete-all" title="Borrar todos">
-        Borrar todos
+      <button type="button" class="btn btn--ghost btn--small btn--danger" id="members-delete-all" title="Archivar todos los socios activos">
+        Archivar todos
       </button>
       <input type="file" id="members-import-file" class="visually-hidden" accept=".csv,text/csv,text/plain" />
     </div>
@@ -42,6 +42,7 @@
     <button type="button" class="chip" data-members-type-filter="premium">Premium</button>
     <button type="button" class="chip" data-members-type-filter="vip">VIP</button>
     <button type="button" class="chip" data-members-type-filter="expired">Caducados</button>
+    <button type="button" class="chip" data-members-type-filter="archived">Archivados</button>
   </div>
   <p class="hint sc-hint-collapsed member-csv-hint">
     CSV con <strong>;</strong> o <strong>,</strong>. Columnas: nombre, email, teléfono, tipo, uuid…
@@ -73,6 +74,7 @@
       <h2 id="member-profile-view-title">Perfil del socio</h2>
       <div class="member-modal__actions">
         <button type="button" class="btn btn--small" id="member-profile-edit-btn">Editar socio</button>
+        <button type="button" class="btn btn--ghost btn--small btn--danger is-hidden" id="member-profile-archive-btn">Eliminar socio</button>
         <button type="button" class="btn btn--ghost btn--small" data-member-close-modal="profile" aria-label="Cerrar">×</button>
       </div>
     </div>
@@ -379,6 +381,7 @@
         </div>
 
         <div class="member-form-sc__actions sc-sticky-actions">
+          <button type="button" class="btn btn--ghost btn--danger is-hidden" id="member-archive">Eliminar socio</button>
           <button type="button" class="btn btn--ghost" id="member-cancel">Cancelar</button>
           <button type="button" class="btn" id="member-save">Guardar socio</button>
         </div>
