@@ -2183,6 +2183,29 @@ body.club-dark .member-form-sc__avalista-section {
   }
 }
 
+.member-view-avalista-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--g);
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.member-view-avalista-link:hover {
+  color: #15803d;
+}
+
+body.club-dark .member-view-avalista-link:hover {
+  color: #4ade80;
+}
+
 .member-form-sc__grid {
   display: grid;
   gap: 0.75rem 1rem;

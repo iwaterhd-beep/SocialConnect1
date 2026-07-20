@@ -506,6 +506,68 @@
     return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
   }
 
+  function resolveAvalistaInfo(m) {
+    if (!m) return { label: '', memberId: '' };
+    const avName = m.avalista != null ? String(m.avalista).trim() : '';
+    const avDni = m.avalista_dni != null ? String(m.avalista_dni).trim() : '';
+    let memberId = m.avalista_member_id != null ? String(m.avalista_member_id).trim() : '';
+
+    if (memberId) {
+      const linked = (membersCache || []).find((x) => memberIdEquals(x.id, memberId));
+      if (linked) {
+        const linkedName = formatMemberDisplayName(linked) || avName;
+        let label = linkedName;
+        const dniPart = avDni || (linked.dni != null ? String(linked.dni).trim() : '');
+        if (dniPart) label = `${linkedName} · ${dniPart}`;
+        return { label: label || linkedName, memberId };
+      }
+    }
+
+    if (!memberId && (avName || avDni)) {
+      const byDni = avDni
+        ? (membersCache || []).find(
+            (x) => String(x.dni || '').trim().toLowerCase() === avDni.toLowerCase(),
+          )
+        : null;
+      const byName =
+        !byDni && avName
+          ? (membersCache || []).find(
+              (x) => formatMemberDisplayName(x).toLowerCase() === avName.toLowerCase(),
+            )
+          : null;
+      const found = byDni || byName;
+      if (found?.id) memberId = found.id;
+    }
+
+    let label = '';
+    if (avName && avDni) label = `${avName} · ${avDni}`;
+    else if (avName) label = avName;
+    else if (avDni) label = avDni;
+
+    return { label, memberId };
+  }
+
+  function renderMemberViewAvalista(m) {
+    const el = $('member-view-avalista');
+    if (!el) return;
+    const { label, memberId } = resolveAvalistaInfo(m);
+    el.replaceChildren();
+    if (!label) {
+      el.textContent = '—';
+      return;
+    }
+    if (memberId && !memberIdEquals(memberId, m.id)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'member-view-avalista-link';
+      btn.textContent = label;
+      btn.setAttribute('data-avalista-member-id', memberId);
+      el.appendChild(btn);
+      return;
+    }
+    el.textContent = label;
+  }
+
   function fillMemberViewSummary(m) {
     const { first, last } = getMemberNames(m);
     const title = $('member-profile-view-title');
@@ -515,15 +577,7 @@
     if ($('member-view-dni')) {
       $('member-view-dni').textContent = m.dni != null && String(m.dni).trim() !== '' ? formatMemberName(m.dni) : '—';
     }
-    if ($('member-view-avalista')) {
-      const avName = m.avalista != null ? String(m.avalista).trim() : '';
-      const avDni = m.avalista_dni != null ? String(m.avalista_dni).trim() : '';
-      let avTxt = '—';
-      if (avName && avDni) avTxt = `${avName} · ${avDni}`;
-      else if (avName) avTxt = avName;
-      else if (avDni) avTxt = avDni;
-      $('member-view-avalista').textContent = avTxt;
-    }
+    renderMemberViewAvalista(m);
     if ($('member-view-code')) {
       $('member-view-code').textContent = formatMemberCode(m);
     }
@@ -830,7 +884,24 @@
   }
 
   async function showMemberProfile(memberId) {
-    const m = membersCache.find((x) => memberIdEquals(x.id, memberId));
+    let m = membersCache.find((x) => memberIdEquals(x.id, memberId));
+    try {
+      if (ctx?.club?.id) {
+        const { data: fresh, error } = await sb()
+          .from('club_members')
+          .select('*')
+          .eq('id', memberId)
+          .eq('club_id', ctx.club.id)
+          .maybeSingle();
+        if (!error && fresh) {
+          m = fresh;
+          const idx = membersCache.findIndex((x) => memberIdEquals(x.id, memberId));
+          if (idx >= 0) membersCache[idx] = fresh;
+        }
+      }
+    } catch (_) {
+      /* usar caché si falla la recarga puntual */
+    }
     if (!m) {
       selectedMemberId = '';
       closeMemberModals();
@@ -3537,6 +3608,13 @@
       el.addEventListener('click', () => {
         closeMemberModals();
       });
+    });
+    $('member-view-avalista')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-avalista-member-id]');
+      if (!btn) return;
+      e.preventDefault();
+      const id = btn.getAttribute('data-avalista-member-id');
+      if (id) void showMemberProfile(id);
     });
     $('members-search')?.addEventListener('input', () => {
       membersSearch = $('members-search')?.value || '';
