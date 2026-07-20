@@ -1,6 +1,6 @@
 <div class="club-view-stage sc-home-grid">
-<section class="card-section sc-home-summary sc-card--flat sc-home-shortcuts" aria-labelledby="home-next-title">
-  <h2 id="home-next-title">Accesos rápidos</h2>
+<section class="card-section sc-home-summary sc-home-shortcuts" aria-labelledby="home-next-title">
+  <h2 id="home-next-title" class="sc-section-title">Accesos rápidos</h2>
   <nav class="sc-quick-nav" aria-label="Ir a sección">
     <button type="button" class="sc-quick-nav__item" data-quick-nav="tpv">
       <span class="sc-quick-nav__icon" aria-hidden="true">
@@ -55,30 +55,39 @@
 </section>
 
 <section class="card-section sc-home-kpis" aria-labelledby="home-kpis-title">
-  <h2 id="home-kpis-title" class="visually-hidden">Resumen del día</h2>
+  <h2 id="home-kpis-title" class="sc-section-title visually-hidden">Resumen del día</h2>
   <div class="sc-home-kpis-grid">
     <button type="button" class="sc-home-kpi" data-quick-nav="finance">
       <span class="sc-home-kpi__label">Ventas hoy</span>
-      <span class="sc-home-kpi__value" id="home-kpi-sales">—</span>
+      <span class="sc-home-kpi__metric">
+        <span class="sc-home-kpi__value" id="home-kpi-sales">—</span>
+      </span>
     </button>
     <button type="button" class="sc-home-kpi" data-quick-nav="members">
       <span class="sc-home-kpi__label">Socios activos</span>
-      <span class="sc-home-kpi__value" id="home-kpi-members">—</span>
+      <span class="sc-home-kpi__metric">
+        <span class="sc-home-kpi__value" id="home-kpi-members">—</span>
+      </span>
     </button>
-    <button type="button" class="sc-home-kpi" data-quick-nav="inventory">
+    <button type="button" class="sc-home-kpi sc-home-kpi--alerts" data-quick-nav="inventory">
       <span class="sc-home-kpi__label">Stock bajo</span>
-      <span class="sc-home-kpi__value" id="home-kpi-alerts">—</span>
+      <span class="sc-home-kpi__metric">
+        <span class="sc-home-kpi__value" id="home-kpi-alerts">—</span>
+        <span class="sc-kpi-badge sc-kpi-badge--danger" id="home-kpi-alerts-badge" hidden>Revisar</span>
+      </span>
     </button>
     <button type="button" class="sc-home-kpi sc-home-kpi--shift" data-quick-nav="home">
       <span class="sc-home-kpi__label">Turno</span>
-      <span class="sc-home-kpi__value sc-home-kpi__pill" id="home-kpi-shift">—</span>
+      <span class="sc-home-kpi__metric">
+        <span class="sc-home-kpi__value sc-home-kpi__pill" id="home-kpi-shift">—</span>
+      </span>
     </button>
   </div>
 </section>
 
 <section class="card-section sc-home-shift" aria-labelledby="shift-title">
   <div class="sc-section-head">
-    <h2 id="shift-title">Turno de caja</h2>
+    <h2 id="shift-title" class="sc-section-title">Turno de caja</h2>
     <p id="shift-state" class="hint sc-section-head__meta">Cargando…</p>
   </div>
   <div class="grid grid--2 sc-compact-grid">
@@ -106,8 +115,8 @@
     <button type="button" class="btn" id="btn-open-shift">Abrir turno</button>
     <button type="button" class="btn btn--ghost" id="btn-close-shift" disabled>Cerrar turno</button>
   </div>
-  <div class="table-wrap">
-    <table class="table-compact">
+  <div class="table-wrap sc-data-table-wrap">
+    <table class="table-compact sc-data-table">
       <thead>
         <tr>
           <th>Apertura</th>

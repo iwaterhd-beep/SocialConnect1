@@ -61,8 +61,7 @@
     $('club-name-display').textContent = club.name;
     const topClub = $('club-topnav-club');
     if (topClub) topClub.textContent = club.name;
-    $('club-role-display').textContent = gate.profile.role;
-    $('club-user-email').textContent = gate.profile.email || '';
+    setHeaderUserUi(gate.profile.email || '', gate.profile.role);
 
     return { ...gate, club };
   }
@@ -104,6 +103,47 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function emailDisplayName(email) {
+    const t = String(email || '').trim();
+    if (!t) return 'Usuario';
+    const local = t.split('@')[0] || t;
+    return local
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  function emailInitials(email) {
+    const t = String(email || '').trim();
+    if (!t) return '?';
+    const local = t.split('@')[0] || t;
+    const parts = local.split(/[._-]+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    }
+    return local.slice(0, 2).toUpperCase();
+  }
+
+  function setHeaderUserUi(email, role) {
+    const emailEl = $('club-user-email');
+    const initialsEl = $('club-user-initials');
+    const roleEl = $('club-role-display');
+    const display = emailDisplayName(email);
+    if (emailEl) {
+      emailEl.textContent = display;
+      if (email) emailEl.title = String(email);
+    }
+    if (initialsEl) initialsEl.textContent = emailInitials(email);
+    if (roleEl) roleEl.textContent = role || '—';
+  }
+
+  function shiftStatusPillHtml(state) {
+    const open = String(state || '').toLowerCase() === 'abierto';
+    const cls = open ? 'sc-status-pill sc-status-pill--success' : 'sc-status-pill sc-status-pill--neutral';
+    return `<span class="${cls}">${escapeHtml(state)}</span>`;
   }
 
   async function loadStaffEmailMap() {
@@ -154,15 +194,13 @@
     if (open) {
       const whoOpen = staffEmailLabel(staffMap, open.opened_by);
       bar.textContent = `Turno abierto desde ${formatTs(open.opened_at)} · Abierto por ${whoOpen}`;
-      bar.classList.remove('hint');
-      bar.classList.add('shift-state--open');
+      bar.className = 'sc-section-head__meta sc-status-pill sc-status-pill--success sc-status-pill--lg';
       btnOpen.disabled = true;
       btnClose.disabled = false;
       btnClose.dataset.shiftId = open.id;
     } else {
       bar.textContent = 'No hay turno abierto.';
-      bar.classList.add('hint');
-      bar.classList.remove('shift-state--open');
+      bar.className = 'hint sc-section-head__meta sc-status-pill sc-status-pill--neutral';
       btnOpen.disabled = false;
       btnClose.disabled = true;
       delete btnClose.dataset.shiftId;
@@ -183,7 +221,7 @@
           <td>${escapeHtml(formatTs(row.closed_at))}</td>
           <td>${escapeHtml(openedBy)}</td>
           <td>${escapeHtml(closedBy)}</td>
-          <td>${escapeHtml(state)}</td>
+          <td>${shiftStatusPillHtml(state)}</td>
         `;
         tbody.appendChild(tr);
       });
