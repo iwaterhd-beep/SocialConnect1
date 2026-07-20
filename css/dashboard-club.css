@@ -2129,6 +2129,60 @@ body.club-dark .finance-kpi__value {
   gap: 0.5rem;
 }
 
+.member-form-sc__avalista-section {
+  margin: 0.35rem 0 1.1rem;
+  padding: 1rem 1.05rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  background: linear-gradient(180deg, rgba(240, 253, 244, 0.95) 0%, rgba(255, 255, 255, 0.92) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.member-form-sc__section-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+}
+
+.member-form-sc__required {
+  color: var(--r);
+  font-weight: 800;
+}
+
+.member-form-sc__avalista-lede {
+  margin: 0 0 0.85rem;
+}
+
+body.club-dark .member-form-sc__avalista-section {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.12) 0%, rgba(15, 23, 42, 0.55) 100%);
+}
+
+.member-avalista-wrap {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.member-avalista-wrap .input[type='search'] {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.member-form-sc__avalista-block {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 720px) {
+  .member-form-sc__avalista-block {
+    grid-column: span 2;
+  }
+}
+
 .member-form-sc__grid {
   display: grid;
   gap: 0.75rem 1rem;

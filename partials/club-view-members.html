@@ -97,6 +97,10 @@
               <dd id="member-view-dni">—</dd>
             </div>
             <div class="member-view-dl__row">
+              <dt>Avalista</dt>
+              <dd id="member-view-avalista">—</dd>
+            </div>
+            <div class="member-view-dl__row">
               <dt>Nº socio</dt>
               <dd id="member-view-code">—</dd>
             </div>
@@ -226,6 +230,41 @@
             <label for="member-dni">DNI / NIE <span class="field-required" aria-hidden="true">*</span></label>
             <input class="input input--uppercase" id="member-dni" type="text" inputmode="text" autocomplete="off" placeholder="12345678A" required />
           </div>
+        </div>
+
+        <section class="member-form-sc__avalista-section" aria-labelledby="member-avalista-title">
+          <h3 id="member-avalista-title" class="member-form-sc__section-title">Avalista <span class="member-form-sc__required">*</span></h3>
+          <p class="hint member-form-sc__avalista-lede">
+            Socio del club que avala la inscripción. Busca uno existente o escribe nombre y DNI.
+          </p>
+          <div class="member-form-sc__grid">
+            <div class="form__row member-form-sc__avalista-block">
+              <label for="member-avalista-search">Buscar socio avalista</label>
+              <div class="member-avalista-wrap">
+                <input
+                  type="search"
+                  id="member-avalista-search"
+                  class="input"
+                  placeholder="Nombre, DNI o código…"
+                  autocomplete="off"
+                />
+                <button type="button" class="btn btn--ghost btn--small" id="member-avalista-clear">Quitar</button>
+                <div id="member-avalista-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
+              </div>
+              <input type="hidden" id="member-avalista-member-id" value="" />
+            </div>
+            <div class="form__row">
+              <label for="member-avalista-name">Nombre del avalista</label>
+              <input class="input" id="member-avalista-name" type="text" autocomplete="off" placeholder="Nombre y apellidos" required />
+            </div>
+            <div class="form__row">
+              <label for="member-avalista-dni">DNI / NIE del avalista</label>
+              <input class="input" id="member-avalista-dni" type="text" inputmode="text" autocomplete="off" placeholder="Opcional" />
+            </div>
+          </div>
+        </section>
+
+        <div class="member-form-sc__grid">
           <div class="form__row">
             <label for="member-birth">Fecha nacimiento</label>
             <input class="input" id="member-birth" type="date" />

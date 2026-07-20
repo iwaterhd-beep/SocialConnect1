@@ -515,6 +515,15 @@
     if ($('member-view-dni')) {
       $('member-view-dni').textContent = m.dni != null && String(m.dni).trim() !== '' ? formatMemberName(m.dni) : '—';
     }
+    if ($('member-view-avalista')) {
+      const avName = m.avalista != null ? String(m.avalista).trim() : '';
+      const avDni = m.avalista_dni != null ? String(m.avalista_dni).trim() : '';
+      let avTxt = '—';
+      if (avName && avDni) avTxt = `${avName} · ${avDni}`;
+      else if (avName) avTxt = avName;
+      else if (avDni) avTxt = avDni;
+      $('member-view-avalista').textContent = avTxt;
+    }
     if ($('member-view-code')) {
       $('member-view-code').textContent = formatMemberCode(m);
     }
@@ -761,6 +770,15 @@
       }
     }
     $('member-dni').value = formatMemberName(row.dni || '');
+    const avName = row.avalista != null ? String(row.avalista).trim() : '';
+    if ($('member-avalista-name')) $('member-avalista-name').value = avName;
+    if ($('member-avalista-dni')) {
+      $('member-avalista-dni').value = row.avalista_dni != null ? String(row.avalista_dni).trim() : '';
+    }
+    if ($('member-avalista-member-id')) {
+      $('member-avalista-member-id').value = row.avalista_member_id || '';
+    }
+    if ($('member-avalista-search')) $('member-avalista-search').value = avName;
     $('member-birth').value = row.birth_date ? String(row.birth_date).slice(0, 10) : '';
     $('member-phone').value = row.phone || '';
     $('member-email').value = row.email || '';
@@ -960,12 +978,80 @@
     el.textContent = t || '?';
   }
 
+  function hideAvalistaDropdown() {
+    const dd = $('member-avalista-dropdown');
+    if (!dd) return;
+    dd.innerHTML = '';
+    dd.hidden = true;
+    dd.classList.add('is-hidden');
+  }
+
+  function pickAvalistaMember(m) {
+    if (!m) return;
+    const name = (m.display_name || '').trim();
+    if ($('member-avalista-name')) $('member-avalista-name').value = name;
+    if ($('member-avalista-dni')) {
+      $('member-avalista-dni').value = m.dni != null ? String(m.dni).trim() : '';
+    }
+    if ($('member-avalista-member-id')) $('member-avalista-member-id').value = m.id || '';
+    if ($('member-avalista-search')) $('member-avalista-search').value = name;
+    hideAvalistaDropdown();
+  }
+
+  function clearAvalistaForm() {
+    if ($('member-avalista-search')) $('member-avalista-search').value = '';
+    if ($('member-avalista-name')) $('member-avalista-name').value = '';
+    if ($('member-avalista-dni')) $('member-avalista-dni').value = '';
+    if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
+    hideAvalistaDropdown();
+  }
+
+  function renderAvalistaDropdown() {
+    const dd = $('member-avalista-dropdown');
+    const q = ($('member-avalista-search')?.value || '').trim().toLowerCase();
+    if (!dd || q.length < 1) {
+      hideAvalistaDropdown();
+      return;
+    }
+    const editingId = ($('member-edit-id')?.value || '').trim();
+    const hits = membersCache
+      .filter((m) => {
+        if (editingId && m.id === editingId) return false;
+        const hay = [m.display_name, m.dni, m.member_code, m.phone, m.email]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, 10);
+    if (!hits.length) {
+      hideAvalistaDropdown();
+      return;
+    }
+    dd.innerHTML = hits
+      .map(
+        (m) =>
+          `<button type="button" class="tpv-member-dropdown__item" data-avalista-pick="${escapeHtml(m.id)}" role="option">${escapeHtml(m.display_name || '—')}${m.dni ? ` · ${escapeHtml(String(m.dni))}` : ''}</button>`,
+      )
+      .join('');
+    dd.hidden = false;
+    dd.classList.remove('is-hidden');
+    dd.querySelectorAll('[data-avalista-pick]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-avalista-pick');
+        const m = membersCache.find((x) => x.id === id);
+        pickAvalistaMember(m);
+      });
+    });
+  }
+
   function clearMemberForm() {
     memberEditInitialType = 'standard';
     $('member-edit-id').value = '';
     $('member-first-name').value = '';
     $('member-last-name').value = '';
     $('member-dni').value = '';
+    clearAvalistaForm();
     $('member-birth').value = '';
     $('member-phone').value = '';
     $('member-email').value = '';
@@ -1706,6 +1792,14 @@
       rfid_uid,
     } = validation.fields;
 
+    const avalista = ($('member-avalista-name')?.value || '').trim();
+    const avalista_dni = ($('member-avalista-dni')?.value || '').trim();
+    const avalistaMemberRaw = ($('member-avalista-member-id')?.value || '').trim();
+    if (!avalista) {
+      setMemberMsg('Indica el avalista (nombre obligatorio).', true);
+      return;
+    }
+
     setMemberMsg('Guardando…', false);
     const row = {
       club_id: ctx.club.id,
@@ -1722,6 +1816,9 @@
       member_type_valid_until,
       enrollment_fee_eur,
       rfid_uid,
+      avalista,
+      avalista_dni,
+      avalista_member_id: avalistaMemberRaw || null,
     };
 
     if (member_type !== 'vip') {
@@ -1742,6 +1839,7 @@
     let r = await tryPersist(row);
     error = r.error;
     let savedWithoutValidUntilColumn = false;
+    let savedWithoutAvalistaColumn = false;
     if (error && String(error.message || '').toLowerCase().includes('member_type_valid_until')) {
       const row2 = { ...row };
       delete row2.member_type_valid_until;
@@ -1768,6 +1866,22 @@
       r = await tryPersist(row4);
       error = r.error;
       if (!error) savedWithoutRfidColumn = true;
+    }
+    if (
+      error &&
+      (error.code === '42703' ||
+        (String(error.message || '').includes('column') &&
+          String(error.message || '').toLowerCase().includes('avalista')))
+    ) {
+      const rowAv = { ...row };
+      delete rowAv.avalista;
+      delete rowAv.avalista_dni;
+      delete rowAv.avalista_member_id;
+      r = await tryPersist(rowAv);
+      error = r.error;
+      if (!error) {
+        savedWithoutAvalistaColumn = true;
+      }
     }
 
     if (!error) {
@@ -1852,12 +1966,14 @@
     setMemberMsg(
       savedWithoutRfidColumn
         ? 'Socio guardado. Ejecuta en Supabase 045_club_members_rfid.sql para poder guardar la chapa RFID.'
-        : savedWithoutValidUntilColumn
-          ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
-          : isNew
-            ? 'Socio creado.'
-            : 'Socio actualizado.',
-      savedWithoutRfidColumn || savedWithoutValidUntilColumn,
+        : savedWithoutAvalistaColumn
+          ? 'Socio guardado. Ejecuta en Supabase la migración 040_club_members_avalista.sql para guardar el avalista.'
+          : savedWithoutValidUntilColumn
+            ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
+            : isNew
+              ? 'Socio creado.'
+              : 'Socio actualizado.',
+      savedWithoutRfidColumn || savedWithoutAvalistaColumn || savedWithoutValidUntilColumn,
     );
     selectedMemberId = memberId;
     closeMemberTermsModal();
@@ -2960,6 +3076,15 @@
       else if (k === 'alta') idx.alta = i;
       else if (k === 'consumo') idx.consumo = i;
       else if (k === 'dni' || k === 'nie' || k === 'documento' || kn === 'dni/nie') idx.dni = i;
+      else if (k === 'avalista' || k === 'aval' || k === 'socio_avalista') idx.avalista = i;
+      else if (
+        k === 'avalista_dni' ||
+        kn === 'avalistadni' ||
+        k === 'dni_avalista' ||
+        kn === 'dniavalista'
+      ) {
+        idx.avalista_dni = i;
+      }
       else if (k === 'monedero') idx.monedero = i;
       else if (k === 'cuota') idx.cuota = i;
       else if (k === 'uuid' || k === 'id_interno') idx.uuid = i;
@@ -3109,6 +3234,8 @@
       'alta',
       'consumo',
       'dni',
+      'avalista',
+      'avalista_dni',
       'fecha_nacimiento',
       'monedero',
       'cuota',
@@ -3141,6 +3268,8 @@
         csvEscapeField(formatAltaExport(m.created_at)),
         csvEscapeField(''),
         csvEscapeField(m.dni != null ? String(m.dni) : ''),
+        csvEscapeField(m.avalista != null ? String(m.avalista) : ''),
+        csvEscapeField(m.avalista_dni != null ? String(m.avalista_dni) : ''),
         csvEscapeField(birthIso),
         csvEscapeField(''),
         csvEscapeField(
@@ -3206,6 +3335,8 @@
       }
       const activo = normalizeEstadoImport(csvCell(row, idx, 'estado'));
       const dni = formatMemberName(csvCell(row, idx, 'dni').trim());
+      const avalista = csvCell(row, idx, 'avalista').trim();
+      const avalista_dni = csvCell(row, idx, 'avalista_dni').trim();
       const cuota = parseCuotaEuros(csvCell(row, idx, 'cuota'));
       const rawAlta = csvCell(row, idx, 'alta').trim();
       const rawFechaNac = csvCell(row, idx, 'fecha_nacimiento').trim();
@@ -3226,6 +3357,8 @@
         email,
         phone: telefono,
         dni,
+        avalista,
+        avalista_dni,
         member_code: legacyId,
         member_type: tipo,
         member_type_valid_until,
@@ -3465,6 +3598,16 @@
     $('member-dni')?.addEventListener('blur', function () {
       this.value = formatMemberName(this.value);
     });
+
+    $('member-avalista-search')?.addEventListener('input', () => renderAvalistaDropdown());
+    $('member-avalista-search')?.addEventListener('focus', () => renderAvalistaDropdown());
+    $('member-avalista-search')?.addEventListener('blur', () => {
+      window.setTimeout(() => hideAvalistaDropdown(), 180);
+    });
+    $('member-avalista-name')?.addEventListener('input', () => {
+      if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
+    });
+    $('member-avalista-clear')?.addEventListener('click', () => clearAvalistaForm());
 
     document.querySelectorAll('[data-member-slot][data-member-mode]').forEach((btn) => {
       btn.addEventListener('click', () => {
