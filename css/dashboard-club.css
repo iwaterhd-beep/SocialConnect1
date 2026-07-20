@@ -2349,6 +2349,51 @@ body.club-dark .member-view-avalista-link:hover {
   gap: 0.35rem;
 }
 
+.member-view-docs {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--bd);
+}
+
+.member-view-docs__title {
+  margin: 0 0 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--tx2);
+}
+
+.member-view-docs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.member-view-docs__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.member-view-docs__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--tx2);
+}
+
+.member-view-docs__empty {
+  font-size: 0.78rem;
+}
+
+body.club-dark .member-view-docs__item {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .member-form-sc__status-row {
   margin-top: 1rem;
 }

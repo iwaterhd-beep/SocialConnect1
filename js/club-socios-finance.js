@@ -92,7 +92,11 @@
     if (!e) return false;
     if (e.code === '42703') return true;
     const m = e.message || '';
-    return m.includes('avatar_path') || m.includes('doc_dni_');
+    return (
+      m.includes('avatar_path') ||
+      m.includes('doc_dni_') ||
+      m.includes('doc_passport_path')
+    );
   }
 
   function slotToFileId(slot) {
@@ -917,6 +921,51 @@
       statusEl.textContent = m.is_active ? 'Activo' : 'Inactivo';
       statusEl.classList.toggle('member-view-status--inactive', !m.is_active);
     }
+    void renderMemberViewDocuments(m);
+  }
+
+  async function renderMemberViewDocuments(m) {
+    const list = $('member-view-docs-list');
+    const wrap = $('member-view-docs');
+    if (!list || !wrap) return;
+    list.replaceChildren();
+    const items = [
+      { label: 'DNI delante', path: m?.doc_dni_front_path },
+      { label: 'DNI detrás', path: m?.doc_dni_back_path },
+      { label: 'Pasaporte', path: m?.doc_passport_path },
+    ];
+    for (const item of items) {
+      const path = item.path ? String(item.path).trim() : '';
+      const li = document.createElement('li');
+      li.className = 'member-view-docs__item';
+      const title = document.createElement('span');
+      title.className = 'member-view-docs__label';
+      title.textContent = item.label;
+      li.appendChild(title);
+      if (!path) {
+        const empty = document.createElement('span');
+        empty.className = 'hint member-view-docs__empty';
+        empty.textContent = 'Sin archivo';
+        li.appendChild(empty);
+      } else {
+        const { data, error } = await sb().storage.from(BUCKET).createSignedUrl(path, 3600);
+        if (error || !data?.signedUrl) {
+          const err = document.createElement('span');
+          err.className = 'hint member-view-docs__empty';
+          err.textContent = 'Archivo guardado';
+          li.appendChild(err);
+        } else {
+          const link = document.createElement('a');
+          link.className = 'btn btn--ghost btn--small';
+          link.href = data.signedUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = 'Ver';
+          li.appendChild(link);
+        }
+      }
+      list.appendChild(li);
+    }
   }
 
   function memberTypeShortSuffix(m) {
@@ -1603,6 +1652,13 @@
       const ext = extFromFile(file);
       const col = SLOT_TO_COL[slot];
       const objectPath = `${ctx.club.id}/${memberId}/${slot}.${ext}`;
+      const oldPath = memberLoadedPaths[col];
+      if (oldPath && oldPath !== objectPath) {
+        const { error: remErr } = await sb().storage.from(BUCKET).remove([oldPath]);
+        if (remErr && !String(remErr.message || '').toLowerCase().includes('not found')) {
+          void remErr;
+        }
+      }
       const { error: upErr } = await sb().storage.from(BUCKET).upload(objectPath, file, {
         contentType: file.type || 'application/octet-stream',
         upsert: true,
@@ -1617,7 +1673,7 @@
       }
       pathUpdates[col] = objectPath;
     }
-    return { ok: true, pathUpdates };
+    return { ok: true, pathUpdates, uploadedCount: Object.keys(pathUpdates).length };
   }
 
   function setMemberWalletAdjustStatus(text, isError) {
@@ -2312,10 +2368,12 @@
     }
 
     const hadPending = Object.keys(SLOT_TO_COL).some((s) => memberPendingFiles[s]);
+    let uploadedCount = 0;
     if (memberId && hadPending) {
       const up = await uploadPendingAssets(memberId);
       if (!up.ok) return;
       const keys = Object.keys(up.pathUpdates || {});
+      uploadedCount = up.uploadedCount || keys.length;
       if (keys.length) {
         const { error: pe } = await sb()
           .from('club_members')
@@ -2358,8 +2416,12 @@
       }
     }
 
+    const filesNote =
+      uploadedCount > 0
+        ? ` ${uploadedCount} archivo${uploadedCount === 1 ? '' : 's'} guardado${uploadedCount === 1 ? '' : 's'}.`
+        : '';
     setMemberMsg(
-      savedWithoutRfidColumn
+      (savedWithoutRfidColumn
         ? 'Socio guardado. Ejecuta en Supabase 045_club_members_rfid.sql para poder guardar la chapa RFID.'
         : savedWithoutAvalistaColumn
           ? 'Socio guardado. Ejecuta en Supabase la migración 040_club_members_avalista.sql para guardar el avalista.'
@@ -2367,7 +2429,7 @@
             ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
             : isNew
               ? 'Socio creado.'
-              : 'Socio actualizado.',
+              : 'Socio actualizado.') + filesNote,
       savedWithoutRfidColumn || savedWithoutAvalistaColumn || savedWithoutValidUntilColumn,
     );
     selectedMemberId = memberId;
