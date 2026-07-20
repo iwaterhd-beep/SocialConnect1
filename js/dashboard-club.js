@@ -194,13 +194,13 @@
     if (open) {
       const whoOpen = staffEmailLabel(staffMap, open.opened_by);
       bar.textContent = `Turno abierto desde ${formatTs(open.opened_at)} · Abierto por ${whoOpen}`;
-      bar.className = 'sc-section-head__meta sc-status-pill sc-status-pill--success sc-status-pill--lg';
+      bar.className = 'sc-shift-status sc-status-pill sc-status-pill--success sc-status-pill--lg';
       btnOpen.disabled = true;
       btnClose.disabled = false;
       btnClose.dataset.shiftId = open.id;
     } else {
       bar.textContent = 'No hay turno abierto.';
-      bar.className = 'hint sc-section-head__meta sc-status-pill sc-status-pill--neutral';
+      bar.className = 'sc-shift-status sc-status-pill sc-status-pill--neutral';
       btnOpen.disabled = false;
       btnClose.disabled = true;
       delete btnClose.dataset.shiftId;

@@ -2874,7 +2874,7 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   font-size: 0.9rem;
 }
 
-.has-club-topnav .card-section {
+body.has-club-topnav:not(.club-app) .card-section {
   border-radius: 20px;
   border: 1px solid rgba(15, 23, 42, 0.06);
   background: rgba(255, 255, 255, 0.58);
@@ -2887,9 +2887,9 @@ body.has-club-topnav .panel.panel--wide.club-panel {
 }
 
 /* Títulos de bloque coherentes en Inicio, TPV, Inventario, Stock, Socios, Finanzas */
-.has-club-topnav .card-section > h2,
-.has-club-topnav .tpv-shell__hdr h2,
-.has-club-topnav .member-csv-toolbar h2 {
+body.has-club-topnav:not(.club-app) .card-section > h2,
+body.has-club-topnav:not(.club-app) .tpv-shell__hdr h2,
+body.has-club-topnav:not(.club-app) .member-csv-toolbar h2 {
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -2903,9 +2903,9 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   color: var(--tx);
 }
 
-.has-club-topnav .card-section > h2::before,
-.has-club-topnav .tpv-shell__hdr h2::before,
-.has-club-topnav .member-csv-toolbar h2::before {
+body.has-club-topnav:not(.club-app) .card-section > h2::before,
+body.has-club-topnav:not(.club-app) .tpv-shell__hdr h2::before,
+body.has-club-topnav:not(.club-app) .member-csv-toolbar h2::before {
   content: '';
   width: 4px;
   height: 1.2em;
@@ -2915,35 +2915,35 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
 }
 
-.has-club-topnav .member-csv-toolbar {
+body.has-club-topnav:not(.club-app) .member-csv-toolbar {
   padding-bottom: 0.85rem;
   margin-bottom: 0.75rem;
   border-bottom: 1px solid rgba(15, 23, 42, 0.07);
 }
 
-.has-club-topnav .member-csv-toolbar h2 {
+body.has-club-topnav:not(.club-app) .member-csv-toolbar h2 {
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
 }
 
-.has-club-topnav .member-csv-toolbar h2::before {
+body.has-club-topnav:not(.club-app) .member-csv-toolbar h2::before {
   box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
 }
 
-.has-club-topnav .input,
-.has-club-topnav .select {
+body.has-club-topnav:not(.club-app) .input,
+body.has-club-topnav:not(.club-app) .select {
   border-radius: 11px;
   border-color: rgba(148, 163, 184, 0.32);
   background: rgba(255, 255, 255, 0.95);
 }
 
-.has-club-topnav .input:hover:not(:focus),
-.has-club-topnav .select:hover:not(:focus) {
+body.has-club-topnav:not(.club-app) .input:hover:not(:focus),
+body.has-club-topnav:not(.club-app) .select:hover:not(:focus) {
   border-color: rgba(22, 163, 74, 0.28);
 }
 
-.has-club-topnav .row-actions {
+body.has-club-topnav:not(.club-app) .row-actions {
   padding: 0.75rem;
   gap: 0.65rem;
   border-radius: 14px;
@@ -2951,7 +2951,7 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-.has-club-topnav .inv-toolbar {
+body.has-club-topnav:not(.club-app) .inv-toolbar {
   padding: 0.85rem 1rem;
   border-radius: 14px;
   background: rgba(248, 250, 252, 0.55);
@@ -2959,7 +2959,7 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   margin-bottom: 1rem;
 }
 
-.has-club-topnav .finance-ventas-toolbar {
+body.has-club-topnav:not(.club-app) .finance-ventas-toolbar {
   padding: 0.85rem 1rem;
   margin-top: 0.75rem;
   border-radius: 14px;
@@ -2967,14 +2967,14 @@ body.has-club-topnav .panel.panel--wide.club-panel {
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.has-club-topnav .table-wrap {
+body.has-club-topnav:not(.club-app) .table-wrap {
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: rgba(255, 255, 255, 0.45);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-.has-club-topnav th {
+body.has-club-topnav:not(.club-app) th {
   background: rgba(248, 250, 252, 0.92);
 }
 
@@ -3231,14 +3231,14 @@ body.club-dark .chip.is-active {
   color: #86efac;
 }
 
-.has-club-topnav .btn {
+body.has-club-topnav:not(.club-app) .btn {
   border-radius: 10px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 10px 22px rgba(22, 163, 74, 0.18);
 }
 
-.has-club-topnav .btn--ghost {
+body.has-club-topnav:not(.club-app) .btn--ghost {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
@@ -3247,15 +3247,15 @@ body.club-dark .finance-kpi {
   border-color: rgba(148, 163, 184, 0.22);
 }
 
-/* ---------- TPV / panel (mismo “stage” cristal que TPV) ---------- */
-.has-club-topnav .club-view-stage {
+/* ---------- TPV / panel (mismo “stage” cristal que TPV) — solo layout legacy ---------- */
+body.has-club-topnav:not(.club-app) .club-view-stage {
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
 }
 
-.tpv-shell--stage,
-.club-view-stage {
+body.has-club-topnav:not(.club-app) .tpv-shell--stage,
+body.has-club-topnav:not(.club-app) .club-view-stage {
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.48);
@@ -3266,8 +3266,8 @@ body.club-dark .finance-kpi {
     0 22px 56px rgba(15, 23, 42, 0.07);
 }
 
-.club-view-stage,
-.tpv-shell--stage {
+body.has-club-topnav:not(.club-app) .club-view-stage,
+body.has-club-topnav:not(.club-app) .tpv-shell--stage {
   padding: 1.55rem clamp(1.05rem, 2vw, 1.75rem) 1.65rem;
 }
 

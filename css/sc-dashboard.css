@@ -20,8 +20,8 @@
   --green-500: #22c55e;
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
-  --shadow-card: var(--shadow-sm);
-  --shadow-card-hover: var(--shadow-md);
+  --shadow-card: var(--shadow-md);
+  --shadow-card-hover: var(--shadow-lg);
   --radius-card: var(--radius-lg, 16px);
   --radius-control: var(--radius-sm, 8px);
   --space-2: var(--space-2, 8px);
@@ -2196,4 +2196,182 @@ body.club-dark.club-app .sc-data-table-wrap tbody tr:nth-child(even) td {
 body.club-dark.club-app .has-club-topnav tbody tr:hover td,
 body.club-dark.club-app .sc-data-table-wrap tbody tr:hover td {
   background: rgba(255, 255, 255, 0.07);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inicio — dashboard unificado (club-app)                                    */
+/* -------------------------------------------------------------------------- */
+body.club-app.has-club-topnav {
+  background: var(--bg-app);
+}
+
+body.club-app .club-view-stage.sc-home-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 1120px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+body.club-app .card-section.sc-home-hero,
+body.club-app .card-section.sc-home-shift {
+  padding: var(--space-6) var(--space-6) var(--space-5);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+body.club-app .card-section.sc-home-hero > .sc-section-title,
+body.club-app .card-section.sc-home-shift > .sc-section-title {
+  margin-bottom: var(--space-5);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+body.club-app .sc-subsection-title {
+  margin: 0 0 var(--space-4);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+body.club-app .sc-home-divider {
+  height: 1px;
+  margin: var(--space-6) 0;
+  background: var(--border-subtle);
+}
+
+body.club-app .sc-home-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+body.club-app .sc-home-kpi {
+  min-height: 6.5rem;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+body.club-app .sc-home-kpi__value {
+  font-size: 1.5rem;
+}
+
+body.club-app .sc-quick-nav--home {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+body.club-app .sc-quick-nav--home .sc-quick-nav__item {
+  min-height: 7.5rem;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+body.club-app .sc-quick-nav--home .sc-quick-nav__icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--space-2);
+}
+
+body.club-app .sc-quick-nav--home .sc-quick-nav__label {
+  font-size: 0.875rem;
+}
+
+body.club-app .sc-quick-nav--home .sc-quick-nav__desc {
+  font-size: 0.75rem;
+}
+
+body.club-app .sc-shift-status {
+  margin: 0 0 var(--space-5);
+  width: fit-content;
+  max-width: 100%;
+}
+
+body.club-app .sc-shift-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+body.club-app .sc-shift-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+
+body.club-app .sc-shift-form__full {
+  grid-column: 1 / -1;
+}
+
+body.club-app .sc-shift-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+body.club-app .sc-shift-form__actions .btn {
+  min-width: 9.5rem;
+}
+
+body.club-app .sc-data-table-wrap {
+  margin-top: var(--space-6);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+body.club-app .sc-data-table-wrap th {
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+body.club-app .sc-data-table-wrap td {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+body.club-app .sc-data-table-wrap tbody tr:last-child td {
+  border-bottom: none;
+}
+
+body.club-app .card-section > h2::before,
+body.club-app .card-section > h2::after {
+  display: none !important;
+  content: none !important;
+}
+
+@media (max-width: 900px) {
+  body.club-app .sc-home-kpis-grid,
+  body.club-app .sc-quick-nav--home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.club-app .sc-shift-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  body.club-app .app-main {
+    padding: var(--space-4);
+  }
+
+  body.club-app .sc-home-kpis-grid,
+  body.club-app .sc-quick-nav--home {
+    grid-template-columns: 1fr;
+  }
 }
