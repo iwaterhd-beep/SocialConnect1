@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=35" />
     <link rel="stylesheet" href="css/dashboard-club.css?v=37" />
-    <link rel="stylesheet" href="css/sc-dashboard.css?v=29" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=30" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=7" />
     <link rel="stylesheet" href="css/sc-membership.css?v=2" />
   </head>
@@ -110,6 +110,14 @@
       <div class="app-sidebar-backdrop" id="app-sidebar-backdrop" hidden aria-hidden="true"></div>
 
       <div class="app-body">
+        <div class="superadmin-club-banner" id="superadmin-club-banner" hidden>
+          <p>
+            Viendo el club <strong id="superadmin-club-banner-name">—</strong> como superadmin.
+          </p>
+          <button type="button" class="btn btn--small btn--ghost" id="superadmin-club-back">
+            Volver al panel superadmin
+          </button>
+        </div>
         <header class="app-header" role="banner">
           <div class="app-header__left">
             <button type="button" class="app-header__menu" id="sidebar-toggle" aria-label="Abrir menú">
@@ -353,13 +361,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/config.js?v=25"></script>
     <script src="js/supabase-client.js"></script>
-    <script src="js/auth-helpers.js"></script>
+    <script src="js/auth-helpers.js?v=2"></script>
     <script src="js/dashboard-club-partials.js?v=3"></script>
     <script src="js/club-inventory-tpv.js?v=45"></script>
     <script src="js/club-stock.js?v=24"></script>
     <script src="js/club-socios-finance.js?v=45"></script>
     <script src="js/club-membership.js?v=2"></script>
-    <script src="js/dashboard-club.js?v=40"></script>
+    <script src="js/dashboard-club.js?v=41"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

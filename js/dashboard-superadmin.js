@@ -63,11 +63,29 @@
       <td>${escapeHtml(club.email || '')}</td>
       <td><span class="badge ${club.is_active ? 'badge--on' : 'badge--off'}">${active}</span></td>
       <td class="actions">
-        <button type="button" class="btn btn--small btn--toggle" data-active="${club.is_active}">
-          ${club.is_active ? 'Desactivar' : 'Activar'}
-        </button>
+        <div class="row-actions">
+          <button type="button" class="btn btn--small btn--enter-club" ${club.is_active ? '' : 'disabled title="Activa el club para entrar"'}>
+            Entrar
+          </button>
+          <button type="button" class="btn btn--small btn--ghost btn--toggle" data-active="${club.is_active}">
+            ${club.is_active ? 'Desactivar' : 'Activar'}
+          </button>
+        </div>
       </td>
     `;
+
+    tr.querySelector('.btn--enter-club')?.addEventListener('click', () => {
+      try {
+        if (!club.is_active) {
+          setStatus('Activa el club antes de entrar.', true);
+          return;
+        }
+        window.SCAuth.setSuperadminClubContext(club.id, club.name);
+        window.location.href = 'dashboard-club.html';
+      } catch (e) {
+        setStatus(e.message || 'No se pudo abrir el club.', true);
+      }
+    });
 
     tr.querySelector('.btn--toggle').addEventListener('click', async () => {
       try {

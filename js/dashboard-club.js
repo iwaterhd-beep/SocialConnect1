@@ -27,10 +27,11 @@
       return null;
     }
 
+    const clubId = gate.profile.club_id;
     let { data: club, error } = await sb()
       .from('clubs')
       .select('id, name, cif, email, address, member_min_age, is_active')
-      .eq('id', gate.profile.club_id)
+      .eq('id', clubId)
       .maybeSingle();
 
     if (
@@ -40,20 +41,42 @@
       ({ data: club, error } = await sb()
         .from('clubs')
         .select('id, name, cif, email, address, is_active')
-        .eq('id', gate.profile.club_id)
+        .eq('id', clubId)
         .maybeSingle());
       if (club) club.member_min_age = 18;
     }
 
     if (error) throw error;
-    if (!club || !club.is_active) {
-      setStatus('Este club está desactivado. Consulta con el superadmin.', true);
+    if (!club) {
+      if (gate.asSuperadmin) {
+        window.SCAuth.clearSuperadminClubContext();
+        setStatus('No se encontró el club.', true);
+        setTimeout(() => {
+          window.location.href = 'dashboard-superadmin.html';
+        }, 1500);
+        return null;
+      }
+      setStatus('Este club no existe. Consulta con el superadmin.', true);
       await sb().auth.signOut();
       setTimeout(() => {
         window.location.href = 'index.html';
       }, 2500);
       return null;
     }
+
+    if (!club.is_active) {
+      if (gate.asSuperadmin) {
+        setStatus('Este club está desactivado. Puedes revisarlo, pero conviene reactivarlo.', true);
+      } else {
+        setStatus('Este club está desactivado. Consulta con el superadmin.', true);
+        await sb().auth.signOut();
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 2500);
+        return null;
+      }
+    }
+
     if (club.member_min_age == null || Number.isNaN(Number(club.member_min_age))) {
       club.member_min_age = 18;
     }
@@ -61,8 +84,19 @@
     $('club-name-display').textContent = club.name;
     const topClub = $('club-topnav-club');
     if (topClub) topClub.textContent = club.name;
-    $('club-role-display').textContent = gate.profile.role;
     $('club-user-email').textContent = gate.profile.email || '';
+
+    const roleEl = $('club-role-display');
+    if (gate.asSuperadmin) {
+      if (roleEl) roleEl.textContent = 'superadmin';
+      const banner = $('superadmin-club-banner');
+      const bannerName = $('superadmin-club-banner-name');
+      if (banner) banner.hidden = false;
+      if (bannerName) bannerName.textContent = club.name;
+      document.body.classList.add('is-superadmin-club-view');
+    } else if (roleEl) {
+      roleEl.textContent = gate.profile.role;
+    }
 
     return { ...gate, club };
   }
@@ -1578,10 +1612,24 @@
     }
 
     $('logout-btn')?.addEventListener('click', async () => {
+      if (ctx.asSuperadmin) {
+        window.SCAuth.clearSuperadminClubContext();
+        window.location.href = 'dashboard-superadmin.html';
+        return;
+      }
       await sb().auth.signOut();
       window.location.href = 'index.html';
     });
 
+    $('superadmin-club-back')?.addEventListener('click', () => {
+      window.SCAuth.clearSuperadminClubContext();
+      window.location.href = 'dashboard-superadmin.html';
+    });
+
+    if (ctx.asSuperadmin) {
+      const logoutBtn = $('logout-btn');
+      if (logoutBtn) logoutBtn.textContent = 'Volver';
+    }
     $('btn-open-shift')?.addEventListener('click', async () => {
       const note = ($('note-open')?.value || '').trim();
       const floatRaw = ($('opening-float-eur')?.value || '').trim();

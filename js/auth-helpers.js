@@ -156,9 +156,47 @@
     return 'index.html';
   }
 
+  const SUPERADMIN_CLUB_KEY = 'sc_superadmin_club_id';
+  const SUPERADMIN_CLUB_NAME_KEY = 'sc_superadmin_club_name';
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  function getSuperadminClubContext() {
+    try {
+      const id = String(sessionStorage.getItem(SUPERADMIN_CLUB_KEY) || '').trim();
+      if (!id || !UUID_RE.test(id)) return null;
+      const name = String(sessionStorage.getItem(SUPERADMIN_CLUB_NAME_KEY) || '').trim();
+      return { clubId: id, clubName: name || '' };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setSuperadminClubContext(clubId, clubName) {
+    const id = String(clubId || '').trim();
+    if (!UUID_RE.test(id)) {
+      throw new Error('Identificador de club no válido.');
+    }
+    sessionStorage.setItem(SUPERADMIN_CLUB_KEY, id);
+    if (clubName) {
+      sessionStorage.setItem(SUPERADMIN_CLUB_NAME_KEY, String(clubName));
+    } else {
+      sessionStorage.removeItem(SUPERADMIN_CLUB_NAME_KEY);
+    }
+  }
+
+  function clearSuperadminClubContext() {
+    try {
+      sessionStorage.removeItem(SUPERADMIN_CLUB_KEY);
+      sessionStorage.removeItem(SUPERADMIN_CLUB_NAME_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   /**
    * Sesión válida para panel de club (admin_club / empleado).
-   * Si es superadmin, devuelve reason is_superadmin para redirigir sin cerrar sesión.
+   * El superadmin puede entrar si hay contexto de club en sessionStorage.
    */
   async function requireClubSession() {
     const {
@@ -178,7 +216,23 @@
     }
 
     if (profile.role === 'superadmin') {
-      return { ok: false, reason: 'is_superadmin', session, profile };
+      const ctx = getSuperadminClubContext();
+      if (!ctx) {
+        return { ok: false, reason: 'is_superadmin', session, profile };
+      }
+      return {
+        ok: true,
+        session,
+        profile: {
+          ...profile,
+          club_id: ctx.clubId,
+          // Permisos de UI de admin de club; la auth real sigue siendo superadmin (RLS).
+          role: 'admin_club',
+          original_role: 'superadmin',
+        },
+        asSuperadmin: true,
+        clubNameHint: ctx.clubName || '',
+      };
     }
 
     if (profile.role !== 'admin_club' && profile.role !== 'empleado') {
@@ -191,7 +245,7 @@
       return { ok: false, reason: 'no_club' };
     }
 
-    return { ok: true, session, profile };
+    return { ok: true, session, profile, asSuperadmin: false };
   }
 
   window.SCAuth = {
@@ -202,5 +256,8 @@
     signIn,
     dashboardPathForProfile,
     requireClubSession,
+    getSuperadminClubContext,
+    setSuperadminClubContext,
+    clearSuperadminClubContext,
   };
 })();
