@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#14532d" />
+    <meta name="theme-color" content="#0b1a12" />
     <title>SocialConnect — Software de gestión para clubes</title>
     <meta
       name="description"
@@ -68,7 +68,7 @@
     </script>
     <link rel="stylesheet" href="css/theme.css?v=35" />
     <link rel="stylesheet" href="css/sc-auth.css?v=17" />
-    <link rel="stylesheet" href="css/sc-landing.css?v=7" />
+    <link rel="stylesheet" href="css/sc-landing.css?v=8" />
   </head>
   <body class="auth-splash-open">
     <div id="auth-splash" class="auth-splash is-blinking" role="dialog" aria-modal="true" aria-label="SocialConnect">
@@ -137,127 +137,57 @@
       </nav>
 
       <main>
-        <section class="landing-hero" id="inicio" aria-labelledby="hero-title">
+        <section class="landing-hero" id="inicio" aria-labelledby="hero-brand">
           <div class="landing-hero__bg" aria-hidden="true"></div>
-          <div class="landing-hero__grid">
+          <div class="landing-hero__stage">
             <div class="landing-hero__copy" data-reveal>
-              <p class="landing-eyebrow">Software de gestión para clubes</p>
-              <h1 class="landing-hero__title" id="hero-title">
-                Todo lo que tu club necesita, en <span>un solo panel</span>
-              </h1>
+              <p class="landing-hero__brand" id="hero-brand">SocialConnect</p>
+              <h1 class="landing-hero__title" id="hero-title">Un solo panel para tu club</h1>
               <p class="landing-hero__lead">
-                SocialConnect centraliza POS con báscula, inventario, socios, cuotas, aforo, proveedores, límites de
-                consumo, monedero, finanzas y cierres de turno. Pensado para equipos que quieren orden, trazabilidad y
-                control real del día a día.
+                POS con báscula, socios, cuotas, aforo e inventario — orden y control del día a día, desde el navegador.
               </p>
               <div class="landing-hero__cta">
                 <a class="landing-btn landing-btn--primary" href="#precios">Ver planes</a>
-                <a class="landing-btn landing-btn--outline" href="#funciones">Explorar funciones</a>
-              </div>
-              <div class="landing-hero__stats">
-                <div class="landing-hero__stat">
-                  <strong>50 €/mes</strong>
-                  <span>Plan Club con todo incluido</span>
-                </div>
-                <div class="landing-hero__stat">
-                  <strong>∞ socios</strong>
-                  <span>Sin límite de fichas activas</span>
-                </div>
-                <div class="landing-hero__stat">
-                  <strong>100 % web</strong>
-                  <span>Acceso desde cualquier dispositivo</span>
-                </div>
+                <a class="landing-btn landing-btn--ghost-light" href="#funciones">Explorar funciones</a>
               </div>
             </div>
 
-            <div class="landing-hero__visual" data-reveal="right">
-              <div class="landing-mock">
-                <div class="landing-mock__bar" aria-hidden="true">
-                  <span class="landing-mock__dot"></span>
-                  <span class="landing-mock__dot"></span>
-                  <span class="landing-mock__dot"></span>
+            <div class="landing-hero__plane" data-reveal="fade" aria-hidden="true">
+              <div class="landing-plane">
+                <div class="landing-plane__rail">
+                  <span>Panel</span>
+                  <span class="landing-plane__live">En vivo</span>
                 </div>
-                <div class="landing-mock__kpis">
-                  <div class="landing-mock__kpi">
+                <div class="landing-plane__metrics">
+                  <div>
                     <small>Ventas hoy</small>
                     <strong>1.248 €</strong>
                   </div>
-                  <div class="landing-mock__kpi">
-                    <small>Dentro ahora</small>
+                  <div>
+                    <small>Dentro</small>
                     <strong>42 / 80</strong>
                   </div>
-                  <div class="landing-mock__kpi">
-                    <small>Cuotas</small>
-                    <strong>5 cad.</strong>
-                  </div>
-                  <div class="landing-mock__kpi">
+                  <div>
                     <small>Turno</small>
                     <strong>Abierto</strong>
                   </div>
                 </div>
-                <div class="landing-mock__list">
-                  <div class="landing-mock__row"><span>POS · báscula 2,48 g</span><span>En vivo</span></div>
-                  <div class="landing-mock__row"><span>Monedero socio #00042</span><span>+25,00 €</span></div>
-                  <div class="landing-mock__row"><span>Cuota renovada · VIP</span><span>+1 año</span></div>
-                  <div class="landing-mock__row"><span>Cierre turno tarde</span><span>Cuadra</span></div>
+                <div class="landing-plane__feed">
+                  <div><span>POS · báscula</span><b>2,48 g</b></div>
+                  <div><span>Monedero #00042</span><b>+25,00 €</b></div>
+                  <div><span>Cuota VIP</span><b>+1 año</b></div>
                 </div>
-              </div>
-              <div class="landing-mock__badge" aria-hidden="true">
-                <strong>Turno vinculado</strong>
-                Cada venta queda registrada con efectivo, monedero y responsable.
               </div>
             </div>
           </div>
         </section>
 
-        <section class="landing-section landing-section--tight landing-trust" aria-label="Ventajas principales">
-          <div class="landing-wrap">
-            <div class="landing-trust__grid" data-reveal-stagger>
-              <div class="landing-trust__item" data-reveal>
-                <div class="landing-trust__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>Datos seguros</strong>
-                  <span>Infraestructura en la nube con acceso por roles.</span>
-                </div>
-              </div>
-              <div class="landing-trust__item" data-reveal>
-                <div class="landing-trust__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>Tiempo real</strong>
-                  <span>Stock, ventas y monedero actualizados al instante.</span>
-                </div>
-              </div>
-              <div class="landing-trust__item" data-reveal>
-                <div class="landing-trust__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>Equipo coordinado</strong>
-                  <span>Admin y personal con permisos diferenciados.</span>
-                </div>
-              </div>
-              <div class="landing-trust__item" data-reveal>
-                <div class="landing-trust__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>POS con báscula</strong>
-                  <span>Peso real, mermas, efectivo y monedero integrados.</span>
-                </div>
-              </div>
-            </div>
+        <section class="landing-proof" aria-label="Cifras clave">
+          <div class="landing-wrap landing-proof__row" data-reveal-stagger>
+            <p data-reveal><strong>50 €/mes</strong> Plan Club con todo incluido</p>
+            <p data-reveal><strong>∞ socios</strong> Sin límite de fichas</p>
+            <p data-reveal><strong>100 % web</strong> PC, tablet y móvil</p>
+            <p data-reveal><strong>POS + báscula</strong> Peso real y mermas</p>
           </div>
         </section>
 
