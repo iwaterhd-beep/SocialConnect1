@@ -195,6 +195,68 @@
   }
 
   /**
+   * Mapa user_id → email del personal del club (RPC security definer).
+   * Superadmin: pasar clubId; si el RPC aún no acepta p_club_id, cae a public.users.
+   */
+  async function loadClubStaffEmailMap(clubId, extraUserIds) {
+    const map = {};
+    const fill = (rows) => {
+      (rows || []).forEach((row) => {
+        const id = row.user_id ?? row.userId ?? row.id;
+        const email = row.email;
+        if (id && email) map[id] = email;
+      });
+    };
+
+    const club = clubId ? String(clubId).trim() : '';
+
+    try {
+      if (club) {
+        let res = await sb().rpc('club_staff_directory', { p_club_id: club });
+        if (res.error) {
+          res = await sb().rpc('club_staff_directory');
+        }
+        if (!res.error) fill(res.data);
+      } else {
+        const res = await sb().rpc('club_staff_directory');
+        if (!res.error) fill(res.data);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    // Fallback: superadmin (y políticas que permitan) leen users del club
+    if (club && Object.keys(map).length === 0) {
+      try {
+        const { data, error } = await sb()
+          .from('users')
+          .select('id, email')
+          .eq('club_id', club);
+        if (!error) fill(data);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    const missing = [...new Set((extraUserIds || []).filter(Boolean))]
+      .map(String)
+      .filter((id) => !map[id]);
+    if (missing.length) {
+      try {
+        const { data, error } = await sb()
+          .from('users')
+          .select('id, email')
+          .in('id', missing);
+        if (!error) fill(data);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    return map;
+  }
+
+  /**
    * Sesión válida para panel de club (admin_club / empleado).
    * El superadmin puede entrar si hay contexto de club en sessionStorage.
    */
@@ -259,5 +321,6 @@
     getSuperadminClubContext,
     setSuperadminClubContext,
     clearSuperadminClubContext,
+    loadClubStaffEmailMap,
   };
 })();

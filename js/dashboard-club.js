@@ -140,15 +140,11 @@
       .replace(/"/g, '&quot;');
   }
 
-  async function loadStaffEmailMap() {
-    const map = {};
-    const { data, error } = await sb().rpc('club_staff_directory');
-    if (error || !data) return map;
-    (data || []).forEach((row) => {
-      const id = row.user_id ?? row.userId;
-      if (id && row.email) map[id] = row.email;
-    });
-    return map;
+  async function loadStaffEmailMap(clubId, extraUserIds) {
+    if (typeof window.SCAuth?.loadClubStaffEmailMap === 'function') {
+      return window.SCAuth.loadClubStaffEmailMap(clubId, extraUserIds);
+    }
+    return {};
   }
 
   function staffEmailLabel(map, userId) {
@@ -177,7 +173,12 @@
     const recent = await fetchRecentShifts(ctx.club.id);
     let staffMap = {};
     try {
-      staffMap = await loadStaffEmailMap();
+      const ids = [];
+      if (open) ids.push(open.opened_by);
+      (recent || []).forEach((row) => {
+        ids.push(row.opened_by, row.closed_by);
+      });
+      staffMap = await loadStaffEmailMap(ctx.club.id, ids);
     } catch (e) {
       /* ignore */
     }
@@ -1033,12 +1034,7 @@
       })
       .join('');
 
-    const { data: staffDir } = await sb().rpc('club_staff_directory');
-    const smap = {};
-    (staffDir || []).forEach((row) => {
-      const id = row.user_id ?? row.userId;
-      if (id && row.email) smap[id] = row.email;
-    });
+    const smap = await loadStaffEmailMap(clubId, shift ? [shift.opened_by, shift.closed_by] : []);
     const labStaff = (uid) => (uid && smap[uid] ? smap[uid] : '—');
     const headPeople = shift
       ? `<p style="margin:0 0 0.75rem">Abierto por <strong>${escapeHtml(labStaff(shift.opened_by))}</strong> · Cerrado por <strong>${escapeHtml(labStaff(shift.closed_by))}</strong></p>`

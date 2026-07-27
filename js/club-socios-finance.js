@@ -602,11 +602,10 @@
     const rows = shifts || [];
     let staffMap = {};
     try {
-      const { data: sd } = await sb().rpc('club_staff_directory');
-      (sd || []).forEach((row) => {
-        const id = row.user_id ?? row.userId;
-        if (id && row.email) staffMap[id] = row.email;
-      });
+      const ids = rows.flatMap((row) => [row.opened_by, row.closed_by]);
+      if (typeof window.SCAuth?.loadClubStaffEmailMap === 'function') {
+        staffMap = await window.SCAuth.loadClubStaffEmailMap(ctx.club.id, ids);
+      }
     } catch (e) {
       /* ignore */
     }
@@ -3239,11 +3238,10 @@
 
     let staffMap = {};
     try {
-      const { data: sd } = await sb().rpc('club_staff_directory');
-      (sd || []).forEach((row) => {
-        const id = row.user_id ?? row.userId;
-        if (id && row.email) staffMap[id] = row.email;
-      });
+      const ids = list.map((r) => r.created_by);
+      if (typeof window.SCAuth?.loadClubStaffEmailMap === 'function') {
+        staffMap = await window.SCAuth.loadClubStaffEmailMap(ctx.club.id, ids);
+      }
     } catch (e) {
       /* ignore */
     }

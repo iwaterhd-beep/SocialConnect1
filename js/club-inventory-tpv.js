@@ -878,13 +878,13 @@
 
   async function loadStaffDirectory() {
     state.staffById = {};
-    const { data, error } = await sb().rpc('club_staff_directory');
-    if (error || !data) return;
-    (data || []).forEach((row) => {
-      const id = row.user_id ?? row.userId;
-      const mail = row.email;
-      if (id) state.staffById[id] = mail || '—';
-    });
+    if (!state.ctx?.club?.id) return;
+    if (typeof window.SCAuth?.loadClubStaffEmailMap !== 'function') return;
+    try {
+      state.staffById = await window.SCAuth.loadClubStaffEmailMap(state.ctx.club.id);
+    } catch (e) {
+      state.staffById = {};
+    }
   }
 
   function shiftBannerLabel(open) {
