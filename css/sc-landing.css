@@ -22,7 +22,7 @@
 }
 
 .landing:not(.auth-page--splash-hidden) {
-  animation: authPageReveal 0.65s var(--ease-out) both;
+  animation: authPageReveal 0.48s var(--ease-out) both;
 }
 
 /* ── Header fijo ── */
@@ -40,10 +40,10 @@
     0
     max(var(--landing-pad), env(safe-area-inset-left));
   transition:
-    background 0.35s ease,
-    border-color 0.35s ease,
-    box-shadow 0.35s ease,
-    backdrop-filter 0.35s ease;
+    background var(--duration-ui) ease,
+    border-color var(--duration-ui) ease,
+    box-shadow var(--duration-ui) ease,
+    backdrop-filter var(--duration-ui) ease;
 }
 
 .landing-header.is-scrolled {
@@ -98,7 +98,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--duration-ui) ease;
 }
 
 .landing-nav a:hover {
@@ -126,15 +126,20 @@
   text-decoration: none;
   cursor: pointer;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+    transform var(--duration-press) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out),
+    background var(--duration-ui) ease,
+    border-color var(--duration-ui) ease,
+    filter var(--duration-ui) ease;
 }
 
 .landing-btn:hover {
   text-decoration: none;
   transform: translateY(-1px);
+}
+
+.landing-btn:active {
+  transform: scale(0.97);
 }
 
 .landing-btn--ghost {
@@ -187,6 +192,14 @@
   background: #fff;
   color: var(--tx);
   cursor: pointer;
+  transition:
+    transform var(--duration-press) var(--ease-out),
+    background var(--duration-ui) ease,
+    border-color var(--duration-ui) ease;
+}
+
+.landing-menu-btn:active {
+  transform: scale(0.97);
 }
 
 .landing-menu-btn svg {
@@ -205,14 +218,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  transform: translateY(-8px);
+  transform: translateY(-6px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition:
-    opacity 0.25s ease,
-    transform 0.25s ease,
-    visibility 0.25s ease;
+    opacity var(--duration-ui) var(--ease-out),
+    transform var(--duration-ui) var(--ease-out),
+    visibility var(--duration-ui) var(--ease-out);
 }
 
 body.landing-menu-open {
@@ -420,7 +433,7 @@ body.landing-menu-open {
     0 24px 64px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(12px);
   padding: 1.1rem;
-  animation: landingFloat 6s ease-in-out infinite;
+  animation: landingFloat 7s var(--ease-in-out) infinite;
 }
 
 .landing-mock__bar {
@@ -513,7 +526,7 @@ body.landing-menu-open {
   font-size: 0.8125rem;
   line-height: 1.45;
   max-width: 11rem;
-  animation: landingFloat 5s ease-in-out infinite reverse;
+  animation: landingFloat 8s var(--ease-in-out) infinite reverse;
 }
 
 .landing-mock__badge strong {
@@ -527,7 +540,7 @@ body.landing-menu-open {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-6px);
   }
 }
 
@@ -594,13 +607,13 @@ body.landing-menu-open {
   border: 1px solid var(--bd);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   transition:
-    transform 0.35s var(--ease-out),
-    box-shadow 0.35s var(--ease-out),
-    border-color 0.35s ease;
+    transform var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out),
+    border-color var(--duration-ui) ease;
 }
 
 .landing-feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   border-color: rgba(22, 163, 74, 0.25);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
@@ -989,10 +1002,10 @@ body.landing-menu-open {
 /* ── Scroll reveal ── */
 [data-reveal] {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(16px);
   transition:
-    opacity 0.7s var(--ease-out),
-    transform 0.7s var(--ease-out);
+    opacity var(--duration-reveal) var(--ease-out),
+    transform var(--duration-reveal) var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -1006,11 +1019,11 @@ body.landing-menu-open {
 }
 
 [data-reveal="left"] {
-  transform: translateX(-28px);
+  transform: translateX(-16px);
 }
 
 [data-reveal="right"] {
-  transform: translateX(28px);
+  transform: translateX(16px);
 }
 
 [data-reveal="left"].is-visible,

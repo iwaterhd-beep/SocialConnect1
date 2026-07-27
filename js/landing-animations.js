@@ -82,9 +82,9 @@
         if (parent) {
           const siblings = [...parent.querySelectorAll('[data-reveal]')];
           const idx = siblings.indexOf(el);
-          if (idx >= 0) el.style.setProperty('--reveal-delay', `${idx * 80}ms`);
+          if (idx >= 0) el.style.setProperty('--reveal-delay', `${idx * 55}ms`);
         } else if (i < 12) {
-          el.style.setProperty('--reveal-delay', `${Math.min(i, 6) * 60}ms`);
+          el.style.setProperty('--reveal-delay', `${Math.min(i, 6) * 45}ms`);
         }
       } else {
         el.style.setProperty('--reveal-delay', delay);

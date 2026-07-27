@@ -8,7 +8,7 @@
   const authPage = document.getElementById('auth-page');
   if (!splash || !trigger || !authPage) return;
 
-  const LEAVE_MS = 950;
+  const LEAVE_MS = 520;
   let leaving = false;
 
   function revealLogin() {

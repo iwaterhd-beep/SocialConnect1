@@ -22,7 +22,13 @@
   --bg: #f9fafb;
   --bg2: #f3f4f6;
   --w: #fff;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Emil Kowalski — strong curves (easing.dev) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-press: 160ms;
+  --duration-ui: 220ms;
+  --duration-reveal: 500ms;
   --radius-sm: 8px;
   --radius-lg: 18px;
   --radius-xl: 22px;
@@ -312,7 +318,7 @@ body:not(.has-club-topnav) .shell--app {
 }
 
 .btn:active {
-  transform: translateY(0);
+  transform: scale(0.97);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 2px 8px rgba(22, 163, 74, 0.22);
 }
 
