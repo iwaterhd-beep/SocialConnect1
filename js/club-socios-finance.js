@@ -1682,17 +1682,21 @@
     hideAvalistaDropdown();
   }
 
+  function countActiveMembersForAvalista() {
+    return (membersCache || []).filter((m) => !isMemberArchived(m)).length;
+  }
+
   function getAvalistaForSave() {
     const idDom = ($('member-avalista-member-id')?.value || '').trim();
     const nameDom = ($('member-avalista-name')?.value || '').trim();
     const searchDom = ($('member-avalista-search')?.value || '').trim();
     const dniDom = ($('member-avalista-dni')?.value || '').trim();
 
-    if (avalistaSelection?.name || avalistaSelection?.id) {
+    if (avalistaSelection?.id) {
       return {
         name: String(avalistaSelection.name || nameDom || searchDom || 'Socio').trim(),
         dni: String(avalistaSelection.dni || dniDom || '').trim(),
-        memberId: String(avalistaSelection.id || idDom || '').trim() || null,
+        memberId: String(avalistaSelection.id).trim(),
       };
     }
 
@@ -1713,25 +1717,34 @@
       }
     }
 
-    const name = nameDom || searchDom;
-    if (!name) return { name: '', dni: dniDom, memberId: null };
-
-    const q = name.toLowerCase();
-    const editingId = ($('member-edit-id')?.value || '').trim();
-    const exact = (membersCache || []).find((m) => {
-      if (isMemberArchived(m)) return false;
-      if (editingId && memberIdEquals(m.id, editingId)) return false;
-      const label = (formatMemberDisplayName(m) || m.display_name || '').trim().toLowerCase();
-      const code = formatMemberCode(m).toLowerCase();
-      const dni = m.dni != null ? String(m.dni).trim().toLowerCase() : '';
-      return label === q || code === q || dni === q;
-    });
-    if (exact) {
-      pickAvalistaMember(exact);
-      return getAvalistaForSave();
+    // Autocompletar si hay una sola coincidencia clara en la búsqueda.
+    const probe = (searchDom || nameDom).trim();
+    if (probe) {
+      const hits = filterAvalistaHits(probe);
+      if (hits.length === 1) {
+        pickAvalistaMember(hits[0]);
+        return getAvalistaForSave();
+      }
+      const q = probe.toLowerCase();
+      const exact = hits.find((m) => {
+        const label = (formatMemberDisplayName(m) || m.display_name || '').trim().toLowerCase();
+        const code = formatMemberCode(m).toLowerCase();
+        const dni = m.dni != null ? String(m.dni).trim().toLowerCase() : '';
+        return label === q || code === q || dni === q;
+      });
+      if (exact) {
+        pickAvalistaMember(exact);
+        return getAvalistaForSave();
+      }
     }
 
-    return { name, dni: dniDom, memberId: null };
+    // Sin socios en el club: se permite texto libre (primer alta).
+    if (countActiveMembersForAvalista() === 0) {
+      const name = nameDom || searchDom;
+      return { name: name || '', dni: dniDom, memberId: null };
+    }
+
+    return { name: '', dni: dniDom, memberId: null };
   }
 
   function filterAvalistaHits(qRaw) {
@@ -2374,11 +2387,18 @@
       }
     }
     const avalistaInfo = getAvalistaForSave();
-    if (!avalistaInfo.name) {
+    if (!avalistaInfo.name && !avalistaInfo.memberId) {
       return {
         ok: false,
         message:
-          'Indica el avalista: elige uno de la lista o escribe su nombre (campo Avalista).',
+          'Debes indicar un socio avalista (garante) existente: búscale y selecciónalo en la lista.',
+      };
+    }
+    if (countActiveMembersForAvalista() > 0 && !avalistaInfo.memberId) {
+      return {
+        ok: false,
+        message:
+          'Debes seleccionar un socio avalista de la lista (no basta con escribir el nombre). Tiene que aparecer en verde «Avalista seleccionado».',
       };
     }
     return { ok: true, fields: f };
@@ -2626,9 +2646,16 @@
     const avalista = avalistaInfo.name;
     const avalista_dni = avalistaInfo.dni;
     const avalistaMemberRaw = avalistaInfo.memberId || '';
-    if (!avalista) {
+    if (countActiveMembersForAvalista() > 0 && !avalistaMemberRaw) {
       const msg =
-        'Indica el avalista: elige uno de la lista o escribe su nombre (campo Avalista).';
+        'Debes seleccionar un socio avalista de la lista (no basta con escribir el nombre). Tiene que aparecer en verde «Avalista seleccionado».';
+      if (fromTerms) setMemberTermsStatus(msg, true);
+      setMemberMsg(msg, true);
+      return;
+    }
+    if (!avalista && !avalistaMemberRaw) {
+      const msg =
+        'Debes indicar un socio avalista (garante) existente: búscale y selecciónalo en la lista.';
       if (fromTerms) setMemberTermsStatus(msg, true);
       setMemberMsg(msg, true);
       return;
@@ -2739,6 +2766,11 @@
         String(error.message || '').toLowerCase().includes('rfid')
       ) {
         msg = 'Esa chapa RFID ya está asignada a otro socio de este club.';
+      } else if (
+        /garante|avalista.*existente|socio avalista/i.test(String(error.message || ''))
+      ) {
+        msg =
+          'Debes seleccionar un socio avalista existente de la lista del club (pulsa un resultado hasta ver el texto verde).';
       } else if (
         String(error.message || '').toLowerCase().includes('club_member_counters') ||
         String(error.message || '').toLowerCase().includes('row-level security')
