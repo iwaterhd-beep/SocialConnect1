@@ -1640,7 +1640,10 @@
   function fillAvalistaSelectOptions(preferredId) {
     const sel = $('member-avalista-select');
     if (!sel) return;
-    const keep = preferredId != null ? String(preferredId) : String(sel.value || avalistaSelection?.id || '');
+    const current = String(sel.value || '').trim();
+    const fromArg =
+      preferredId != null && String(preferredId).trim() !== '' ? String(preferredId).trim() : '';
+    const keep = fromArg || current || String(avalistaSelection?.id || '').trim();
     const editingId = ($('member-edit-id')?.value || '').trim();
     const options = (membersCache || [])
       .filter((m) => !isMemberArchived(m) && !(editingId && memberIdEquals(m.id, editingId)))
@@ -1663,9 +1666,52 @@
     });
     if (keep && [...sel.options].some((o) => o.value === keep)) {
       sel.value = keep;
-    } else {
+    } else if (!keep) {
       sel.value = '';
+    } else {
+      // Conservar el id elegido aunque no esté en caché (p. ej. recarga).
+      const orphan = document.createElement('option');
+      orphan.value = keep;
+      orphan.textContent = avalistaSelection?.name || 'Avalista seleccionado';
+      sel.appendChild(orphan);
+      sel.value = keep;
     }
+  }
+
+  function syncAvalistaFromSelect() {
+    const sel = $('member-avalista-select');
+    const id = (sel?.value || '').trim();
+    if (!id) {
+      avalistaSelection = null;
+      pendingSaveAvalista = null;
+      if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
+      if ($('member-avalista-name')) $('member-avalista-name').value = '';
+      if ($('member-avalista-dni')) $('member-avalista-dni').value = '';
+      updateAvalistaPickedUi();
+      return null;
+    }
+    const m = (membersCache || []).find((x) => memberIdEquals(x.id, id));
+    const optLabel = (sel.selectedOptions?.[0]?.textContent || '').split('·')[0].trim();
+    const name =
+      (m && (formatMemberDisplayName(m) || m.display_name)) ||
+      avalistaSelection?.name ||
+      optLabel ||
+      'Socio';
+    const dni =
+      (m && m.dni != null ? String(m.dni).trim() : '') ||
+      (avalistaSelection?.dni || '');
+    avalistaSelection = { id, name: String(name).trim() || 'Socio', dni };
+    pendingSaveAvalista = {
+      memberId: id,
+      name: avalistaSelection.name,
+      dni: avalistaSelection.dni,
+    };
+    if ($('member-avalista-member-id')) $('member-avalista-member-id').value = id;
+    if ($('member-avalista-name')) $('member-avalista-name').value = avalistaSelection.name;
+    if ($('member-avalista-dni')) $('member-avalista-dni').value = avalistaSelection.dni;
+    if ($('member-avalista-search')) $('member-avalista-search').value = avalistaSelection.name;
+    updateAvalistaPickedUi();
+    return pendingSaveAvalista;
   }
 
   function pickAvalistaMember(m) {
@@ -1684,7 +1730,16 @@
     if ($('member-avalista-dni')) $('member-avalista-dni').value = dni;
     if ($('member-avalista-member-id')) $('member-avalista-member-id').value = id;
     if ($('member-avalista-search')) $('member-avalista-search').value = name;
-    fillAvalistaSelectOptions(id);
+    const sel = $('member-avalista-select');
+    if (sel) {
+      if (![...sel.options].some((o) => o.value === id)) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      }
+      sel.value = id;
+    }
     updateAvalistaPickedUi();
     hideAvalistaDropdown();
   }
@@ -1709,47 +1764,20 @@
   }
 
   function getAvalistaForSave() {
-    const selId = ($('member-avalista-select')?.value || '').trim();
-    if (selId) {
-      const linked = (membersCache || []).find((x) => memberIdEquals(x.id, selId));
-      if (linked) {
-        pickAvalistaMember(linked);
-      }
-    }
-
-    const idDom = ($('member-avalista-member-id')?.value || '').trim();
-    const nameDom = ($('member-avalista-name')?.value || '').trim();
-    const dniDom = ($('member-avalista-dni')?.value || '').trim();
-
+    const synced = syncAvalistaFromSelect();
+    if (synced?.memberId) return synced;
+    if (pendingSaveAvalista?.memberId) return pendingSaveAvalista;
     if (avalistaSelection?.id) {
       return {
-        name: String(avalistaSelection.name || nameDom || 'Socio').trim(),
-        dni: String(avalistaSelection.dni || dniDom || '').trim(),
+        name: String(avalistaSelection.name || 'Socio').trim(),
+        dni: String(avalistaSelection.dni || '').trim(),
         memberId: String(avalistaSelection.id).trim(),
       };
     }
-
-    if (idDom) {
-      const linked = (membersCache || []).find((x) => memberIdEquals(x.id, idDom));
-      if (linked) {
-        return {
-          name:
-            formatMemberDisplayName(linked) ||
-            String(linked.display_name || '').trim() ||
-            nameDom ||
-            'Socio',
-          dni: dniDom || (linked.dni != null ? String(linked.dni).trim() : ''),
-          memberId: idDom,
-        };
-      }
-      return { name: nameDom || 'Socio', dni: dniDom, memberId: idDom };
-    }
-
     if (countActiveMembersForAvalista() === 0) {
-      return { name: nameDom || '', dni: dniDom, memberId: null };
+      return { name: '', dni: '', memberId: null };
     }
-
-    return { name: '', dni: dniDom, memberId: null };
+    return { name: '', dni: '', memberId: null };
   }
 
   function setEditModalInert(on) {
@@ -1777,7 +1805,7 @@
     if ($('member-second-last-name')) $('member-second-last-name').value = '';
     $('member-dni').value = '';
     clearAvalistaForm();
-    fillAvalistaSelectOptions('');
+    fillAvalistaSelectOptions(null);
     setMemberBirthIso('');
     $('member-phone').value = '';
     $('member-email').value = '';
@@ -1911,7 +1939,7 @@
 
     if (error) throw error;
     membersCache = data || [];
-    fillAvalistaSelectOptions(avalistaSelection?.id || '');
+    fillAvalistaSelectOptions(avalistaSelection?.id || pendingSaveAvalista?.memberId || null);
     renderMembersTable();
     if (selectedMemberId) {
       if (membersCache.some((m) => memberIdEquals(m.id, selectedMemberId))) {
@@ -2474,11 +2502,17 @@
 
   async function confirmMemberTermsAndSave() {
     if (memberSaving) return;
+    if (!pendingSaveAvalista?.memberId) {
+      syncAvalistaFromSelect();
+    }
     const validation = validateMemberFormFields();
     if (!validation.ok) {
       setMemberTermsStatus(validation.message, true);
       setMemberMsg(validation.message, true);
       return;
+    }
+    if (!pendingSaveAvalista?.memberId) {
+      pendingSaveAvalista = getAvalistaForSave();
     }
     setMemberTermsStatus('Creando socio…', false);
     await saveMember({ skipDniWarn: true, fromTerms: true });
@@ -2536,14 +2570,14 @@
 
   async function requestSaveMember() {
     if (memberSaving) return;
-    fillAvalistaSelectOptions(($('member-avalista-select')?.value || '').trim());
+    const avalistaSnap = syncAvalistaFromSelect();
     const validation = validateMemberFormFields();
     if (!validation.ok) {
       setMemberMsg(validation.message, true);
       return;
     }
-    pendingSaveAvalista = getAvalistaForSave();
-    if (countActiveMembersForAvalista() > 0 && !pendingSaveAvalista.memberId) {
+    pendingSaveAvalista = avalistaSnap || getAvalistaForSave();
+    if (countActiveMembersForAvalista() > 0 && !pendingSaveAvalista?.memberId) {
       setMemberMsg(
         'Debes elegir un socio avalista existente en el desplegable «Socio avalista (garante)».',
         true,
@@ -2589,10 +2623,12 @@
       rfid_uid,
     } = validation.fields;
 
-    const avalistaInfo = pendingSaveAvalista || getAvalistaForSave();
-    const avalista = avalistaInfo.name;
-    const avalista_dni = avalistaInfo.dni;
-    const avalistaMemberRaw = avalistaInfo.memberId || '';
+    const avalistaInfo = pendingSaveAvalista?.memberId
+      ? pendingSaveAvalista
+      : getAvalistaForSave();
+    const avalista = String(avalistaInfo.name || '').trim() || 'Socio';
+    const avalista_dni = String(avalistaInfo.dni || '').trim();
+    const avalistaMemberRaw = String(avalistaInfo.memberId || '').trim();
     if (countActiveMembersForAvalista() > 0 && !avalistaMemberRaw) {
       const msg =
         'Debes elegir un socio avalista existente en el desplegable «Socio avalista (garante)».';
@@ -2600,9 +2636,8 @@
       setMemberMsg(msg, true);
       return;
     }
-    if (!avalista && !avalistaMemberRaw) {
-      const msg =
-        'Debes indicar un socio avalista (garante) existente.';
+    if (!avalistaMemberRaw && countActiveMembersForAvalista() > 0) {
+      const msg = 'Debes indicar un socio avalista (garante) existente.';
       if (fromTerms) setMemberTermsStatus(msg, true);
       setMemberMsg(msg, true);
       return;
@@ -2678,10 +2713,10 @@
     }
     if (
       error &&
-      (error.code === '42703' ||
-        (String(error.message || '').includes('column') &&
-          String(error.message || '').toLowerCase().includes('avalista')))
+      error.code === '42703' &&
+      String(error.message || '').toLowerCase().includes('avalista')
     ) {
+      // Solo quitar columnas de avalista si realmente no existen en BD.
       const rowAv = { ...row };
       delete rowAv.avalista;
       delete rowAv.avalista_dni;
@@ -2717,7 +2752,9 @@
         /garante|avalista.*existente|socio avalista/i.test(String(error.message || ''))
       ) {
         msg =
-          'Debes seleccionar un socio avalista existente de la lista del club (pulsa un resultado hasta ver el texto verde).';
+          avalistaMemberRaw
+            ? `No se pudo validar el avalista en la base de datos (${avalista || avalistaMemberRaw}). Prueba a volver a elegirlo en el desplegable y guarda otra vez.`
+            : 'Debes elegir un socio avalista en el desplegable «Socio avalista (garante)» antes de guardar.';
       } else if (
         String(error.message || '').toLowerCase().includes('club_member_counters') ||
         String(error.message || '').toLowerCase().includes('row-level security')
@@ -4535,18 +4572,11 @@
     });
 
     $('member-avalista-select')?.addEventListener('change', () => {
-      const id = ($('member-avalista-select')?.value || '').trim();
-      if (!id) {
-        clearAvalistaForm();
-        fillAvalistaSelectOptions('');
-        return;
-      }
-      const m = (membersCache || []).find((x) => memberIdEquals(x.id, id));
-      if (m) pickAvalistaMember(m);
+      syncAvalistaFromSelect();
     });
     $('member-avalista-clear')?.addEventListener('click', () => {
       clearAvalistaForm();
-      fillAvalistaSelectOptions('');
+      fillAvalistaSelectOptions(null);
     });
 
     document.querySelectorAll('[data-member-slot][data-member-mode]').forEach((btn) => {
