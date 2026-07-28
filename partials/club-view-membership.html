@@ -22,7 +22,7 @@
         <li><strong>Nombres:</strong> cámbialos a “Socio”, “Oro”, “Platino”… El código interno (standard / premium / vip) no cambia.</li>
         <li><strong>Auto-VIP:</strong> si lo activas, el socio sube a VIP al superar el umbral de gasto en la ventana de días.</li>
         <li><strong>VIP manual:</strong> si lo asignas a mano en Socios, la regla automática no lo baja.</li>
-        <li><strong>Regalos:</strong> son notas para el equipo (entrega manual). No se entregan solos en el POS.</li>
+        <li><strong>Regalos:</strong> elige un producto del TPV. Al subir de nivel, en la primera venta del socio se añade gratis al ticket.</li>
       </ul>
     </details>
 
@@ -42,15 +42,18 @@
       <div class="sc-section-head">
         <h2 id="membership-rewards-title">Regalos y objetivos</h2>
         <p class="hint sc-section-head__meta">
-          Lista de premios para el equipo · <strong>entrega manual</strong>
+          Producto del TPV · se añade <strong>gratis</strong> al ticket al subir de nivel
         </p>
       </div>
 
       <div class="sc-membership-reward-form">
         <div class="sc-membership-reward-form__grid">
           <div class="form__row">
-            <label for="reward-title">Título del regalo</label>
-            <input class="input" id="reward-title" type="text" placeholder="Ej. 1 g de bienvenida VIP" autocomplete="off" />
+            <label for="reward-product">Producto del TPV (regalo)</label>
+            <select class="input" id="reward-product">
+              <option value="">— Elige un producto del inventario —</option>
+            </select>
+            <p class="hint">Se añadirá gratis al ticket la primera vez que el socio compre tras subir a ese nivel.</p>
           </div>
           <div class="form__row">
             <label for="reward-tier">Nivel asociado</label>

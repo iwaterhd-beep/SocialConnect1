@@ -2910,6 +2910,96 @@
     await renderTpvMemberChipDisplay(m);
     syncTpvMemberFieldVipFromSelection();
     updateTpvWalletUi();
+    await applyPendingMembershipGifts(m);
+  }
+
+  async function applyPendingMembershipGifts(m) {
+    if (!m?.id || !state.ctx?.club?.id || !sb()) return;
+    let { data: grants, error } = await sb()
+      .from('club_membership_reward_grants')
+      .select('id, product_id, reward_id, status')
+      .eq('club_id', state.ctx.club.id)
+      .eq('member_id', m.id)
+      .eq('status', 'pending');
+    if (error) {
+      // tabla aún no migrada
+      return;
+    }
+    if (!grants?.length) return;
+
+    let added = 0;
+    for (const g of grants) {
+      if (!g.product_id) continue;
+      const already = (state.tpvCart || []).some(
+        (line) =>
+          line.membership_grant_id &&
+          String(line.membership_grant_id) === String(g.id),
+      );
+      if (already) continue;
+
+      let product = (state.products || []).find((p) => tpvIdsEqual(p.id, g.product_id));
+      if (!product) {
+        const { data: pRow } = await sb()
+          .from('inventory_products')
+          .select('id, name, emoji, sale_unit, default_sale_grams, stock_grams')
+          .eq('id', g.product_id)
+          .maybeSingle();
+        product = pRow || null;
+      }
+      if (!product) continue;
+
+      const unit = unitKey(product);
+      let qty = 1;
+      if (unit !== 'unit') {
+        const defG = Number(product.default_sale_grams);
+        qty = Number.isFinite(defG) && defG > 0 ? defG : 1;
+      }
+
+      state.tpvCart.push({
+        cart_row_id: makeTpvCartRowId(),
+        product_id: product.id,
+        product_name: product.name || 'Regalo',
+        product_emoji: (product.emoji || '').trim(),
+        sale_unit: unit,
+        grams_charged: qty,
+        grams_dispensed: qty,
+        price_charged_eur: 0,
+        notes: 'Regalo membresía (subida de nivel)',
+        membership_grant_id: g.id,
+        is_membership_gift: true,
+      });
+      added += 1;
+    }
+
+    if (added > 0) {
+      renderTpvCart();
+      pulseTpvTicket();
+      setMsg(
+        'tpv-status',
+        added === 1
+          ? 'Regalo de membresía añadido gratis al ticket.'
+          : `${added} regalos de membresía añadidos gratis al ticket.`,
+        false,
+      );
+    }
+  }
+
+  async function fulfillMembershipGiftGrants(lines) {
+    if (!state.ctx?.club?.id || !sb()) return;
+    const grantIds = (lines || [])
+      .map((l) => l.membership_grant_id)
+      .filter(Boolean)
+      .map(String);
+    if (!grantIds.length) return;
+    const unique = [...new Set(grantIds)];
+    for (const gid of unique) {
+      await sb()
+        .from('club_membership_reward_grants')
+        .update({ status: 'fulfilled', fulfilled_at: new Date().toISOString() })
+        .eq('id', gid)
+        .eq('club_id', state.ctx.club.id)
+        .eq('status', 'pending');
+    }
   }
 
   async function clearTpvMember() {
@@ -3061,11 +3151,16 @@
     lines.forEach((line) => {
       const row = document.createElement('div');
       row.className = 'tpv-receipt__line tpv-cart-line';
+      if (line.is_membership_gift) row.classList.add('tpv-cart-line--gift');
       const us = line.sale_unit === 'unit' ? 'ud' : 'g';
+      const giftTag = line.is_membership_gift
+        ? '<div class="tpv-cart-line__gift">Regalo membresía · gratis</div>'
+        : '';
       row.innerHTML = `
         <div class="tpv-cart-line__main">
           <div class="tpv-cart-line__title">${escapeHtml(line.product_emoji ? line.product_emoji + ' ' : '')}${escapeHtml(line.product_name)}</div>
           <div class="tpv-cart-line__meta">Ticket ${escapeHtml(formatNum(line.grams_charged))} ${escapeHtml(us)} · Real ${escapeHtml(formatNum(line.grams_dispensed))} ${escapeHtml(us)}</div>
+          ${giftTag}
         </div>
         <div class="tpv-cart-line__side">
           <strong>${escapeHtml(formatMoney(line.price_charged_eur))}</strong>
@@ -3203,6 +3298,11 @@
       lines = [built.line];
     }
 
+    const memberBefore = memberRaw
+      ? (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, memberRaw))
+      : null;
+    const typeBefore = memberBefore?.member_type || 'standard';
+
     const shiftId = state.tpvOpenShiftId || (await getOpenShiftId(state.ctx.club.id));
     if (!shiftId) {
       setMsg('tpv-status', 'Abre un turno desde Inicio para cobrar.', true);
@@ -3235,6 +3335,8 @@
       if (ensured.id) registeredIds.push(ensured.id);
     }
 
+    await fulfillMembershipGiftGrants(lines);
+
     const totalPrice = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
     setMsg(
       'tpv-status',
@@ -3264,6 +3366,19 @@
     await refreshStockUi();
     await loadMembersForTpv();
     updateTpvWalletUi();
+
+    if (memberRaw && typeof window.scMembershipGrantOnTierUpgrade === 'function') {
+      const memberAfter = (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, memberRaw));
+      const typeAfter = memberAfter?.member_type || typeBefore;
+      if (typeAfter !== typeBefore) {
+        try {
+          await window.scMembershipGrantOnTierUpgrade(memberRaw, typeBefore, typeAfter);
+        } catch (_) {
+          /* opcional */
+        }
+      }
+    }
+
     const visibleRows = await loadRecentDispenses(
       registeredIds.length ? registeredIds : lastRpcRes?.data || null,
     );

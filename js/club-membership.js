@@ -50,10 +50,19 @@
   let uiBound = false;
   let tiersCache = [];
   let rewardsCache = [];
+  let rewardProductsCache = [];
   let migrationMissing = false;
+  let hasRewardProductColumn = true;
+  let hasRewardGrantsTable = true;
 
   function sb() {
     return window.scSupabase || window.supabaseClient || null;
+  }
+
+  function tierRank(key) {
+    if (key === 'vip') return 2;
+    if (key === 'premium') return 1;
+    return 0;
   }
 
   function escapeHtml(s) {
@@ -96,11 +105,69 @@
       error.code === '42P01' ||
       error.code === 'PGRST205' ||
       error.code === '42703' ||
+      error.code === 'PGRST204' ||
       msg.includes('club_membership_tiers') ||
       msg.includes('club_membership_rewards') ||
+      msg.includes('club_membership_reward_grants') ||
       msg.includes('does not exist') ||
       msg.includes('schema cache')
     );
+  }
+
+  async function loadRewardProducts() {
+    rewardProductsCache = [];
+    if (!ctx?.club?.id || !sb()) return [];
+    let { data, error } = await sb()
+      .from('inventory_products')
+      .select('id, name, emoji, sale_unit, default_sale_grams')
+      .eq('club_id', ctx.club.id)
+      .order('name', { ascending: true });
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('default_sale_grams'))
+    ) {
+      ({ data, error } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji, sale_unit')
+        .eq('club_id', ctx.club.id)
+        .order('name', { ascending: true }));
+    }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('sale_unit'))
+    ) {
+      ({ data, error } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji')
+        .eq('club_id', ctx.club.id)
+        .order('name', { ascending: true }));
+    }
+    if (error) {
+      console.warn('loadRewardProducts', error);
+      return [];
+    }
+    rewardProductsCache = data || [];
+    return rewardProductsCache;
+  }
+
+  function fillRewardProductSelect() {
+    const sel = $('reward-product');
+    if (!sel) return;
+    const keep = sel.value;
+    sel.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '— Elige un producto del inventario —';
+    sel.appendChild(empty);
+    rewardProductsCache.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = String(p.id);
+      const emoji = (p.emoji || '').trim();
+      const unit = p.sale_unit === 'unit' ? 'ud' : 'g';
+      opt.textContent = `${emoji ? emoji + ' ' : ''}${p.name || 'Producto'} · ${unit}`;
+      sel.appendChild(opt);
+    });
+    if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
   }
 
   function useDefaultTiers() {
@@ -557,9 +624,14 @@
         r.trigger_type === 'spend_threshold' && r.trigger_spend_eur != null
           ? ` (≥ ${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €)`
           : '';
+      const productHint =
+        r.product_id
+          ? `<div class="hint">TPV · entrega automática gratis</div>`
+          : `<div class="hint">Sin producto TPV (solo nota)</div>`;
       tr.innerHTML = `
         <td>
           <strong>${escapeHtml(r.title)}</strong>
+          ${productHint}
           ${r.description ? `<div class="hint">${escapeHtml(r.description)}</div>` : ''}
         </td>
         <td>${escapeHtml(tierName)}</td>
@@ -593,12 +665,19 @@
       setMsg('Ejecuta 046_club_membership_tiers.sql en Supabase para poder guardar regalos.', true);
       return;
     }
-    const title = ($('reward-title')?.value || '').trim();
-    if (!title) {
-      setMsg('Indica un título para el regalo.', true);
+    const productId = ($('reward-product')?.value || '').trim();
+    if (!productId) {
+      setMsg('Elige un producto del TPV para el regalo.', true);
+      $('reward-product')?.focus?.();
       return;
     }
-    const trigger = $('reward-trigger')?.value || 'manual';
+    const product = rewardProductsCache.find((p) => String(p.id) === productId);
+    const title = String(product?.name || '').trim();
+    if (!title) {
+      setMsg('El producto elegido no es válido.', true);
+      return;
+    }
+    const trigger = $('reward-trigger')?.value || 'on_upgrade';
     const tier = ($('reward-tier')?.value || '').trim() || null;
     const desc = ($('reward-desc')?.value || '').trim();
     let spend = null;
@@ -612,18 +691,41 @@
     }
 
     setMsg('Guardando regalo…', false);
-    const { error } = await sb().from('club_membership_rewards').insert([
-      {
-        club_id: ctx.club.id,
-        title,
-        description: desc,
-        tier_key: tier,
-        trigger_type: trigger,
-        trigger_spend_eur: spend,
-        is_active: true,
-        sort_order: rewardsCache.length,
-      },
-    ]);
+    const payload = {
+      club_id: ctx.club.id,
+      title,
+      description: desc,
+      tier_key: tier,
+      trigger_type: trigger,
+      trigger_spend_eur: spend,
+      is_active: true,
+      sort_order: rewardsCache.length,
+      product_id: productId,
+    };
+    let { error } = await sb().from('club_membership_rewards').insert([payload]);
+    if (
+      error &&
+      (error.code === '42703' ||
+        error.code === 'PGRST204' ||
+        String(error.message || '').toLowerCase().includes('product_id'))
+    ) {
+      hasRewardProductColumn = false;
+      const withoutProduct = { ...payload };
+      delete withoutProduct.product_id;
+      ({ error } = await sb().from('club_membership_rewards').insert([withoutProduct]));
+      if (!error) {
+        setMsg(
+          'Regalo guardado sin enlace al TPV. Ejecuta 052_membership_reward_products.sql en Supabase para la entrega automática.',
+          true,
+        );
+        if ($('reward-product')) $('reward-product').value = '';
+        if ($('reward-desc')) $('reward-desc').value = '';
+        if ($('reward-spend')) $('reward-spend').value = '';
+        await loadRewards();
+        renderRewards();
+        return;
+      }
+    }
 
     if (error) {
       if (isMissingTableErr(error)) {
@@ -635,13 +737,77 @@
       return;
     }
 
-    if ($('reward-title')) $('reward-title').value = '';
+    if ($('reward-product')) $('reward-product').value = '';
     if ($('reward-desc')) $('reward-desc').value = '';
     if ($('reward-spend')) $('reward-spend').value = '';
     await loadRewards();
     renderRewards();
-    setMsg('Regalo añadido.', false);
+    setMsg('Regalo añadido. Se entregará gratis en el TPV al subir de nivel.', false);
   }
+
+  /**
+   * Crea grants pendientes cuando un socio sube de nivel (manual o auto-VIP).
+   * Solo para regalos on_upgrade con product_id del nivel destino.
+   */
+  async function grantUpgradeRewards(memberId, fromTier, toTier) {
+    if (!ctx?.club?.id || !sb() || !memberId || !toTier) return { ok: false, created: 0 };
+    if (tierRank(toTier) <= tierRank(fromTier || 'standard')) {
+      return { ok: true, created: 0 };
+    }
+    if (!hasRewardGrantsTable) return { ok: false, created: 0 };
+
+    let rewards = rewardsCache;
+    if (!rewards.length) {
+      try {
+        await loadRewards();
+        rewards = rewardsCache;
+      } catch (_) {
+        rewards = [];
+      }
+    }
+
+    const matching = (rewards || []).filter((r) => {
+      if (!r?.is_active) return false;
+      if (r.trigger_type !== 'on_upgrade') return false;
+      if (!r.product_id) return false;
+      if (r.tier_key && r.tier_key !== toTier) return false;
+      return true;
+    });
+    if (!matching.length) return { ok: true, created: 0 };
+
+    let created = 0;
+    for (const r of matching) {
+      const row = {
+        club_id: ctx.club.id,
+        member_id: memberId,
+        reward_id: r.id,
+        product_id: r.product_id,
+        status: 'pending',
+      };
+      const { error } = await sb().from('club_membership_reward_grants').insert([row]);
+      if (error) {
+        const msg = String(error.message || '').toLowerCase();
+        if (
+          error.code === '42P01' ||
+          error.code === 'PGRST205' ||
+          msg.includes('club_membership_reward_grants')
+        ) {
+          hasRewardGrantsTable = false;
+          return { ok: false, created, needMigration: true };
+        }
+        // unique violation = already granted
+        if (error.code === '23505') continue;
+        console.warn('grantUpgradeRewards', error);
+        continue;
+      }
+      created += 1;
+    }
+    return { ok: true, created };
+  }
+
+  window.scMembershipGrantOnTierUpgrade = async function (memberId, fromTier, toTier) {
+    return grantUpgradeRewards(memberId, fromTier, toTier);
+  };
 
   async function toggleReward(id, nextActive) {
     const { error } = await sb()
@@ -719,12 +885,19 @@
     try {
       await loadTiers();
       renderTiers();
+      await loadRewardProducts();
+      fillRewardProductSelect();
       await loadRewards();
       renderRewards();
       notifyLabelsUpdated();
       if (migrationMissing) {
         setMsg(
           'Vista lista. Para guardar en la nube ejecuta 046_club_membership_tiers.sql en Supabase.',
+          true,
+        );
+      } else if (!hasRewardProductColumn) {
+        setMsg(
+          'Para enlazar regalos al TPV ejecuta 052_membership_reward_products.sql en Supabase.',
           true,
         );
       }
@@ -751,6 +924,8 @@
       await loadTiers();
       if (isAdmin()) {
         renderTiers();
+        await loadRewardProducts();
+        fillRewardProductSelect();
         await loadRewards();
         renderRewards();
       }

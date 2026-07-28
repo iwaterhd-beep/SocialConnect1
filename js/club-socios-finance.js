@@ -2981,6 +2981,25 @@
     );
     selectedMemberId = memberId;
     pendingSaveAvalista = null;
+
+    if (
+      !isNew &&
+      memberId &&
+      member_type &&
+      memberEditInitialType !== member_type &&
+      typeof window.scMembershipGrantOnTierUpgrade === 'function'
+    ) {
+      try {
+        await window.scMembershipGrantOnTierUpgrade(
+          memberId,
+          memberEditInitialType || 'standard',
+          member_type,
+        );
+      } catch (_) {
+        /* opcional hasta migración 052 */
+      }
+    }
+
     closeMemberTermsModal();
     closeMemberModals();
     await loadMembersTable();
