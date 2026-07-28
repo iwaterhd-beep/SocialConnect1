@@ -1737,6 +1737,18 @@ body.club-dark.club-app .tpv-card {
   overflow: hidden;
 }
 
+.club-app .shift-modal.member-terms-modal {
+  z-index: 560;
+}
+
+.club-app .shift-modal.member-dni-warn-modal {
+  z-index: 565;
+}
+
+.club-app .shift-modal.member-camera-modal {
+  z-index: 570;
+}
+
 .club-app .shift-modal:not(.is-hidden) {
   position: fixed;
   inset: 0;

@@ -1,4 +1,9 @@
-/* Membresía — panel de configuración de niveles y regalos */
+/* Membresía — niveles y regalos (admin) */
+
+.sc-membership {
+  display: grid;
+  gap: 1rem;
+}
 
 .sc-membership-hero__row {
   display: flex;
@@ -10,6 +15,50 @@
 
 .sc-membership-hero__row .btn {
   flex-shrink: 0;
+  transition: transform 160ms var(--ease-out, ease-out);
+}
+
+.sc-membership-hero__row .btn:active {
+  transform: scale(0.97);
+}
+
+.sc-membership-howto {
+  padding: 0.85rem 1.1rem;
+}
+
+.sc-membership-howto summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--tx2, #374151);
+  list-style: none;
+}
+
+.sc-membership-howto summary::-webkit-details-marker {
+  display: none;
+}
+
+.sc-membership-howto summary::before {
+  content: "▸ ";
+  color: var(--g, #16a34a);
+}
+
+.sc-membership-howto[open] summary::before {
+  content: "▾ ";
+}
+
+.sc-membership-tips {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--tx2, #374151);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sc-membership-tips strong {
+  color: var(--tx, #111827);
 }
 
 .sc-membership-tiers {
@@ -19,15 +68,32 @@
 }
 
 .sc-membership-tier {
-  border: 1px solid var(--bd, #e5e7eb);
-  border-radius: 18px;
-  background: #fff;
-  padding: 1.2rem 1.15rem 1.15rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  border-top: 5px solid var(--tier-color, #64748b);
+  --tier-color: #64748b;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.95rem;
+  padding: 1.15rem 1.1rem 1.1rem;
+  border: 1px solid var(--bd, #e5e7eb);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  transition:
+    opacity 220ms var(--ease-out, ease-out),
+    border-color 220ms ease;
+}
+
+.sc-membership-tier::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--tier-color);
+}
+
+.sc-membership-tier.is-disabled {
+  opacity: 0.58;
 }
 
 .sc-membership-tier__head {
@@ -40,23 +106,22 @@
 .sc-membership-tier__preview {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  max-width: 100%;
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
   font-weight: 800;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: color-mix(in srgb, var(--tier-color, #64748b) 16%, #fff);
-  color: var(--tier-color, #475569);
-  border: 1px solid color-mix(in srgb, var(--tier-color, #64748b) 35%, #fff);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--tier-color) 14%, #fff);
+  color: var(--tier-color);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 32%, #fff);
 }
 
 .sc-membership-tier__key {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--tx3, #6b7280);
   white-space: nowrap;
 }
@@ -68,16 +133,19 @@
   align-items: end;
 }
 
-.sc-membership-tier__name-row .form__row {
+.sc-membership-tier__name-row .form__row,
+.sc-membership-tier__grid .form__row {
   margin: 0;
 }
 
-.sc-membership-tier__name-row label {
+.sc-membership-tier__name-row label,
+.sc-membership-tier__grid label,
+.sc-membership-tier__auto label {
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.sc-membership-tier__name-row input[type='text'] {
+.sc-membership-tier__name-row input[type="text"] {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -94,44 +162,13 @@
 .sc-membership-tier__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.65rem 0.85rem;
-}
-
-.sc-membership-tier__grid .form__row {
-  margin: 0;
-}
-
-.sc-membership-tier__grid label {
-  font-size: 0.78rem;
+  gap: 0.7rem;
 }
 
 .sc-membership-tier__grid textarea.input {
-  min-height: 4.5rem;
+  min-height: 4.25rem;
   resize: vertical;
   line-height: 1.45;
-}
-
-.sc-membership-tier__auto {
-  display: grid;
-  gap: 0.65rem;
-  padding: 0.85rem;
-  border-radius: 12px;
-  background: var(--bg, #f9fafb);
-  border: 1px solid var(--bd, #e5e7eb);
-  margin-top: auto;
-}
-
-.sc-membership-tier__auto-title {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--tx2, #374151);
-}
-
-.sc-membership-tier__auto-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
 }
 
 .sc-membership-tier__toggle {
@@ -140,6 +177,59 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.sc-membership-tier__auto {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: var(--bg, #f9fafb);
+  border: 1px solid var(--bd, #e5e7eb);
+}
+
+.sc-membership-tier__auto--live {
+  background: color-mix(in srgb, var(--gbg, #f0fdf4) 80%, #fff);
+  border-color: color-mix(in srgb, var(--g, #16a34a) 28%, var(--bd, #e5e7eb));
+}
+
+.sc-membership-tier__auto--ref {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.sc-membership-tier__auto-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--tx2, #374151);
+}
+
+.sc-membership-tier__auto-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--gs, #dcfce7);
+  color: var(--gd, #15803d);
+}
+
+.sc-membership-tier__auto--ref .sc-membership-tier__auto-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sc-membership-tier__auto-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
 }
 
 .sc-membership-tier__hint {
@@ -147,6 +237,18 @@
   font-size: 0.75rem;
   line-height: 1.45;
   color: var(--tx3, #6b7280);
+}
+
+.sc-membership-tier__note {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: var(--bg, #f9fafb);
+  border: 1px dashed var(--bd, #e5e7eb);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--tx3, #6b7280);
+  margin-top: auto;
 }
 
 .sc-membership-reward-form {
@@ -162,18 +264,8 @@
   gap: 0.65rem 0.85rem;
 }
 
-.sc-membership-tips {
-  margin: 0.75rem 0 0;
-  padding-left: 1.15rem;
-  display: grid;
-  gap: 0.55rem;
-  color: var(--tx2, #374151);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.sc-membership-tips strong {
-  color: var(--tx, #111827);
+.sc-membership-rewards-table {
+  margin-top: 1rem;
 }
 
 .sc-membership-reward-inactive {
@@ -181,13 +273,23 @@
 }
 
 .sc-membership-empty {
-  margin: 0;
-  padding: 1.25rem;
-  text-align: center;
+  margin: 0 0 1rem;
+  padding: 1rem 1.15rem;
+  text-align: left;
   color: var(--tx3, #6b7280);
   border: 1px dashed var(--bd, #e5e7eb);
   border-radius: 14px;
   background: var(--bg, #f9fafb);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sc-membership-empty code {
+  font-size: 0.85em;
+  background: #fff;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--bd, #e5e7eb);
 }
 
 @media (min-width: 700px) {
@@ -213,17 +315,44 @@
 
 body.club-dark .sc-membership-tier,
 body.club-dark .sc-membership-reward-form,
-body.club-dark .sc-membership-empty {
+body.club-dark .sc-membership-empty,
+body.club-dark .sc-membership-howto {
   background: #1e293b;
   border-color: #334155;
 }
 
-body.club-dark .sc-membership-tier__auto {
+body.club-dark .sc-membership-tier__auto,
+body.club-dark .sc-membership-tier__note {
   background: #0f172a;
   border-color: #334155;
 }
 
+body.club-dark .sc-membership-tier__auto--live {
+  background: color-mix(in srgb, #14532d 55%, #0f172a);
+  border-color: #166534;
+}
+
+body.club-dark .sc-membership-tier__auto--ref {
+  background: color-mix(in srgb, #78350f 40%, #0f172a);
+  border-color: #a16207;
+}
+
 body.club-dark .sc-membership-tier__preview {
-  background: color-mix(in srgb, var(--tier-color, #64748b) 28%, #0f172a);
-  border-color: color-mix(in srgb, var(--tier-color, #64748b) 45%, #334155);
+  background: color-mix(in srgb, var(--tier-color) 28%, #0f172a);
+  border-color: color-mix(in srgb, var(--tier-color) 45%, #334155);
+}
+
+body.club-dark .sc-membership-tips,
+body.club-dark .sc-membership-howto summary {
+  color: #cbd5e1;
+}
+
+body.club-dark .sc-membership-tips strong {
+  color: #f1f5f9;
+}
+
+body.club-dark .sc-membership-empty code {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
 }

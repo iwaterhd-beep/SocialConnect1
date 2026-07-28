@@ -50,9 +50,8 @@
 
   window.scOpenShiftModal = function scOpenShiftModal(modal) {
     if (!modal) return;
-    if (modal.parentElement !== document.body) {
-      document.body.appendChild(modal);
-    }
+    // Siempre al final de body para que el último modal quede encima (z-index empatado).
+    document.body.appendChild(modal);
     modal.classList.remove('is-hidden', 'is-leaving');
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');

@@ -2149,7 +2149,13 @@
     }
     fillMemberTermsClubInfo();
     resetMemberTermsModal();
+    // Encima del modal "Nuevo socio" (mismo z-index base → reordenar al final de body).
+    document.body.appendChild(modal);
     window.scOpenShiftModal(modal);
+    window.setTimeout(() => {
+      $('member-terms-scroll')?.focus?.();
+      updateMemberTermsConfirmBtn();
+    }, 50);
   }
 
   function closeMemberTermsModal() {

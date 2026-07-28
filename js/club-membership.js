@@ -53,7 +53,7 @@
   let migrationMissing = false;
 
   function sb() {
-    return window.supabaseClient;
+    return window.scSupabase || window.supabaseClient || null;
   }
 
   function escapeHtml(s) {
@@ -205,12 +205,12 @@
 
   function autoHintFor(key) {
     if (key === 'vip') {
-      return 'Si está activo, el socio sube a este nivel al superar el umbral en la ventana de días (y puede bajar si no lo mantiene). El VIP asignado a mano en Socios no se baja.';
+      return 'Si está activo, el socio sube a VIP al superar el umbral en la ventana de días. El VIP asignado a mano en Socios no se baja.';
     }
     if (key === 'premium') {
-      return 'Puedes configurar umbral como referencia para el equipo. La regla automática en POS aplica al nivel VIP.';
+      return 'Solo referencia para el equipo. La regla automática del POS aplica únicamente al nivel VIP.';
     }
-    return 'Nivel base: sin auto-upgrade. Renómbralo si quieres (ej. “Socio”).';
+    return '';
   }
 
   function renderTiers() {
@@ -225,30 +225,93 @@
       const note = document.createElement('p');
       note.className = 'sc-membership-empty';
       note.innerHTML =
-        'Para guardar en la nube, ejecuta en Supabase la migración <code>046_club_membership_tiers.sql</code>. Mientras tanto puedes editar y ver la vista previa local.';
+        'Para guardar en la nube, ejecuta en Supabase <code>046_club_membership_tiers.sql</code>. Mientras tanto puedes editar y ver la vista previa en esta sesión.';
       grid.appendChild(note);
     }
 
     tiersCache.forEach((t) => {
       const card = document.createElement('article');
-      card.className = 'sc-membership-tier';
+      const enabled = t.is_enabled !== false;
+      card.className = 'sc-membership-tier' + (enabled ? '' : ' is-disabled');
       card.style.setProperty('--tier-color', normalizeHex(t.color_hex));
       card.setAttribute('data-tier-key', t.tier_key);
 
       const color = normalizeHex(t.color_hex);
       const name = t.display_name || t.tier_key;
+      const key = t.tier_key;
+
+      let autoBlock = '';
+      if (key === 'standard') {
+        autoBlock = `
+          <p class="sc-membership-tier__note">
+            Nivel base · sin auto-upgrade. Renómbralo si quieres (ej. “Socio”).
+          </p>
+        `;
+      } else if (key === 'premium') {
+        autoBlock = `
+          <div class="sc-membership-tier__auto sc-membership-tier__auto--ref">
+            <p class="sc-membership-tier__auto-title">
+              Gasto POS
+              <span class="sc-membership-tier__auto-badge">Referencia</span>
+            </p>
+            <label class="sc-membership-tier__toggle">
+              <input type="checkbox" data-field="auto_upgrade_enabled" ${t.auto_upgrade_enabled ? 'checked' : ''} />
+              Mostrar como objetivo interno
+            </label>
+            <div class="sc-membership-tier__auto-grid">
+              <div class="form__row">
+                <label>Umbral (€)</label>
+                <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
+                  value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
+              </div>
+              <div class="form__row">
+                <label>Ventana (días)</label>
+                <input class="input" data-field="spend_window_days" type="number" min="1" max="365" step="1"
+                  value="${escapeHtml(String(t.spend_window_days ?? 7))}" />
+              </div>
+            </div>
+            <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(key))}</p>
+          </div>
+        `;
+      } else {
+        autoBlock = `
+          <div class="sc-membership-tier__auto sc-membership-tier__auto--live">
+            <p class="sc-membership-tier__auto-title">
+              Activación por gasto en POS
+              <span class="sc-membership-tier__auto-badge">Activo en POS</span>
+            </p>
+            <label class="sc-membership-tier__toggle">
+              <input type="checkbox" data-field="auto_upgrade_enabled" ${t.auto_upgrade_enabled ? 'checked' : ''} />
+              Activación automática
+            </label>
+            <div class="sc-membership-tier__auto-grid">
+              <div class="form__row">
+                <label>Umbral (€)</label>
+                <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
+                  value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
+              </div>
+              <div class="form__row">
+                <label>Ventana (días)</label>
+                <input class="input" data-field="spend_window_days" type="number" min="1" max="365" step="1"
+                  value="${escapeHtml(String(t.spend_window_days ?? 7))}" />
+              </div>
+            </div>
+            <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(key))}</p>
+          </div>
+        `;
+      }
 
       card.innerHTML = `
         <div class="sc-membership-tier__head">
           <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
-          <span class="sc-membership-tier__key">clave: ${escapeHtml(t.tier_key)}</span>
+          <span class="sc-membership-tier__key">${escapeHtml(key)}</span>
         </div>
         <div class="sc-membership-tier__name-row">
           <div class="form__row">
-            <label for="tier-name-${escapeHtml(t.tier_key)}">Nombre visible</label>
+            <label for="tier-name-${escapeHtml(key)}">Nombre visible</label>
             <input
               class="input"
-              id="tier-name-${escapeHtml(t.tier_key)}"
+              id="tier-name-${escapeHtml(key)}"
               data-field="display_name"
               type="text"
               maxlength="40"
@@ -258,10 +321,10 @@
             />
           </div>
           <div class="form__row">
-            <label for="tier-color-${escapeHtml(t.tier_key)}">Color</label>
+            <label for="tier-color-${escapeHtml(key)}">Color</label>
             <input
               class="input sc-membership-tier__color"
-              id="tier-color-${escapeHtml(t.tier_key)}"
+              id="tier-color-${escapeHtml(key)}"
               data-field="color_hex"
               type="color"
               value="${escapeHtml(color)}"
@@ -275,7 +338,7 @@
             <input class="input" data-field="description" type="text" value="${escapeHtml(t.description || '')}" placeholder="Qué es este nivel" />
           </div>
           <div class="form__row form__row--full">
-            <label>Beneficios / ventajas</label>
+            <label>Beneficios</label>
             <textarea class="input" data-field="benefits_text" rows="3" placeholder="Qué ofrece este nivel al socio">${escapeHtml(t.benefits_text || '')}</textarea>
           </div>
           <div class="form__row">
@@ -286,42 +349,33 @@
           </div>
           <div class="form__row">
             <label class="sc-membership-tier__toggle" style="margin-top:1.35rem">
-              <input type="checkbox" data-field="is_enabled" ${t.is_enabled !== false ? 'checked' : ''} />
-              Nivel activo en el club
+              <input type="checkbox" data-field="is_enabled" ${enabled ? 'checked' : ''} />
+              Nivel activo
             </label>
           </div>
         </div>
-        <div class="sc-membership-tier__auto">
-          <p class="sc-membership-tier__auto-title">Activación por gasto en POS</p>
-          <label class="sc-membership-tier__toggle">
-            <input type="checkbox" data-field="auto_upgrade_enabled" ${t.auto_upgrade_enabled ? 'checked' : ''}
-              ${t.tier_key === 'standard' ? 'disabled' : ''} />
-            Activación automática
-          </label>
-          <div class="sc-membership-tier__auto-grid">
-            <div class="form__row">
-              <label>Umbral (€)</label>
-              <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
-                value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}"
-                ${t.tier_key === 'standard' ? 'disabled' : ''} />
-            </div>
-            <div class="form__row">
-              <label>Ventana (días)</label>
-              <input class="input" data-field="spend_window_days" type="number" min="1" max="365" step="1"
-                value="${escapeHtml(String(t.spend_window_days ?? 7))}"
-                ${t.tier_key === 'standard' ? 'disabled' : ''} />
-            </div>
-          </div>
-          <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(t.tier_key))}</p>
-        </div>
+        ${autoBlock}
       `;
+
+      // Campos ocultos para que readTiersFromDom siga leyendo standard sin inputs de gasto
+      if (key === 'standard') {
+        const hidden = document.createElement('div');
+        hidden.hidden = true;
+        hidden.innerHTML = `
+          <input type="checkbox" data-field="auto_upgrade_enabled" disabled />
+          <input data-field="spend_threshold_eur" type="hidden" value="0" />
+          <input data-field="spend_window_days" type="hidden" value="7" />
+        `;
+        card.appendChild(hidden);
+      }
 
       const nameInput = card.querySelector('[data-field="display_name"]');
       const colorInput = card.querySelector('[data-field="color_hex"]');
       const preview = card.querySelector('[data-tier-preview]');
+      const enabledInput = card.querySelector('[data-field="is_enabled"]');
 
       const syncPreview = () => {
-        const n = (nameInput?.value || '').trim() || t.tier_key;
+        const n = (nameInput?.value || '').trim() || key;
         const c = normalizeHex(colorInput?.value, t.color_hex);
         card.style.setProperty('--tier-color', c);
         if (preview) preview.textContent = n;
@@ -329,6 +383,9 @@
 
       nameInput?.addEventListener('input', syncPreview);
       colorInput?.addEventListener('input', syncPreview);
+      enabledInput?.addEventListener('change', () => {
+        card.classList.toggle('is-disabled', !enabledInput.checked);
+      });
 
       grid.appendChild(card);
     });
@@ -487,7 +544,7 @@
     tbody.innerHTML = '';
     if (!rewardsCache.length) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="hint">Aún no hay regalos. Añade el primero arriba.</td></tr>';
+        '<tr><td colspan="5"><div class="sc-membership-empty" style="margin:0;border-style:dashed">Aún no hay regalos. Añade el primero arriba para que el equipo sepa qué entregar.</div></td></tr>';
       return;
     }
     rewardsCache.forEach((r) => {
