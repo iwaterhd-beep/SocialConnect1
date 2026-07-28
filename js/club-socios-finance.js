@@ -4056,8 +4056,8 @@
       if (summaryEl) summaryEl.textContent = '';
       setFinanceEmptyVisible(emptyEl, false);
       setStatText('finance-wallet-stat-count', '—');
-      setStatText('finance-wallet-stat-net', '—');
-      setStatText('finance-wallet-stat-cash', '—');
+      setStatText('finance-wallet-stat-pos', '—');
+      setStatText('finance-wallet-stat-neg', '—');
       return;
     }
 
@@ -4083,8 +4083,8 @@
     if (!list.length) {
       setFinanceEmptyVisible(emptyEl, true);
       setStatText('finance-wallet-stat-count', '0');
-      setStatText('finance-wallet-stat-net', formatWalletLedgerAmount(0));
-      setStatText('finance-wallet-stat-cash', formatWalletLedgerAmount(0));
+      setStatText('finance-wallet-stat-pos', formatMoney(0));
+      setStatText('finance-wallet-stat-neg', formatMoney(0));
       if (summaryEl) {
         summaryEl.textContent = `Sin movimientos de monedero en ${rangeLabel}.`;
       }
@@ -4092,13 +4092,13 @@
     }
     setFinanceEmptyVisible(emptyEl, false);
 
-    let sumWallet = 0;
-    let sumCash = 0;
+    let sumPos = 0;
+    let sumNeg = 0;
     list.forEach((r) => {
       const amt = Number(r.amount_eur) || 0;
       const cash = Number(r.cash_eur) || 0;
-      sumWallet += amt;
-      sumCash += cash;
+      if (amt > 0) sumPos += amt;
+      else if (amt < 0) sumNeg += Math.abs(amt);
       const mb = r.member_id ? memMap[r.member_id] : null;
       const tipo =
         amt >= 0 ? (Math.abs(cash) > 0.005 ? 'Recarga (efectivo)' : 'Ingreso monedero') : Math.abs(cash) > 0.005
@@ -4120,8 +4120,8 @@
     });
 
     setStatText('finance-wallet-stat-count', String(list.length));
-    setStatText('finance-wallet-stat-net', formatWalletLedgerAmount(sumWallet));
-    setStatText('finance-wallet-stat-cash', formatWalletLedgerAmount(sumCash));
+    setStatText('finance-wallet-stat-pos', `+${formatMoney(sumPos)}`);
+    setStatText('finance-wallet-stat-neg', sumNeg > 0 ? `−${formatMoney(sumNeg)}` : formatMoney(0));
     if (summaryEl) {
       summaryEl.textContent = `${list.length} movimiento(s) en ${rangeLabel}.`;
     }
