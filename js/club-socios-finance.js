@@ -1691,16 +1691,17 @@
       return null;
     }
     const m = (membersCache || []).find((x) => memberIdEquals(x.id, id));
-    const optLabel = (sel.selectedOptions?.[0]?.textContent || '').split('·')[0].trim();
-    const name =
-      (m && (formatMemberDisplayName(m) || m.display_name)) ||
-      avalistaSelection?.name ||
-      optLabel ||
-      'Socio';
+    // Usar el display_name tal cual en BD (sin reformatear) para no romper triggers antiguos por acentos.
+    const name = m
+      ? String(m.display_name || '').trim() ||
+        [m.first_name, m.last_name].filter(Boolean).join(' ').trim() ||
+        formatMemberDisplayName(m) ||
+        'Socio'
+      : String(avalistaSelection?.name || (sel.selectedOptions?.[0]?.textContent || '').split('·')[0] || 'Socio').trim();
     const dni =
       (m && m.dni != null ? String(m.dni).trim() : '') ||
       (avalistaSelection?.dni || '');
-    avalistaSelection = { id, name: String(name).trim() || 'Socio', dni };
+    avalistaSelection = { id, name: name || 'Socio', dni };
     pendingSaveAvalista = {
       memberId: id,
       name: avalistaSelection.name,
@@ -1717,9 +1718,9 @@
   function pickAvalistaMember(m) {
     if (!m || !m.id) return;
     const name =
-      formatMemberDisplayName(m) ||
       String(m.display_name || '').trim() ||
       [m.first_name, m.last_name].filter(Boolean).join(' ').trim() ||
+      formatMemberDisplayName(m) ||
       (m.member_code ? String(m.member_code) : '') ||
       'Socio';
     const dni = m.dni != null ? String(m.dni).trim() : '';
@@ -2751,10 +2752,9 @@
       } else if (
         /garante|avalista.*existente|socio avalista/i.test(String(error.message || ''))
       ) {
-        msg =
-          avalistaMemberRaw
-            ? `No se pudo validar el avalista en la base de datos (${avalista || avalistaMemberRaw}). Prueba a volver a elegirlo en el desplegable y guarda otra vez.`
-            : 'Debes elegir un socio avalista en el desplegable «Socio avalista (garante)» antes de guardar.';
+        msg = avalistaMemberRaw
+          ? `La base de datos rechazó el avalista. Ejecuta en Supabase la migración 050_club_members_avalista_by_id.sql y vuelve a guardar (avalista: ${avalista}).`
+          : 'Debes elegir un socio avalista en el desplegable «Socio avalista (garante)» antes de guardar.';
       } else if (
         String(error.message || '').toLowerCase().includes('club_member_counters') ||
         String(error.message || '').toLowerCase().includes('row-level security')
