@@ -131,3 +131,113 @@
     </div>
   </section>
 </div>
+
+<div
+  id="membership-tier-create-modal"
+  class="shift-modal is-hidden"
+  aria-hidden="true"
+  hidden
+>
+  <div class="shift-modal__backdrop" data-tier-create-close></div>
+  <div
+    class="shift-modal__panel card-section shift-modal__panel--wide sc-membership-create-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="membership-tier-create-title"
+  >
+    <div class="sc-section-head" style="margin: 0 0 0.75rem">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem">
+        <div>
+          <h3 id="membership-tier-create-title" class="shift-modal__title" style="margin:0">
+            Nuevo nivel de membresía
+          </h3>
+          <p class="hint" style="margin:0.35rem 0 0">
+            Define nombre, color y detalles. Luego pulsa «Guardar cambios» en Membresía para fijarlo en la nube.
+          </p>
+        </div>
+        <button type="button" class="btn btn--ghost btn--small" data-tier-create-close aria-label="Cerrar">
+          ×
+        </button>
+      </div>
+    </div>
+
+    <div class="shift-modal__body">
+      <p id="membership-tier-create-status" class="msg" role="status" aria-live="polite"></p>
+      <div class="sc-membership-create-form">
+        <div class="sc-membership-create-form__preview" aria-hidden="true">
+          <span id="tier-create-preview" class="sc-membership-tier__preview">Nuevo nivel</span>
+        </div>
+        <div class="sc-membership-create-form__grid">
+          <div class="form__row">
+            <label for="tier-create-name">Nombre visible</label>
+            <input
+              class="input"
+              id="tier-create-name"
+              type="text"
+              maxlength="40"
+              autocomplete="off"
+              placeholder="Ej. Oro, Platino, Socio plus…"
+            />
+          </div>
+          <div class="form__row">
+            <label for="tier-create-color">Color</label>
+            <input class="input sc-membership-tier__color" id="tier-create-color" type="color" value="#7c3aed" />
+          </div>
+          <div class="form__row form__row--full">
+            <label for="tier-create-description">Descripción corta</label>
+            <input
+              class="input"
+              id="tier-create-description"
+              type="text"
+              maxlength="160"
+              placeholder="Qué es este nivel"
+            />
+          </div>
+          <div class="form__row form__row--full">
+            <label for="tier-create-benefits">Beneficios</label>
+            <textarea
+              class="input"
+              id="tier-create-benefits"
+              rows="3"
+              maxlength="500"
+              placeholder="Qué ofrece este nivel al socio"
+            ></textarea>
+          </div>
+          <div class="form__row">
+            <label for="tier-create-valid-days">Vigencia por defecto (días)</label>
+            <input
+              class="input"
+              id="tier-create-valid-days"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Vacío = sin caducidad"
+            />
+          </div>
+          <div class="form__row">
+            <label for="tier-create-threshold">Umbral gasto POS (€)</label>
+            <input class="input" id="tier-create-threshold" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="form__row">
+            <label for="tier-create-window">Ventana (días)</label>
+            <input class="input" id="tier-create-window" type="number" min="1" max="365" step="1" value="7" />
+          </div>
+          <div class="form__row form__row--full">
+            <label class="sc-membership-tier__toggle">
+              <input type="checkbox" id="tier-create-enabled" checked />
+              Nivel activo (visible en Socios y POS)
+            </label>
+          </div>
+          <p class="hint form__row--full" style="margin:0">
+            La auto-subida por gasto del POS sigue aplicando solo a VIP. Este nivel se asigna a mano en Socios.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-actions shift-modal__actions">
+      <button type="button" class="btn btn--ghost" data-tier-create-close>Cancelar</button>
+      <button type="button" class="btn" id="membership-tier-create-submit">Crear nivel</button>
+    </div>
+  </div>
+</div>

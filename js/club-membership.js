@@ -592,7 +592,24 @@
     syncRewardTierOptions();
   }
 
-  function addCustomTier() {
+  function setCreateTierMsg(text, isError) {
+    const el = $('membership-tier-create-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (text ? (isError ? ' msg--error' : ' msg--ok') : '');
+  }
+
+  function syncCreateTierPreview() {
+    const name = ($('tier-create-name')?.value || '').trim() || 'Nuevo nivel';
+    const color = normalizeHex($('tier-create-color')?.value, '#7c3aed');
+    const preview = $('tier-create-preview');
+    if (preview) {
+      preview.textContent = name;
+      preview.style.setProperty('--tier-color', color);
+    }
+  }
+
+  function openCreateTierModal() {
     if (!isAdmin()) {
       setMsg('Solo el administrador puede crear niveles.', true);
       return;
@@ -608,43 +625,125 @@
       ? readTiersFromDom()
       : tiersCache.slice();
     tiersCache = fromDom;
+
     const suggested = `Nivel ${tiersCache.length + 1}`;
-    const raw = window.prompt('Nombre del nuevo nivel:', suggested);
-    if (raw == null) return;
-    const display_name = String(raw).trim().slice(0, 40) || suggested;
+    if ($('tier-create-name')) $('tier-create-name').value = suggested;
+    if ($('tier-create-color')) $('tier-create-color').value = nextCustomColor();
+    if ($('tier-create-description')) $('tier-create-description').value = '';
+    if ($('tier-create-benefits')) $('tier-create-benefits').value = '';
+    if ($('tier-create-valid-days')) $('tier-create-valid-days').value = '';
+    if ($('tier-create-threshold')) $('tier-create-threshold').value = '0';
+    if ($('tier-create-window')) $('tier-create-window').value = '7';
+    if ($('tier-create-enabled')) $('tier-create-enabled').checked = true;
+    setCreateTierMsg('', false);
+    syncCreateTierPreview();
+
+    const modal = $('membership-tier-create-modal');
+    if (!modal) return;
+    modal.hidden = false;
+    modal.classList.remove('is-hidden', 'is-leaving');
+    modal.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => {
+      $('tier-create-name')?.focus?.();
+      $('tier-create-name')?.select?.();
+    });
+  }
+
+  function closeCreateTierModal() {
+    const modal = $('membership-tier-create-modal');
+    if (!modal || modal.classList.contains('is-hidden')) return;
+    modal.classList.add('is-leaving');
+    window.setTimeout(() => {
+      modal.classList.add('is-hidden');
+      modal.classList.remove('is-leaving');
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      setCreateTierMsg('', false);
+    }, 180);
+  }
+
+  function submitCreateTierModal() {
+    if (!isAdmin()) {
+      setCreateTierMsg('Solo el administrador puede crear niveles.', true);
+      return;
+    }
+    const fromDom = document.querySelectorAll('#membership-tiers-grid [data-tier-key]').length
+      ? readTiersFromDom()
+      : tiersCache.slice();
+    tiersCache = fromDom;
+
+    const display_name = ($('tier-create-name')?.value || '').trim().slice(0, 40);
+    if (!display_name) {
+      setCreateTierMsg('Indica un nombre para el nivel.', true);
+      $('tier-create-name')?.focus?.();
+      return;
+    }
+
+    const color_hex = normalizeHex($('tier-create-color')?.value, nextCustomColor());
+    const description = ($('tier-create-description')?.value || '').trim().slice(0, 160);
+    const benefits_text = ($('tier-create-benefits')?.value || '').trim().slice(0, 500);
+    const validRaw = ($('tier-create-valid-days')?.value || '').trim();
+    let default_valid_days = null;
+    if (validRaw !== '') {
+      const n = Number(validRaw);
+      if (!Number.isFinite(n) || n < 1) {
+        setCreateTierMsg('La vigencia debe ser un número de días ≥ 1, o déjala vacía.', true);
+        $('tier-create-valid-days')?.focus?.();
+        return;
+      }
+      default_valid_days = Math.trunc(n);
+    }
+    const spend_threshold_eur = Number($('tier-create-threshold')?.value || 0);
+    if (!Number.isFinite(spend_threshold_eur) || spend_threshold_eur < 0) {
+      setCreateTierMsg('El umbral de gasto no es válido.', true);
+      $('tier-create-threshold')?.focus?.();
+      return;
+    }
+    const spend_window_days = Math.max(
+      1,
+      Math.min(365, Math.trunc(Number($('tier-create-window')?.value || 7) || 7)),
+    );
+    const is_enabled = $('tier-create-enabled')?.checked !== false;
     const tier_key = slugifyTierKey(display_name);
+
     const row = {
       id: null,
       club_id: ctx?.club?.id || null,
       tier_key,
       display_name,
-      color_hex: nextCustomColor(),
-      description: '',
-      benefits_text: '',
+      color_hex,
+      description,
+      benefits_text,
       auto_upgrade_enabled: false,
-      spend_threshold_eur: 0,
-      spend_window_days: 7,
-      default_valid_days: null,
-      is_enabled: true,
+      spend_threshold_eur,
+      spend_window_days,
+      default_valid_days,
+      is_enabled,
       sort_order: nextSortOrder(),
     };
+
     tiersCache = [...fromDom.filter((t) => t.tier_key !== tier_key), row];
     publishTierGlobal();
     renderTiers();
+    closeCreateTierModal();
+
     const card = document.querySelector(
       `#membership-tiers-grid [data-tier-key="${CSS.escape(tier_key)}"]`,
     );
     if (card) {
       card.querySelector('[data-tier-toggle]')?.click();
-      card.querySelector('[data-field="display_name"]')?.focus?.();
     }
     setMsg(
       migrationMissing
         ? 'Nivel añadido en esta sesión. Ejecuta las migraciones de membresía para guardarlo.'
-        : 'Nivel añadido. Pulsa «Guardar cambios» para fijarlo en la nube.',
+        : 'Nivel creado. Pulsa «Guardar cambios» para fijarlo en la nube.',
       false,
     );
     notifyLabelsUpdated();
+  }
+
+  function addCustomTier() {
+    openCreateTierModal();
   }
 
   async function removeCustomTier(tierKey) {
@@ -1192,6 +1291,24 @@
     uiBound = true;
     $('membership-tiers-save')?.addEventListener('click', () => void saveTiers());
     $('membership-tier-add')?.addEventListener('click', () => addCustomTier());
+    $('membership-tier-create-submit')?.addEventListener('click', () => submitCreateTierModal());
+    document.querySelectorAll('[data-tier-create-close]').forEach((el) => {
+      el.addEventListener('click', () => closeCreateTierModal());
+    });
+    $('tier-create-name')?.addEventListener('input', syncCreateTierPreview);
+    $('tier-create-color')?.addEventListener('input', syncCreateTierPreview);
+    $('tier-create-name')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitCreateTierModal();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('membership-tier-create-modal');
+      if (!modal || modal.classList.contains('is-hidden')) return;
+      closeCreateTierModal();
+    });
     $('reward-add')?.addEventListener('click', () => void addReward());
     $('reward-trigger')?.addEventListener('change', syncRewardSpendVisibility);
     $('reward-product')?.addEventListener('change', syncRewardQtyUnitLabel);
