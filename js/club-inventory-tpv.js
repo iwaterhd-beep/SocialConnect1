@@ -2946,21 +2946,21 @@
         .eq('member_id', m.id)
         .eq('status', 'pending'));
     }
-    if (error) {
-      // tabla aún no migrada
-      return;
-    }
-    if (!grants?.length) return;
+    if (error || !grants?.length) return;
 
-    let added = 0;
+    const shiftId = state.tpvOpenShiftId || (await getOpenShiftId(state.ctx.club.id));
+    let registered = 0;
+    let queued = 0;
+    const registeredLines = [];
+
     for (const g of grants) {
       if (!g.product_id) continue;
-      const already = (state.tpvCart || []).some(
+      const alreadyInCart = (state.tpvCart || []).some(
         (line) =>
           line.membership_grant_id &&
           String(line.membership_grant_id) === String(g.id),
       );
-      if (already) continue;
+      if (alreadyInCart) continue;
 
       let product = (state.products || []).find((p) => tpvIdsEqual(p.id, g.product_id));
       if (!product) {
@@ -2985,7 +2985,7 @@
       }
       if (unit === 'unit') qty = Math.max(1, Math.round(qty));
 
-      state.tpvCart.push({
+      const line = {
         cart_row_id: makeTpvCartRowId(),
         product_id: product.id,
         product_name: product.name || 'Regalo',
@@ -2994,22 +2994,69 @@
         grams_charged: qty,
         grams_dispensed: qty,
         price_charged_eur: 0,
-        notes: 'Regalo membresía (subida de nivel)',
+        notes: 'Regalo membresía',
         membership_grant_id: g.id,
         is_membership_gift: true,
-      });
-      added += 1;
+      };
+
+      // Registrar ya: descuenta stock + crea fila en tpv_dispenses
+      if (shiftId) {
+        const out = await registerTpvDispenseLine(line, shiftId, m.id);
+        if (!out.error) {
+          const ensured = await ensureDispensePersisted(line, shiftId, m.id, out.rpcRes);
+          if (!ensured.error) {
+            await fulfillMembershipGiftGrants([line]);
+            registered += 1;
+            registeredLines.push(line);
+            continue;
+          }
+        } else {
+          console.warn('membership gift register', out.error);
+        }
+      }
+
+      // Sin turno o fallo RPC → dejar en ticket para cobrar después
+      state.tpvCart.push(line);
+      queued += 1;
     }
 
-    if (added > 0) {
+    if (registered > 0) {
+      await loadProducts();
+      await refreshStockUi();
+      await loadRecentDispenses();
+      if (typeof window.scClubRefreshFinance === 'function') {
+        try {
+          await window.scClubRefreshFinance();
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      const names = registeredLines
+        .map((l) => `${(l.product_emoji || '').trim() ? l.product_emoji + ' ' : ''}${l.product_name}`)
+        .join(', ');
+      setMsg(
+        'tpv-status',
+        registered === 1
+          ? `Regalo registrado (${names}): stock descontado y anotado en dispensaciones.`
+          : `${registered} regalos registrados (${names}): stock descontado y anotados en dispensaciones.`,
+        false,
+      );
+      showToast(
+        registered === 1
+          ? 'Regalo membresía registrado en inventario'
+          : `${registered} regalos registrados en inventario`,
+      );
+    }
+
+    if (queued > 0) {
       renderTpvCart();
       pulseTpvTicket();
       setMsg(
         'tpv-status',
-        added === 1
-          ? 'Regalo de membresía añadido gratis al ticket.'
-          : `${added} regalos de membresía añadidos gratis al ticket.`,
-        false,
+        shiftId
+          ? 'No se pudo registrar el regalo automáticamente. Quedó en el ticket: pulsa Cobrar para descontar stock.'
+          : 'Regalo en el ticket. Abre un turno y pulsa Cobrar para descontar stock y registrarlo en dispensaciones.',
+        !shiftId,
       );
     }
   }
@@ -3312,7 +3359,10 @@
   }
 
   async function submitTpv() {
-    syncAutoTpvLine({ silent: true });
+    // Si ya hay líneas en el ticket (p. ej. regalos), no mezclar la línea del formulario
+    if (!(state.tpvCart || []).length) {
+      syncAutoTpvLine({ silent: true });
+    }
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
     if (getTpvPaymentMethod() === 'wallet' && !memberRaw) {
       setMsg('tpv-status', 'Para cobrar con monedero debes seleccionar un socio.', true);
