@@ -369,59 +369,64 @@
       }
 
       card.innerHTML = `
-        <div class="sc-membership-tier__head">
+        <button type="button" class="sc-membership-tier__summary" data-tier-toggle aria-expanded="false">
           <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
-          <span class="sc-membership-tier__key">${escapeHtml(key)}</span>
+          <span class="sc-membership-tier__summary-meta">
+            <span class="sc-membership-tier__key">${escapeHtml(key)}</span>
+            <span class="sc-membership-tier__chevron" aria-hidden="true"></span>
+          </span>
+        </button>
+        <div class="sc-membership-tier__body" hidden>
+          <div class="sc-membership-tier__name-row">
+            <div class="form__row">
+              <label for="tier-name-${escapeHtml(key)}">Nombre visible</label>
+              <input
+                class="input"
+                id="tier-name-${escapeHtml(key)}"
+                data-field="display_name"
+                type="text"
+                maxlength="40"
+                autocomplete="off"
+                value="${escapeHtml(name)}"
+                placeholder="Ej. Oro, Platino…"
+              />
+            </div>
+            <div class="form__row">
+              <label for="tier-color-${escapeHtml(key)}">Color</label>
+              <input
+                class="input sc-membership-tier__color"
+                id="tier-color-${escapeHtml(key)}"
+                data-field="color_hex"
+                type="color"
+                value="${escapeHtml(color)}"
+                title="Color del nivel"
+              />
+            </div>
+          </div>
+          <div class="sc-membership-tier__grid">
+            <div class="form__row form__row--full">
+              <label>Descripción corta</label>
+              <input class="input" data-field="description" type="text" value="${escapeHtml(t.description || '')}" placeholder="Qué es este nivel" />
+            </div>
+            <div class="form__row form__row--full">
+              <label>Beneficios</label>
+              <textarea class="input" data-field="benefits_text" rows="3" placeholder="Qué ofrece este nivel al socio">${escapeHtml(t.benefits_text || '')}</textarea>
+            </div>
+            <div class="form__row">
+              <label>Vigencia por defecto (días)</label>
+              <input class="input" data-field="default_valid_days" type="number" min="1" step="1"
+                placeholder="Vacío = sin caducidad"
+                value="${t.default_valid_days != null ? escapeHtml(String(t.default_valid_days)) : ''}" />
+            </div>
+            <div class="form__row">
+              <label class="sc-membership-tier__toggle" style="margin-top:1.35rem">
+                <input type="checkbox" data-field="is_enabled" ${enabled ? 'checked' : ''} />
+                Nivel activo
+              </label>
+            </div>
+          </div>
+          ${autoBlock}
         </div>
-        <div class="sc-membership-tier__name-row">
-          <div class="form__row">
-            <label for="tier-name-${escapeHtml(key)}">Nombre visible</label>
-            <input
-              class="input"
-              id="tier-name-${escapeHtml(key)}"
-              data-field="display_name"
-              type="text"
-              maxlength="40"
-              autocomplete="off"
-              value="${escapeHtml(name)}"
-              placeholder="Ej. Oro, Platino…"
-            />
-          </div>
-          <div class="form__row">
-            <label for="tier-color-${escapeHtml(key)}">Color</label>
-            <input
-              class="input sc-membership-tier__color"
-              id="tier-color-${escapeHtml(key)}"
-              data-field="color_hex"
-              type="color"
-              value="${escapeHtml(color)}"
-              title="Color del nivel"
-            />
-          </div>
-        </div>
-        <div class="sc-membership-tier__grid">
-          <div class="form__row form__row--full">
-            <label>Descripción corta</label>
-            <input class="input" data-field="description" type="text" value="${escapeHtml(t.description || '')}" placeholder="Qué es este nivel" />
-          </div>
-          <div class="form__row form__row--full">
-            <label>Beneficios</label>
-            <textarea class="input" data-field="benefits_text" rows="3" placeholder="Qué ofrece este nivel al socio">${escapeHtml(t.benefits_text || '')}</textarea>
-          </div>
-          <div class="form__row">
-            <label>Vigencia por defecto (días)</label>
-            <input class="input" data-field="default_valid_days" type="number" min="1" step="1"
-              placeholder="Vacío = sin caducidad"
-              value="${t.default_valid_days != null ? escapeHtml(String(t.default_valid_days)) : ''}" />
-          </div>
-          <div class="form__row">
-            <label class="sc-membership-tier__toggle" style="margin-top:1.35rem">
-              <input type="checkbox" data-field="is_enabled" ${enabled ? 'checked' : ''} />
-              Nivel activo
-            </label>
-          </div>
-        </div>
-        ${autoBlock}
       `;
 
       // Campos ocultos para que readTiersFromDom siga leyendo standard sin inputs de gasto
@@ -433,13 +438,15 @@
           <input data-field="spend_threshold_eur" type="hidden" value="0" />
           <input data-field="spend_window_days" type="hidden" value="7" />
         `;
-        card.appendChild(hidden);
+        card.querySelector('.sc-membership-tier__body')?.appendChild(hidden);
       }
 
       const nameInput = card.querySelector('[data-field="display_name"]');
       const colorInput = card.querySelector('[data-field="color_hex"]');
       const preview = card.querySelector('[data-tier-preview]');
       const enabledInput = card.querySelector('[data-field="is_enabled"]');
+      const toggleBtn = card.querySelector('[data-tier-toggle]');
+      const body = card.querySelector('.sc-membership-tier__body');
 
       const syncPreview = () => {
         const n = (nameInput?.value || '').trim() || key;
@@ -448,12 +455,34 @@
         if (preview) preview.textContent = n;
       };
 
+      const setOpen = (open) => {
+        card.classList.toggle('is-open', open);
+        if (body) {
+          body.hidden = !open;
+        }
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+
+      toggleBtn?.addEventListener('click', () => {
+        const willOpen = !card.classList.contains('is-open');
+        grid.querySelectorAll('.sc-membership-tier.is-open').forEach((other) => {
+          if (other === card) return;
+          other.classList.remove('is-open');
+          const ob = other.querySelector('.sc-membership-tier__body');
+          const ot = other.querySelector('[data-tier-toggle]');
+          if (ob) ob.hidden = true;
+          if (ot) ot.setAttribute('aria-expanded', 'false');
+        });
+        setOpen(willOpen);
+      });
+
       nameInput?.addEventListener('input', syncPreview);
       colorInput?.addEventListener('input', syncPreview);
       enabledInput?.addEventListener('change', () => {
         card.classList.toggle('is-disabled', !enabledInput.checked);
       });
 
+      setOpen(false);
       grid.appendChild(card);
     });
 
