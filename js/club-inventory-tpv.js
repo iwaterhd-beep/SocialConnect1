@@ -410,6 +410,18 @@
     modal.setAttribute('aria-hidden', 'true');
   }
 
+  function openInvMenuModal() {
+    updateMenuUrlPreview();
+    window.scOpenShiftModal($('inv-menu-modal'));
+  }
+
+  function closeInvMenuModal() {
+    const modal = $('inv-menu-modal');
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
   function applyAdminInventoryPriceRows() {
     const show = state.ctx?.profile?.role === 'admin_club';
     const rowPc = $('inv-row-purchase-cost');
@@ -3596,6 +3608,7 @@
     $('inv-product-emoji-open')?.addEventListener('click', () => void openInvEmojiModal());
     $('inv-product-emoji')?.addEventListener('click', () => void openInvEmojiModal());
     $('inv-product-emoji')?.addEventListener('focus', () => void openInvEmojiModal());
+    $('inv-open-menu-modal')?.addEventListener('click', () => openInvMenuModal());
     $('inv-open-cat-modal')?.addEventListener('click', () => openInvCatModal());
     $('inv-open-product-modal')?.addEventListener('click', () => {
       clearProductForm();
@@ -3606,6 +3619,9 @@
         const v = btn.getAttribute('data-inv-sale-unit') || 'grams';
         setInvSaleUnitUi(v);
       });
+    });
+    document.querySelectorAll('[data-inv-close-menu-modal]').forEach((el) => {
+      el.addEventListener('click', () => closeInvMenuModal());
     });
     document.querySelectorAll('[data-inv-close-cat-modal]').forEach((el) => {
       el.addEventListener('click', () => closeInvCatModal());
@@ -3628,6 +3644,7 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
+      if ($('inv-menu-modal') && !$('inv-menu-modal').classList.contains('is-hidden')) closeInvMenuModal();
       if ($('inv-cat-modal') && !$('inv-cat-modal').classList.contains('is-hidden')) closeInvCatModal();
       if ($('inv-product-modal') && !$('inv-product-modal').classList.contains('is-hidden')) closeInvProductModal();
       if ($('inv-emoji-modal') && !$('inv-emoji-modal').classList.contains('is-hidden')) closeInvEmojiModal();
