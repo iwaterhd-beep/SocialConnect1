@@ -165,9 +165,25 @@
       const emoji = (p.emoji || '').trim();
       const unit = p.sale_unit === 'unit' ? 'ud' : 'g';
       opt.textContent = `${emoji ? emoji + ' ' : ''}${p.name || 'Producto'} · ${unit}`;
+      opt.dataset.saleUnit = unit;
       sel.appendChild(opt);
     });
     if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
+    syncRewardQtyUnitLabel();
+  }
+
+  function syncRewardQtyUnitLabel() {
+    const sel = $('reward-product');
+    const unitEl = $('reward-qty-unit');
+    const qtyInput = $('reward-qty');
+    const productId = (sel?.value || '').trim();
+    const product = rewardProductsCache.find((p) => String(p.id) === productId);
+    const isUnit = product ? product.sale_unit === 'unit' : true;
+    if (unitEl) unitEl.textContent = isUnit ? '(ud)' : '(g)';
+    if (qtyInput) {
+      qtyInput.step = isUnit ? '1' : 'any';
+      qtyInput.min = isUnit ? '1' : '0.001';
+    }
   }
 
   function useDefaultTiers() {
@@ -640,7 +656,7 @@
     tbody.innerHTML = '';
     if (!rewardsCache.length) {
       tbody.innerHTML =
-        '<tr><td colspan="5"><div class="sc-membership-empty" style="margin:0;border-style:dashed">Aún no hay regalos. Añade el primero arriba para que el equipo sepa qué entregar.</div></td></tr>';
+        '<tr><td colspan="6"><div class="sc-membership-empty" style="margin:0;border-style:dashed">Aún no hay regalos. Añade el primero arriba para que el equipo sepa qué entregar.</div></td></tr>';
       return;
     }
     rewardsCache.forEach((r) => {
@@ -653,6 +669,13 @@
         r.trigger_type === 'spend_threshold' && r.trigger_spend_eur != null
           ? ` (≥ ${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €)`
           : '';
+      const product = rewardProductsCache.find((p) => String(p.id) === String(r.product_id || ''));
+      const unitLabel = product?.sale_unit === 'unit' ? 'ud' : product ? 'g' : '';
+      const qtyNum = Number(r.quantity);
+      const qtyText =
+        Number.isFinite(qtyNum) && qtyNum > 0
+          ? `${qtyNum.toLocaleString('es-ES', { maximumFractionDigits: 3 })}${unitLabel ? ` ${unitLabel}` : ''}`
+          : '1';
       const productHint =
         r.product_id
           ? `<div class="hint">TPV · entrega automática gratis</div>`
@@ -663,6 +686,7 @@
           ${productHint}
           ${r.description ? `<div class="hint">${escapeHtml(r.description)}</div>` : ''}
         </td>
+        <td>${escapeHtml(qtyText)}</td>
         <td>${escapeHtml(tierName)}</td>
         <td>${escapeHtml(triggerLabel(r.trigger_type))}${escapeHtml(triggerExtra)}</td>
         <td>${r.is_active ? 'Activo' : 'Pausado'}</td>
@@ -706,6 +730,21 @@
       setMsg('El producto elegido no es válido.', true);
       return;
     }
+    const isUnitProduct = product?.sale_unit === 'unit';
+    const qtyRaw = ($('reward-qty')?.value || '').trim();
+    let quantity = qtyRaw === '' ? 1 : Number(qtyRaw);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      setMsg('Indica una cantidad válida mayor que 0.', true);
+      $('reward-qty')?.focus?.();
+      return;
+    }
+    if (isUnitProduct) {
+      quantity = Math.round(quantity);
+      if (quantity < 1) {
+        setMsg('Para productos por unidad la cantidad debe ser al menos 1.', true);
+        return;
+      }
+    }
     const trigger = $('reward-trigger')?.value || 'on_upgrade';
     const tier = ($('reward-tier')?.value || '').trim() || null;
     const desc = ($('reward-desc')?.value || '').trim();
@@ -730,8 +769,33 @@
       is_active: true,
       sort_order: rewardsCache.length,
       product_id: productId,
+      quantity,
     };
     let { error } = await sb().from('club_membership_rewards').insert([payload]);
+    if (
+      error &&
+      (error.code === '42703' ||
+        error.code === 'PGRST204' ||
+        String(error.message || '').toLowerCase().includes('quantity'))
+    ) {
+      const withoutQty = { ...payload };
+      delete withoutQty.quantity;
+      ({ error } = await sb().from('club_membership_rewards').insert([withoutQty]));
+      if (!error) {
+        setMsg(
+          'Regalo guardado sin cantidad. Ejecuta 053_membership_reward_quantity.sql en Supabase.',
+          true,
+        );
+        if ($('reward-product')) $('reward-product').value = '';
+        if ($('reward-qty')) $('reward-qty').value = '1';
+        if ($('reward-desc')) $('reward-desc').value = '';
+        if ($('reward-spend')) $('reward-spend').value = '';
+        syncRewardQtyUnitLabel();
+        await loadRewards();
+        renderRewards();
+        return;
+      }
+    }
     if (
       error &&
       (error.code === '42703' ||
@@ -741,6 +805,7 @@
       hasRewardProductColumn = false;
       const withoutProduct = { ...payload };
       delete withoutProduct.product_id;
+      delete withoutProduct.quantity;
       ({ error } = await sb().from('club_membership_rewards').insert([withoutProduct]));
       if (!error) {
         setMsg(
@@ -748,6 +813,7 @@
           true,
         );
         if ($('reward-product')) $('reward-product').value = '';
+        if ($('reward-qty')) $('reward-qty').value = '1';
         if ($('reward-desc')) $('reward-desc').value = '';
         if ($('reward-spend')) $('reward-spend').value = '';
         await loadRewards();
@@ -767,8 +833,10 @@
     }
 
     if ($('reward-product')) $('reward-product').value = '';
+    if ($('reward-qty')) $('reward-qty').value = '1';
     if ($('reward-desc')) $('reward-desc').value = '';
     if ($('reward-spend')) $('reward-spend').value = '';
+    syncRewardQtyUnitLabel();
     await loadRewards();
     renderRewards();
     setMsg('Regalo añadido. Se entregará gratis en el TPV al subir de nivel.', false);
@@ -806,14 +874,27 @@
 
     let created = 0;
     for (const r of matching) {
+      const qtyRaw = Number(r.quantity);
+      const quantity = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
       const row = {
         club_id: ctx.club.id,
         member_id: memberId,
         reward_id: r.id,
         product_id: r.product_id,
+        quantity,
         status: 'pending',
       };
-      const { error } = await sb().from('club_membership_reward_grants').insert([row]);
+      let { error } = await sb().from('club_membership_reward_grants').insert([row]);
+      if (
+        error &&
+        (error.code === '42703' ||
+          error.code === 'PGRST204' ||
+          String(error.message || '').toLowerCase().includes('quantity'))
+      ) {
+        const withoutQty = { ...row };
+        delete withoutQty.quantity;
+        ({ error } = await sb().from('club_membership_reward_grants').insert([withoutQty]));
+      }
       if (error) {
         const msg = String(error.message || '').toLowerCase();
         if (
@@ -903,7 +984,9 @@
     $('membership-tiers-save')?.addEventListener('click', () => void saveTiers());
     $('reward-add')?.addEventListener('click', () => void addReward());
     $('reward-trigger')?.addEventListener('change', syncRewardSpendVisibility);
+    $('reward-product')?.addEventListener('change', syncRewardQtyUnitLabel);
     syncRewardSpendVisibility();
+    syncRewardQtyUnitLabel();
   }
 
   async function refreshMembershipUi() {

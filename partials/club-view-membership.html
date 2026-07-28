@@ -51,6 +51,19 @@
               <p class="hint">Se añadirá gratis al ticket la primera vez que el socio compre tras subir a ese nivel.</p>
             </div>
             <div class="form__row">
+              <label for="reward-qty">Cantidad <span id="reward-qty-unit" class="hint">(ud)</span></label>
+              <input
+                class="input"
+                id="reward-qty"
+                type="number"
+                min="0.001"
+                step="any"
+                value="1"
+                placeholder="1"
+              />
+              <p class="hint">Unidades si el producto se vende por ud; gramos si se vende por peso.</p>
+            </div>
+            <div class="form__row">
               <label for="reward-tier">Nivel asociado</label>
               <select class="input" id="reward-tier">
                 <option value="">Cualquiera</option>
@@ -93,6 +106,7 @@
             <thead>
               <tr>
                 <th>Regalo</th>
+                <th>Cant.</th>
                 <th>Nivel</th>
                 <th>Cuándo</th>
                 <th>Estado</th>
@@ -101,7 +115,7 @@
             </thead>
             <tbody id="membership-rewards-tbody">
               <tr>
-                <td colspan="5" class="hint">Sin regalos todavía.</td>
+                <td colspan="6" class="hint">Sin regalos todavía.</td>
               </tr>
             </tbody>
           </table>

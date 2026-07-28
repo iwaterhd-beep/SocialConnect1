@@ -2929,10 +2929,23 @@
     if (!m?.id || !state.ctx?.club?.id || !sb()) return;
     let { data: grants, error } = await sb()
       .from('club_membership_reward_grants')
-      .select('id, product_id, reward_id, status')
+      .select('id, product_id, reward_id, status, quantity')
       .eq('club_id', state.ctx.club.id)
       .eq('member_id', m.id)
       .eq('status', 'pending');
+    if (
+      error &&
+      (error.code === '42703' ||
+        error.code === 'PGRST204' ||
+        String(error.message || '').toLowerCase().includes('quantity'))
+    ) {
+      ({ data: grants, error } = await sb()
+        .from('club_membership_reward_grants')
+        .select('id, product_id, reward_id, status')
+        .eq('club_id', state.ctx.club.id)
+        .eq('member_id', m.id)
+        .eq('status', 'pending'));
+    }
     if (error) {
       // tabla aún no migrada
       return;
@@ -2961,11 +2974,16 @@
       if (!product) continue;
 
       const unit = unitKey(product);
-      let qty = 1;
-      if (unit !== 'unit') {
-        const defG = Number(product.default_sale_grams);
-        qty = Number.isFinite(defG) && defG > 0 ? defG : 1;
+      let qty = Number(g.quantity);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        if (unit === 'unit') {
+          qty = 1;
+        } else {
+          const defG = Number(product.default_sale_grams);
+          qty = Number.isFinite(defG) && defG > 0 ? defG : 1;
+        }
       }
+      if (unit === 'unit') qty = Math.max(1, Math.round(qty));
 
       state.tpvCart.push({
         cart_row_id: makeTpvCartRowId(),
