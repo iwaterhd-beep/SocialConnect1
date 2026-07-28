@@ -688,10 +688,68 @@
 
   function syncMemberProfileVipClass(m) {
     const on = isActiveVipMember(m);
+    const isBday = isMemberBirthdayToday(m?.birth_date);
     const modal = $('member-profile-modal');
     const hero = document.querySelector('#member-profile-modal .member-profile-hero');
-    if (modal) modal.classList.toggle('is-vip-member', on);
-    if (hero) hero.classList.toggle('member-profile-hero--vip', on);
+    if (modal) {
+      modal.classList.toggle('is-vip-member', on);
+      modal.classList.toggle('is-birthday-member', isBday);
+    }
+    if (hero) {
+      hero.classList.toggle('member-profile-hero--vip', on);
+      hero.classList.toggle('member-profile-hero--birthday', isBday);
+    }
+  }
+
+  function isMemberBirthdayToday(iso) {
+    if (!iso) return false;
+    const raw = String(iso).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return false;
+    const mo = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!Number.isFinite(mo) || !Number.isFinite(d)) return false;
+    const today = new Date();
+    return today.getMonth() + 1 === mo && today.getDate() === d;
+  }
+
+  function memberBirthdayTurningAge(iso) {
+    if (!isMemberBirthdayToday(iso)) return null;
+    return memberAgeFromBirthIso(iso);
+  }
+
+  function syncMemberProfileBirthdayUi(m) {
+    const banner = $('member-profile-birthday');
+    const title = $('member-profile-birthday-title');
+    const ageEl = $('member-profile-birthday-age');
+    const crown = $('member-profile-avatar-crown');
+    const isBday = isMemberBirthdayToday(m?.birth_date);
+    const age = memberBirthdayTurningAge(m?.birth_date);
+    if (banner) {
+      if (isBday) {
+        banner.classList.remove('is-hidden');
+        banner.hidden = false;
+        if (title) title.textContent = '¡Feliz cumpleaños!';
+        if (ageEl) {
+          ageEl.textContent =
+            age != null ? `Hoy cumple ${age} años` : 'Hoy es su cumpleaños';
+        }
+      } else {
+        banner.classList.add('is-hidden');
+        banner.hidden = true;
+        if (title) title.textContent = '';
+        if (ageEl) ageEl.textContent = '';
+      }
+    }
+    if (crown) {
+      if (isBday) {
+        crown.classList.remove('is-hidden');
+        crown.hidden = false;
+      } else {
+        crown.classList.add('is-hidden');
+        crown.hidden = true;
+      }
+    }
   }
 
   function closeMemberModals() {
@@ -1095,6 +1153,7 @@
       }
     }
     updateMemberArchiveButtons(m);
+    syncMemberProfileBirthdayUi(m);
     void renderMemberViewDocuments(m);
   }
 

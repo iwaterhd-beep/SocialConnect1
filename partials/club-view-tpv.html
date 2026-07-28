@@ -80,10 +80,14 @@
                 <input type="hidden" id="tpv-selected-member" value="" />
                 <div id="tpv-member-chip-wrap" class="tpv-receipt__member-chip tpv-member-chip-wrap is-hidden" hidden>
                   <div class="tpv-member-chip-avatar" aria-hidden="true">
+                    <span id="tpv-member-chip-crown" class="tpv-member-chip-crown is-hidden" hidden aria-hidden="true">♛</span>
                     <img id="tpv-member-chip-img" class="tpv-member-chip-img is-hidden" src="" alt="" />
                     <span id="tpv-member-chip-initials" class="tpv-member-chip-initials">?</span>
                   </div>
-                  <p id="tpv-member-chip" class="tpv-member-chip"></p>
+                  <div class="tpv-member-chip-text">
+                    <p id="tpv-member-chip" class="tpv-member-chip"></p>
+                    <p id="tpv-member-birthday" class="tpv-member-birthday is-hidden" hidden></p>
+                  </div>
                 </div>
                 <details class="tpv-receipt__wallet-panel" id="tpv-wallet-funds" hidden>
                   <summary>Monedero del socio</summary>

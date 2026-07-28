@@ -711,11 +711,48 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
+.club-app .tpv-pos .tpv-receipt__member-chip.tpv-member-chip-wrap--birthday {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 55%, #fde68a 100%);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.club-app .tpv-pos .tpv-receipt__member-chip .tpv-member-chip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
 .club-app .tpv-pos .tpv-receipt__member-chip .tpv-member-chip {
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #0f172a;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-chip .tpv-member-birthday {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.club-app .tpv-pos .tpv-member-chip-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.club-app .tpv-pos .tpv-member-chip-crown {
+  position: absolute;
+  top: -0.65rem;
+  left: 50%;
+  z-index: 2;
+  font-size: 1rem;
+  line-height: 1;
+  color: #d97706;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 .club-app .tpv-pos .tpv-receipt__wallet-panel {

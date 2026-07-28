@@ -2481,7 +2481,7 @@
       sb()
       .from('club_members')
       .select(
-        'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+        'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
       )
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
@@ -2496,7 +2496,7 @@
         sb()
           .from('club_members')
           .select(
-            'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+            'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
           )
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
@@ -2513,7 +2513,7 @@
         sb()
           .from('club_members')
           .select(
-            'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+            'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
           )
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
@@ -2530,7 +2530,7 @@
       const r0 = await withArchiveFilter(
         sb()
           .from('club_members')
-          .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path')
+          .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path, birth_date')
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
           .order('display_name', { ascending: true }),
@@ -2545,13 +2545,30 @@
       const r2 = await withArchiveFilter(
         sb()
           .from('club_members')
-          .select('id, display_name, member_code, member_type, avatar_path')
+          .select('id, display_name, member_code, member_type, avatar_path, birth_date')
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
           .order('display_name', { ascending: true }),
       );
       data = r2.data;
       error = r2.error;
+    }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('birth_date'))
+    ) {
+      const rBirth = await withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select(
+            'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+          )
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('display_name', { ascending: true }),
+      );
+      data = rBirth.data;
+      error = rBirth.error;
     }
     if (
       error &&
@@ -2663,16 +2680,55 @@
     return !tpvMemberTierExpired(m);
   }
 
+  function tpvParseBirthParts(iso) {
+    if (!iso) return null;
+    const raw = String(iso).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    return { y, mo, d };
+  }
+
+  function isTpvMemberBirthdayToday(m) {
+    const p = tpvParseBirthParts(m?.birth_date);
+    if (!p) return false;
+    const today = new Date();
+    return today.getMonth() + 1 === p.mo && today.getDate() === p.d;
+  }
+
+  function tpvMemberAgeTurning(m) {
+    const p = tpvParseBirthParts(m?.birth_date);
+    if (!p) return null;
+    const today = new Date();
+    let age = today.getFullYear() - p.y;
+    const mDiff = today.getMonth() + 1 - p.mo;
+    if (mDiff < 0 || (mDiff === 0 && today.getDate() < p.d)) age--;
+    if (!Number.isFinite(age) || age < 0 || age > 130) return null;
+    return age;
+  }
+
+  function tpvBirthdayMessage(m) {
+    if (!isTpvMemberBirthdayToday(m)) return '';
+    const age = tpvMemberAgeTurning(m);
+    if (age == null) return '¡Feliz cumpleaños!';
+    return `¡Feliz cumpleaños! Cumple ${age} años`;
+  }
+
   function syncTpvTicketPaperVipClass() {
     const paper = $('tpv-ticket-paper');
     if (!paper) return;
     const id = ($('tpv-selected-member')?.value || '').trim();
     if (!id) {
-      paper.classList.remove('tpv-ticket-paper--vip');
+      paper.classList.remove('tpv-ticket-paper--vip', 'tpv-ticket-paper--birthday');
       return;
     }
     const m = (state.tpvMembers || []).find((x) => x.id === id);
     paper.classList.toggle('tpv-ticket-paper--vip', isTpvActiveVipMember(m));
+    paper.classList.toggle('tpv-ticket-paper--birthday', isTpvMemberBirthdayToday(m));
   }
 
   function syncTpvMemberFieldVipFromSelection() {
@@ -2680,12 +2736,13 @@
     if (!field) return;
     const id = ($('tpv-selected-member')?.value || '').trim();
     if (!id) {
-      field.classList.remove('tpv-member-field--vip');
+      field.classList.remove('tpv-member-field--vip', 'tpv-member-field--birthday');
       syncTpvTicketPaperVipClass();
       return;
     }
     const m = (state.tpvMembers || []).find((x) => x.id === id);
     field.classList.toggle('tpv-member-field--vip', isTpvActiveVipMember(m));
+    field.classList.toggle('tpv-member-field--birthday', isTpvMemberBirthdayToday(m));
     syncTpvTicketPaperVipClass();
   }
 
@@ -2722,12 +2779,24 @@
     const chip = $('tpv-member-chip');
     const img = $('tpv-member-chip-img');
     const initials = $('tpv-member-chip-initials');
+    const crown = $('tpv-member-chip-crown');
+    const bday = $('tpv-member-birthday');
     if (!m || !m.id) {
       if (wrap) {
         wrap.classList.add('is-hidden');
         wrap.hidden = true;
+        wrap.classList.remove('tpv-member-chip-wrap--birthday');
       }
       if (chip) chip.textContent = '';
+      if (bday) {
+        bday.textContent = '';
+        bday.classList.add('is-hidden');
+        bday.hidden = true;
+      }
+      if (crown) {
+        crown.classList.add('is-hidden');
+        crown.hidden = true;
+      }
       if (img) {
         img.onload = null;
         img.onerror = null;
@@ -2742,10 +2811,32 @@
       wrap.classList.remove('is-hidden');
       wrap.hidden = false;
     }
+    const isBday = isTpvMemberBirthdayToday(m);
+    if (wrap) wrap.classList.toggle('tpv-member-chip-wrap--birthday', isBday);
     if (chip) {
       const code = formatTpvMemberCode(m);
       const codeTxt = code ? ` (${code})` : '';
       chip.textContent = `Socio: ${formatTpvMemberName(m.display_name) || '—'}${codeTxt}${tpvMemberTierSuffix(m)}`;
+    }
+    if (bday) {
+      if (isBday) {
+        bday.textContent = tpvBirthdayMessage(m);
+        bday.classList.remove('is-hidden');
+        bday.hidden = false;
+      } else {
+        bday.textContent = '';
+        bday.classList.add('is-hidden');
+        bday.hidden = true;
+      }
+    }
+    if (crown) {
+      if (isBday) {
+        crown.classList.remove('is-hidden');
+        crown.hidden = false;
+      } else {
+        crown.classList.add('is-hidden');
+        crown.hidden = true;
+      }
     }
     if (initials) initials.textContent = tpvChipMemberInitials(m);
     if (!img) return;
@@ -2789,6 +2880,10 @@
       const tier = tpvMemberTierSuffix(m);
       b.textContent = `${formatTpvMemberName(m.display_name)}${codeTxt}${tier}`;
       if (isTpvActiveVipMember(m)) b.classList.add('tpv-member-dropdown__item--vip');
+      if (isTpvMemberBirthdayToday(m)) {
+        b.classList.add('tpv-member-dropdown__item--birthday');
+        b.textContent = `♛ ${b.textContent} · ¡Cumpleaños!`;
+      }
       b.addEventListener('click', (ev) => {
         ev.preventDefault();
         selectTpvMember(m);
