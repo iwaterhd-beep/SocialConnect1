@@ -2412,6 +2412,9 @@
     if (!f.firstSurname) {
       return { ok: false, message: 'Indica el primer apellido.' };
     }
+    if (!f.dni) {
+      return { ok: false, message: 'El DNI / NIE es obligatorio.' };
+    }
     const daySel = ($('member-birth-day')?.value || '').trim();
     const monthSel = ($('member-birth-month')?.value || '').trim();
     const yearSel = ($('member-birth-year')?.value || '').trim();
