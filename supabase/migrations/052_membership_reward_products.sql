@@ -43,7 +43,7 @@ create policy "club_membership_reward_grants_select"
     )
     or exists (
       select 1 from public.club_access ca
-      where ca.user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
+      where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
@@ -59,7 +59,7 @@ create policy "club_membership_reward_grants_insert"
     )
     or exists (
       select 1 from public.club_access ca
-      where ca.user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
+      where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
@@ -75,7 +75,7 @@ create policy "club_membership_reward_grants_update"
     )
     or exists (
       select 1 from public.club_access ca
-      where ca.user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
+      where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
@@ -88,7 +88,7 @@ create policy "club_membership_reward_grants_update"
     )
     or exists (
       select 1 from public.club_access ca
-      where ca.user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
+      where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
@@ -104,7 +104,7 @@ create policy "club_membership_reward_grants_delete"
     )
     or exists (
       select 1 from public.club_access ca
-      where ca.user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
+      where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
