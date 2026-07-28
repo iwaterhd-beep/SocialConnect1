@@ -26,7 +26,7 @@
   let financeVentasUiBound = false;
   const financeShiftsFilter = { range: '30d', from: '', to: '' };
   const financeAdjustFilter = { range: '30d', from: '', to: '' };
-  const financeWalletFilter = { range: '30d', from: '', to: '' };
+  const financeWalletFilter = { range: '30d', from: '', to: '', search: '' };
   let financeSectionFiltersBound = false;
 
   const BUCKET = 'club_member_docs';
@@ -587,11 +587,30 @@
     });
   }
 
+  function setFinanceEmptyVisible(emptyEl, visible) {
+    if (!emptyEl) return;
+    emptyEl.hidden = !visible;
+    emptyEl.classList.toggle('is-hidden', !visible);
+  }
+
+  function setStatText(id, text) {
+    const el = $(id);
+    if (el) el.textContent = text;
+  }
+
   async function refreshFinanceShiftClosures() {
     const tbody = $('finance-shifts-tbody');
     const emptyEl = $('finance-shifts-empty');
+    const summaryEl = $('finance-shifts-summary');
     if (!tbody || !ctx) return;
     bindFinanceShiftClosuresUiOnce();
+
+    const rangeLabel = financeDateRangeLabel(
+      financeShiftsFilter.range,
+      financeShiftsFilter.from,
+      financeShiftsFilter.to,
+    );
+    setStatText('finance-shifts-stat-range', rangeLabel);
 
     const bounds = getFinanceDateBounds(
       financeShiftsFilter.range,
@@ -614,7 +633,9 @@
 
     if (error) {
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
-      if (emptyEl) emptyEl.hidden = true;
+      setFinanceEmptyVisible(emptyEl, false);
+      setStatText('finance-shifts-stat-count', '—');
+      if (summaryEl) summaryEl.textContent = '';
       return;
     }
 
@@ -632,16 +653,21 @@
 
     tbody.innerHTML = '';
     if (!rows.length) {
-      if (emptyEl) {
-        emptyEl.hidden = false;
-        emptyEl.textContent =
+      setFinanceEmptyVisible(emptyEl, true);
+      const title = emptyEl?.querySelector?.('.sc-finance-sales__empty-title');
+      if (title) {
+        title.textContent =
           financeShiftsFilter.range === 'all' && !financeShiftsFilter.from && !financeShiftsFilter.to
-            ? 'No hay cierres registrados todavía.'
-            : `No hay cierres en ${financeDateRangeLabel(financeShiftsFilter.range, financeShiftsFilter.from, financeShiftsFilter.to)}.`;
+            ? 'No hay cierres registrados todavía'
+            : 'Sin cierres en este periodo';
       }
+      setStatText('finance-shifts-stat-count', '0');
+      if (summaryEl) summaryEl.textContent = `0 cierres en ${rangeLabel}.`;
       return;
     }
-    if (emptyEl) emptyEl.hidden = true;
+    setFinanceEmptyVisible(emptyEl, false);
+    setStatText('finance-shifts-stat-count', String(rows.length));
+    if (summaryEl) summaryEl.textContent = `${rows.length} cierre(s) en ${rangeLabel}.`;
 
     rows.forEach((row) => {
       const tr = document.createElement('tr');
@@ -3362,6 +3388,26 @@
     bindFinanceDateFilter('shifts', financeShiftsFilter, refreshFinanceShiftClosures);
     bindFinanceDateFilter('adjust', financeAdjustFilter, refreshFinanceStockAdjustments);
     bindFinanceDateFilter('wallet', financeWalletFilter, refreshFinanceWalletMovements);
+
+    $('finance-shifts-empty-all')?.addEventListener('click', () => {
+      financeShiftsFilter.range = 'all';
+      renderFinanceDateFilterUi('shifts', 'all');
+      void refreshFinanceShiftClosures();
+    });
+    $('finance-adjust-empty-all')?.addEventListener('click', () => {
+      financeAdjustFilter.range = 'all';
+      renderFinanceDateFilterUi('adjust', 'all');
+      void refreshFinanceStockAdjustments();
+    });
+    $('finance-wallet-empty-all')?.addEventListener('click', () => {
+      financeWalletFilter.range = 'all';
+      renderFinanceDateFilterUi('wallet', 'all');
+      void refreshFinanceWalletMovements();
+    });
+    $('finance-wallet-search')?.addEventListener('input', () => {
+      financeWalletFilter.search = $('finance-wallet-search')?.value || '';
+      void refreshFinanceWalletMovements();
+    });
   }
 
   function renderFinanceVentasRangeChips() {
@@ -3927,6 +3973,11 @@
     const emptyEl = $('finance-wallet-empty');
     if (!tbody || !ctx) return;
 
+    const rangeLabel = financeDateRangeLabel(
+      financeWalletFilter.range,
+      financeWalletFilter.from,
+      financeWalletFilter.to,
+    );
     const bounds = getFinanceDateBounds(
       financeWalletFilter.range,
       financeWalletFilter.from,
@@ -3952,10 +4003,14 @@
           : error.message || 'Error cargando monedero.';
       tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(msg)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
+      setFinanceEmptyVisible(emptyEl, false);
+      setStatText('finance-wallet-stat-count', '—');
+      setStatText('finance-wallet-stat-net', '—');
+      setStatText('finance-wallet-stat-cash', '—');
       return;
     }
 
-    const list = rows || [];
+    let list = rows || [];
     const mids = [...new Set(list.map((r) => r.member_id).filter(Boolean))];
     let memMap = {};
     if (mids.length) {
@@ -3963,15 +4018,28 @@
       if (mm) memMap = Object.fromEntries(mm.map((x) => [x.id, x]));
     }
 
+    const search = String(financeWalletFilter.search || '').trim().toLowerCase();
+    if (search) {
+      list = list.filter((r) => {
+        const mb = r.member_id ? memMap[r.member_id] : null;
+        const name = String(mb?.display_name || '').toLowerCase();
+        const notes = String(r.notes || '').toLowerCase();
+        return name.includes(search) || notes.includes(search);
+      });
+    }
+
     tbody.innerHTML = '';
     if (!list.length) {
-      if (emptyEl) emptyEl.hidden = false;
+      setFinanceEmptyVisible(emptyEl, true);
+      setStatText('finance-wallet-stat-count', '0');
+      setStatText('finance-wallet-stat-net', formatWalletLedgerAmount(0));
+      setStatText('finance-wallet-stat-cash', formatWalletLedgerAmount(0));
       if (summaryEl) {
-        summaryEl.textContent = `Sin movimientos de monedero en ${financeDateRangeLabel(financeWalletFilter.range, financeWalletFilter.from, financeWalletFilter.to)}.`;
+        summaryEl.textContent = `Sin movimientos de monedero en ${rangeLabel}.`;
       }
       return;
     }
-    if (emptyEl) emptyEl.hidden = true;
+    setFinanceEmptyVisible(emptyEl, false);
 
     let sumWallet = 0;
     let sumCash = 0;
@@ -3986,6 +4054,8 @@
           ? 'Retirada (efectivo)'
           : 'Retirada monedero';
       const tr = document.createElement('tr');
+      if (amt < 0) tr.classList.add('is-out');
+      else tr.classList.add('is-in');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
         <td>${escapeHtml(mb ? mb.display_name : '—')}</td>
@@ -3998,17 +4068,26 @@
       tbody.appendChild(tr);
     });
 
+    setStatText('finance-wallet-stat-count', String(list.length));
+    setStatText('finance-wallet-stat-net', formatWalletLedgerAmount(sumWallet));
+    setStatText('finance-wallet-stat-cash', formatWalletLedgerAmount(sumCash));
     if (summaryEl) {
-      summaryEl.textContent = `${list.length} movimiento(s) · monedero neto ${formatWalletLedgerAmount(sumWallet)} · impacto caja ${formatWalletLedgerAmount(sumCash)}`;
+      summaryEl.textContent = `${list.length} movimiento(s) en ${rangeLabel}.`;
     }
   }
 
   async function refreshFinanceStockAdjustments() {
     const tbody = $('finance-inventory-adjust-tbody');
     const emptyEl = $('finance-inventory-adjust-empty');
+    const summaryEl = $('finance-inventory-adjust-summary');
     const section = $('finance-inventory-adjust-section');
     if (!tbody || !ctx) return;
 
+    const rangeLabel = financeDateRangeLabel(
+      financeAdjustFilter.range,
+      financeAdjustFilter.from,
+      financeAdjustFilter.to,
+    );
     const bounds = getFinanceDateBounds(
       financeAdjustFilter.range,
       financeAdjustFilter.from,
@@ -4038,8 +4117,11 @@
         return;
       }
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
-      if (emptyEl) emptyEl.hidden = true;
+      setFinanceEmptyVisible(emptyEl, false);
       if (section) section.hidden = false;
+      setStatText('finance-adjust-stat-count', '—');
+      setStatText('finance-adjust-stat-in', '—');
+      setStatText('finance-adjust-stat-out', '—');
       return;
     }
 
@@ -4068,25 +4150,32 @@
 
     tbody.innerHTML = '';
     if (!list.length) {
-      if (emptyEl) {
-        emptyEl.hidden = false;
-        emptyEl.textContent = `No hay ajustes en ${financeDateRangeLabel(financeAdjustFilter.range, financeAdjustFilter.from, financeAdjustFilter.to)}.`;
-      }
+      setFinanceEmptyVisible(emptyEl, true);
+      setStatText('finance-adjust-stat-count', '0');
+      setStatText('finance-adjust-stat-in', '0');
+      setStatText('finance-adjust-stat-out', '0');
+      if (summaryEl) summaryEl.textContent = `0 ajustes en ${rangeLabel}.`;
       return;
     }
-    if (emptyEl) emptyEl.hidden = true;
+    setFinanceEmptyVisible(emptyEl, false);
 
+    let inCount = 0;
+    let outCount = 0;
     list.forEach((r) => {
       const pr = prodMap[r.product_id] || {};
       const em = (pr.emoji || '').trim();
       const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
       const u = pr.sale_unit === 'unit' ? 'ud' : 'g';
       const delta = Number(r.delta_grams);
+      if (delta > 0) inCount += 1;
+      else if (delta < 0) outCount += 1;
       const sign = delta > 0 ? '+' : '';
       const mov = `${sign}${formatQty(delta)} ${u}`;
       const who = r.created_by && staffMap[r.created_by] ? staffMap[r.created_by] : '—';
       const note = (r.notes || '').trim() || '—';
       const tr = document.createElement('tr');
+      if (delta > 0) tr.classList.add('is-in');
+      else if (delta < 0) tr.classList.add('is-out');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
         <td>${escapeHtml(prodLabel)}</td>
@@ -4096,6 +4185,11 @@
       `;
       tbody.appendChild(tr);
     });
+
+    setStatText('finance-adjust-stat-count', String(list.length));
+    setStatText('finance-adjust-stat-in', String(inCount));
+    setStatText('finance-adjust-stat-out', String(outCount));
+    if (summaryEl) summaryEl.textContent = `${list.length} ajuste(s) en ${rangeLabel}.`;
   }
 
   function financeInventoryColFail(e) {

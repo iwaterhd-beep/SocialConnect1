@@ -1559,6 +1559,17 @@ body.club-dark.club-app .sc-stock-toolbar {
   .sc-finance-sales__stats {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
+
+  .sc-finance-sales__stats--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sc-finance-sales__stat-value--sm {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
 }
 
 .sc-finance-sales__stat {
