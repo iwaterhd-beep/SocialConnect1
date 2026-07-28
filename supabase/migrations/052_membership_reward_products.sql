@@ -1,4 +1,6 @@
 -- Regalos de membresía enlazados a productos del TPV + entrega única al subir de nivel.
+-- Nota: 053_membership_reward_quantity.sql ya incluye esto + quantity.
+-- Si ya corriste 053 con éxito, puedes ignorar este archivo.
 
 alter table public.club_membership_rewards
   add column if not exists product_id uuid references public.inventory_products (id) on delete set null;
@@ -37,77 +39,67 @@ drop policy if exists "club_membership_reward_grants_delete" on public.club_memb
 create policy "club_membership_reward_grants_select"
   on public.club_membership_reward_grants for select to authenticated
   using (
-    exists (
+    public.is_superadmin()
+    or exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.club_access ca
       where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
-    )
-    or exists (
-      select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
     )
   );
 
 create policy "club_membership_reward_grants_insert"
   on public.club_membership_reward_grants for insert to authenticated
   with check (
-    exists (
+    public.is_superadmin()
+    or exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.club_access ca
       where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
-    )
-    or exists (
-      select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
     )
   );
 
 create policy "club_membership_reward_grants_update"
   on public.club_membership_reward_grants for update to authenticated
   using (
-    exists (
+    public.is_superadmin()
+    or exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.club_access ca
       where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
-    )
-    or exists (
-      select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
     )
   )
   with check (
-    exists (
+    public.is_superadmin()
+    or exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.club_access ca
       where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
-    )
-    or exists (
-      select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
     )
   );
 
 create policy "club_membership_reward_grants_delete"
   on public.club_membership_reward_grants for delete to authenticated
   using (
-    exists (
+    public.is_superadmin()
+    or exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.club_id = club_membership_reward_grants.club_id
     )
     or exists (
       select 1 from public.club_access ca
       where ca.auth_user_id = auth.uid() and ca.club_id = club_membership_reward_grants.club_id
-    )
-    or exists (
-      select 1 from public.users u where u.id = auth.uid() and u.is_superadmin = true
     )
   );
 
