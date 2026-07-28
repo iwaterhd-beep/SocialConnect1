@@ -1285,6 +1285,15 @@ body.club-dark.club-app .app-header__avatar {
   margin-bottom: var(--space-3);
 }
 
+.member-profile-status {
+  margin: 0 var(--space-4) var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+.member-profile-status[hidden] {
+  display: none !important;
+}
+
 .member-profile-hero--panel {
   display: grid;
   grid-template-columns: auto 1fr;

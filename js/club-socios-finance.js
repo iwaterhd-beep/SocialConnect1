@@ -518,10 +518,26 @@
 
   function setMemberMsg(text, isError) {
     const el = $('member-status');
-    if (!el) return;
-    el.textContent = text || '';
-    el.classList.toggle('msg--error', Boolean(isError));
-    if (text) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (el) {
+      el.textContent = text || '';
+      el.classList.toggle('msg--error', Boolean(isError));
+      if (text) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    const profileEl = $('member-profile-status');
+    if (profileEl) {
+      const profileModal = $('member-profile-modal');
+      const profileOpen =
+        profileModal && !profileModal.classList.contains('is-hidden') && !profileModal.hidden;
+      if (profileOpen && text) {
+        profileEl.hidden = false;
+        profileEl.textContent = text;
+        profileEl.classList.toggle('msg--error', Boolean(isError));
+      } else if (!text || !profileOpen) {
+        profileEl.hidden = true;
+        profileEl.textContent = '';
+        profileEl.classList.remove('msg--error');
+      }
+    }
   }
 
   function setMemberSavingUi(saving) {
@@ -4399,8 +4415,22 @@
     }
   }
 
+  function isMissingArchivedColErr(error) {
+    if (!error) return false;
+    const msg = String(error.message || '').toLowerCase();
+    return (
+      error.code === '42703' ||
+      error.code === 'PGRST204' ||
+      msg.includes('is_archived') ||
+      msg.includes('archived_at')
+    );
+  }
+
   async function archiveMember(memberId) {
-    if (!memberId || !ctx?.club?.id) return;
+    if (!memberId || !ctx?.club?.id) {
+      setMemberMsg('No hay socio seleccionado para eliminar.', true);
+      return;
+    }
     const m = membersCache.find((x) => memberIdEquals(x.id, memberId));
     const label = formatMemberDisplayName(m) || 'este socio';
     const msg =
@@ -4408,29 +4438,79 @@
       'Dejará de aparecer en la lista y en el POS, pero se conservará su historial (ventas, monedero y documentos).';
     if (!window.confirm(msg)) return;
 
-    if (!hasArchivedMemberColumn) {
-      setMemberMsg(
-        'Ejecuta supabase/migrations/047_club_members_archived.sql en Supabase para eliminar socios conservando el historial.',
-        true,
-      );
-      return;
+    setMemberMsg('Eliminando socio…', false);
+
+    // Re-probar columnas por si el listado se cargó antes de aplicar la migración 047.
+    const archiveProbe = await sb().from('club_members').select('is_archived').limit(1);
+    hasArchivedMemberColumn = !archiveProbe.error;
+
+    let archivedOk = false;
+
+    if (hasArchivedMemberColumn) {
+      const payload = {
+        is_archived: true,
+        is_active: false,
+        archived_at: new Date().toISOString(),
+        rfid_uid: '',
+      };
+      let { data, error } = await sb()
+        .from('club_members')
+        .update(payload)
+        .eq('id', memberId)
+        .eq('club_id', ctx.club.id)
+        .select('id')
+        .maybeSingle();
+
+      if (error && isMissingArchivedColErr(error)) {
+        const payload2 = { is_archived: true, is_active: false, rfid_uid: '' };
+        ({ data, error } = await sb()
+          .from('club_members')
+          .update(payload2)
+          .eq('id', memberId)
+          .eq('club_id', ctx.club.id)
+          .select('id')
+          .maybeSingle());
+      }
+
+      if (error) {
+        setMemberMsg(error.message || 'No se pudo eliminar el socio.', true);
+        window.alert(error.message || 'No se pudo eliminar el socio.');
+        return;
+      }
+      if (!data?.id) {
+        const fail =
+          'No se pudo eliminar el socio (sin permiso de actualización o el socio ya no existe).';
+        setMemberMsg(fail, true);
+        window.alert(fail);
+        return;
+      }
+      archivedOk = true;
     }
 
-    setMemberMsg('Eliminando socio…', false);
-    const payload = {
-      is_archived: true,
-      is_active: false,
-      archived_at: new Date().toISOString(),
-      rfid_uid: '',
-    };
-    const { error } = await sb()
-      .from('club_members')
-      .update(payload)
-      .eq('id', memberId)
-      .eq('club_id', ctx.club.id);
-    if (error) {
-      setMemberMsg(error.message || 'No se pudo eliminar el socio.', true);
-      return;
+    if (!archivedOk) {
+      // Sin columnas de archivo: intentar borrado real (si no hay FKs que lo impidan).
+      const { data: delData, error: delErr } = await sb()
+        .from('club_members')
+        .delete()
+        .eq('id', memberId)
+        .eq('club_id', ctx.club.id)
+        .select('id')
+        .maybeSingle();
+      if (delErr) {
+        const fail =
+          delErr.message ||
+          'No se pudo eliminar. Ejecuta en Supabase supabase/migrations/047_club_members_archived.sql y reintenta.';
+        setMemberMsg(fail, true);
+        window.alert(fail);
+        return;
+      }
+      if (!delData?.id) {
+        const fail =
+          'No se pudo eliminar el socio. Ejecuta en Supabase la migración 047_club_members_archived.sql.';
+        setMemberMsg(fail, true);
+        window.alert(fail);
+        return;
+      }
     }
 
     selectedMemberId = '';
@@ -4519,12 +4599,25 @@
     $('member-profile-edit-btn')?.addEventListener('click', () => {
       if (selectedMemberId) void editMemberFromRow(selectedMemberId);
     });
-    $('member-profile-archive-btn')?.addEventListener('click', () => {
-      if (selectedMemberId) void archiveMember(selectedMemberId);
+    $('member-profile-archive-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = String(selectedMemberId || '').trim();
+      if (!id) {
+        setMemberMsg('Abre de nuevo el perfil del socio e inténtalo otra vez.', true);
+        window.alert('No hay socio seleccionado. Cierra el perfil, ábrelo de nuevo e inténtalo.');
+        return;
+      }
+      void archiveMember(id);
     });
-    $('member-archive')?.addEventListener('click', () => {
-      const id = ($('member-edit-id')?.value || '').trim();
-      if (id) void archiveMember(id);
+    $('member-archive')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = ($('member-edit-id')?.value || selectedMemberId || '').trim();
+      if (!id) {
+        setMemberMsg('No hay socio seleccionado para eliminar.', true);
+        return;
+      }
+      void archiveMember(id);
     });
     $('member-wallet-adjust-add')?.addEventListener('click', () => {
       void applyMemberWalletAdjust(1);
