@@ -618,18 +618,30 @@
       financeShiftsFilter.to,
     );
 
-    let query = sb()
-      .from('shifts')
-      .select('id, opened_at, closed_at, opened_by, closed_by')
-      .eq('club_id', ctx.club.id)
-      .not('closed_at', 'is', null)
-      .order('closed_at', { ascending: false })
-      .limit(financeShiftsFilter.range === 'all' ? 200 : 100);
+    if (summaryEl && financeShiftsFilter.range === 'all') {
+      summaryEl.textContent = 'Cargando todos los cierres…';
+    }
 
-    if (bounds.from) query = query.gte('closed_at', bounds.from.toISOString());
-    if (bounds.to) query = query.lte('closed_at', bounds.to.toISOString());
+    const pageResult = await fetchAllSupabasePages(
+      (from, to) => {
+        let q = sb()
+          .from('shifts')
+          .select('id, opened_at, closed_at, opened_by, closed_by')
+          .eq('club_id', ctx.club.id)
+          .not('closed_at', 'is', null)
+          .order('closed_at', { ascending: false })
+          .range(from, to);
+        if (bounds.from) q = q.gte('closed_at', bounds.from.toISOString());
+        if (bounds.to) q = q.lte('closed_at', bounds.to.toISOString());
+        return q;
+      },
+      {
+        pageSize: 1000,
+        maxRows: financeShiftsFilter.range === 'all' ? 100000 : 5000,
+      },
+    );
 
-    const { data: shifts, error } = await query;
+    const { data: shifts, error, truncated } = pageResult;
 
     if (error) {
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
@@ -667,7 +679,10 @@
     }
     setFinanceEmptyVisible(emptyEl, false);
     setStatText('finance-shifts-stat-count', String(rows.length));
-    if (summaryEl) summaryEl.textContent = `${rows.length} cierre(s) en ${rangeLabel}.`;
+    if (summaryEl) {
+      const truncNote = truncated ? ' · límite de carga alcanzado' : '';
+      summaryEl.textContent = `${rows.length.toLocaleString('es-ES')} cierre(s) en ${rangeLabel}.${truncNote}`;
+    }
 
     rows.forEach((row) => {
       const tr = document.createElement('tr');
@@ -4018,6 +4033,61 @@
     }
   }
 
+  async function loadCurrentMemberWalletBalanceTotals() {
+    if (!ctx?.club?.id || !sb()) return { pos: 0, neg: 0, ok: false };
+    const pageResult = await fetchAllSupabasePages(
+      (from, to) => {
+        let q = sb()
+          .from('club_members')
+          .select('wallet_balance_eur, is_archived')
+          .eq('club_id', ctx.club.id)
+          .order('id', { ascending: true })
+          .range(from, to);
+        return q;
+      },
+      { pageSize: 1000, maxRows: 100000 },
+    );
+
+    // Fallback si no existe is_archived
+    let rows = pageResult.data || [];
+    let ok = !pageResult.error;
+    if (
+      pageResult.error &&
+      (pageResult.error.code === '42703' ||
+        String(pageResult.error.message || '').toLowerCase().includes('is_archived') ||
+        String(pageResult.error.message || '').toLowerCase().includes('wallet_balance'))
+    ) {
+      const retry = await fetchAllSupabasePages(
+        (from, to) =>
+          sb()
+            .from('club_members')
+            .select('wallet_balance_eur')
+            .eq('club_id', ctx.club.id)
+            .order('id', { ascending: true })
+            .range(from, to),
+        { pageSize: 1000, maxRows: 100000 },
+      );
+      if (retry.error && String(retry.error.message || '').toLowerCase().includes('wallet_balance')) {
+        return { pos: 0, neg: 0, ok: false };
+      }
+      rows = retry.data || [];
+      ok = !retry.error;
+    } else if (pageResult.error) {
+      return { pos: 0, neg: 0, ok: false };
+    }
+
+    let pos = 0;
+    let neg = 0;
+    rows.forEach((m) => {
+      if (m && m.is_archived) return;
+      const bal = Number(m.wallet_balance_eur);
+      if (!Number.isFinite(bal) || Math.abs(bal) < 0.0005) return;
+      if (bal > 0) pos += bal;
+      else neg += Math.abs(bal);
+    });
+    return { pos, neg, ok };
+  }
+
   async function refreshFinanceWalletMovements() {
     const tbody = $('finance-wallet-tbody');
     const summaryEl = $('finance-wallet-summary');
@@ -4034,18 +4104,47 @@
       financeWalletFilter.from,
       financeWalletFilter.to,
     );
-    let query = sb()
-      .from('club_member_wallet_ledger')
-      .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes, member_id')
-      .eq('club_id', ctx.club.id)
-      .eq('kind', 'adjustment')
-      .order('created_at', { ascending: false })
-      .limit(500);
 
-    if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
-    if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
+    // Saldos actuales de todos los socios (independiente del periodo de la tabla)
+    const balTotals = await loadCurrentMemberWalletBalanceTotals();
+    if (balTotals.ok) {
+      setStatText(
+        'finance-wallet-stat-pos',
+        balTotals.pos > 0 ? `+${formatMoney(balTotals.pos)}` : formatMoney(0),
+      );
+      setStatText(
+        'finance-wallet-stat-neg',
+        balTotals.neg > 0 ? `−${formatMoney(balTotals.neg)}` : formatMoney(0),
+      );
+    } else {
+      setStatText('finance-wallet-stat-pos', '—');
+      setStatText('finance-wallet-stat-neg', '—');
+    }
 
-    const { data: rows, error } = await query;
+    if (summaryEl && financeWalletFilter.range === 'all') {
+      summaryEl.textContent = 'Cargando todos los movimientos…';
+    }
+
+    const pageResult = await fetchAllSupabasePages(
+      (from, to) => {
+        let q = sb()
+          .from('club_member_wallet_ledger')
+          .select('created_at, amount_eur, balance_after_eur, cash_eur, kind, notes, member_id')
+          .eq('club_id', ctx.club.id)
+          .eq('kind', 'adjustment')
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (bounds.from) q = q.gte('created_at', bounds.from.toISOString());
+        if (bounds.to) q = q.lte('created_at', bounds.to.toISOString());
+        return q;
+      },
+      {
+        pageSize: 1000,
+        maxRows: financeWalletFilter.range === 'all' ? 100000 : 5000,
+      },
+    );
+
+    const { data: rows, error, truncated } = pageResult;
     if (error) {
       const msg =
         error.code === '42P01' ||
@@ -4056,8 +4155,6 @@
       if (summaryEl) summaryEl.textContent = '';
       setFinanceEmptyVisible(emptyEl, false);
       setStatText('finance-wallet-stat-count', '—');
-      setStatText('finance-wallet-stat-pos', '—');
-      setStatText('finance-wallet-stat-neg', '—');
       return;
     }
 
@@ -4083,8 +4180,6 @@
     if (!list.length) {
       setFinanceEmptyVisible(emptyEl, true);
       setStatText('finance-wallet-stat-count', '0');
-      setStatText('finance-wallet-stat-pos', formatMoney(0));
-      setStatText('finance-wallet-stat-neg', formatMoney(0));
       if (summaryEl) {
         summaryEl.textContent = `Sin movimientos de monedero en ${rangeLabel}.`;
       }
@@ -4092,13 +4187,9 @@
     }
     setFinanceEmptyVisible(emptyEl, false);
 
-    let sumPos = 0;
-    let sumNeg = 0;
     list.forEach((r) => {
       const amt = Number(r.amount_eur) || 0;
       const cash = Number(r.cash_eur) || 0;
-      if (amt > 0) sumPos += amt;
-      else if (amt < 0) sumNeg += Math.abs(amt);
       const mb = r.member_id ? memMap[r.member_id] : null;
       const tipo =
         amt >= 0 ? (Math.abs(cash) > 0.005 ? 'Recarga (efectivo)' : 'Ingreso monedero') : Math.abs(cash) > 0.005
@@ -4120,10 +4211,9 @@
     });
 
     setStatText('finance-wallet-stat-count', String(list.length));
-    setStatText('finance-wallet-stat-pos', `+${formatMoney(sumPos)}`);
-    setStatText('finance-wallet-stat-neg', sumNeg > 0 ? `−${formatMoney(sumNeg)}` : formatMoney(0));
     if (summaryEl) {
-      summaryEl.textContent = `${list.length} movimiento(s) en ${rangeLabel}.`;
+      const truncNote = truncated ? ' · límite de carga alcanzado' : '';
+      summaryEl.textContent = `${list.length.toLocaleString('es-ES')} movimiento(s) en ${rangeLabel}.${truncNote}`;
     }
   }
 
@@ -4145,19 +4235,31 @@
       financeAdjustFilter.to,
     );
 
-    let adjustQuery = sb()
-      .from('inventory_stock_adjustments')
-      .select(
-        'id, created_at, delta_grams, previous_stock_grams, new_stock_grams, notes, product_id, created_by',
-      )
-      .eq('club_id', ctx.club.id)
-      .order('created_at', { ascending: false })
-      .limit(financeAdjustFilter.range === 'all' ? 500 : 200);
+    if (summaryEl && financeAdjustFilter.range === 'all') {
+      summaryEl.textContent = 'Cargando todos los ajustes…';
+    }
 
-    if (bounds.from) adjustQuery = adjustQuery.gte('created_at', bounds.from.toISOString());
-    if (bounds.to) adjustQuery = adjustQuery.lte('created_at', bounds.to.toISOString());
+    const pageResult = await fetchAllSupabasePages(
+      (from, to) => {
+        let q = sb()
+          .from('inventory_stock_adjustments')
+          .select(
+            'id, created_at, delta_grams, previous_stock_grams, new_stock_grams, notes, product_id, created_by',
+          )
+          .eq('club_id', ctx.club.id)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (bounds.from) q = q.gte('created_at', bounds.from.toISOString());
+        if (bounds.to) q = q.lte('created_at', bounds.to.toISOString());
+        return q;
+      },
+      {
+        pageSize: 1000,
+        maxRows: financeAdjustFilter.range === 'all' ? 100000 : 5000,
+      },
+    );
 
-    const { data: rows, error } = await adjustQuery;
+    const { data: rows, error, truncated } = pageResult;
 
     if (error) {
       if (
@@ -4240,7 +4342,10 @@
     setStatText('finance-adjust-stat-count', String(list.length));
     setStatText('finance-adjust-stat-in', String(inCount));
     setStatText('finance-adjust-stat-out', String(outCount));
-    if (summaryEl) summaryEl.textContent = `${list.length} ajuste(s) en ${rangeLabel}.`;
+    if (summaryEl) {
+      const truncNote = truncated ? ' · límite de carga alcanzado' : '';
+      summaryEl.textContent = `${list.length.toLocaleString('es-ES')} ajuste(s) en ${rangeLabel}.${truncNote}`;
+    }
   }
 
   function financeInventoryColFail(e) {
