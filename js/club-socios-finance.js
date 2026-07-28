@@ -679,6 +679,8 @@
 
   function closeMemberModals() {
     closeMemberCamera();
+    setEditModalInert(false);
+    hideAvalistaDropdown();
     ['member-profile-modal', 'member-edit-modal'].forEach((id) => {
       const modal = $(id);
       if (!modal) return;
@@ -1613,6 +1615,28 @@
     dd.innerHTML = '';
     dd.hidden = true;
     dd.classList.add('is-hidden');
+    dd.style.position = '';
+    dd.style.left = '';
+    dd.style.top = '';
+    dd.style.width = '';
+    dd.style.right = '';
+    dd.style.zIndex = '';
+    const wrap = document.querySelector('.member-avalista-wrap');
+    if (wrap && dd.parentElement !== wrap) wrap.appendChild(dd);
+  }
+
+  function positionAvalistaDropdown() {
+    const dd = $('member-avalista-dropdown');
+    const search = $('member-avalista-search');
+    if (!dd || !search || dd.hidden || dd.classList.contains('is-hidden')) return;
+    const r = search.getBoundingClientRect();
+    if (dd.parentElement !== document.body) document.body.appendChild(dd);
+    dd.style.position = 'fixed';
+    dd.style.left = `${Math.max(8, r.left)}px`;
+    dd.style.top = `${r.bottom + 4}px`;
+    dd.style.width = `${Math.max(r.width, 240)}px`;
+    dd.style.right = 'auto';
+    dd.style.zIndex = '1200';
   }
 
   function updateAvalistaPickedUi() {
@@ -1710,15 +1734,11 @@
     return { name, dni: dniDom, memberId: null };
   }
 
-  function renderAvalistaDropdown() {
-    const dd = $('member-avalista-dropdown');
-    const q = ($('member-avalista-search')?.value || '').trim().toLowerCase();
-    if (!dd || q.length < 1) {
-      hideAvalistaDropdown();
-      return;
-    }
+  function filterAvalistaHits(qRaw) {
+    const q = String(qRaw || '').trim().toLowerCase();
+    if (!q) return [];
     const editingId = ($('member-edit-id')?.value || '').trim();
-    const hits = membersCache
+    return (membersCache || [])
       .filter((m) => {
         if (isMemberArchived(m)) return false;
         if (editingId && memberIdEquals(m.id, editingId)) return false;
@@ -1739,6 +1759,26 @@
         return hay.includes(q);
       })
       .slice(0, 10);
+  }
+
+  function renderAvalistaDropdown() {
+    const dd = $('member-avalista-dropdown');
+    const search = $('member-avalista-search');
+    const q = (search?.value || '').trim();
+    if (!dd) return;
+    if (q.length < 1) {
+      hideAvalistaDropdown();
+      return;
+    }
+    if (
+      avalistaSelection?.name &&
+      avalistaSelection.id &&
+      q.toLowerCase() === String(avalistaSelection.name).trim().toLowerCase()
+    ) {
+      hideAvalistaDropdown();
+      return;
+    }
+    const hits = filterAvalistaHits(q);
     if (!hits.length) {
       hideAvalistaDropdown();
       return;
@@ -1751,18 +1791,32 @@
       .join('');
     dd.hidden = false;
     dd.classList.remove('is-hidden');
+    positionAvalistaDropdown();
     dd.querySelectorAll('[data-avalista-pick]').forEach((btn) => {
-      const choose = (e) => {
+      btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         const id = btn.getAttribute('data-avalista-pick');
         const m = membersCache.find((x) => memberIdEquals(x.id, id));
         pickAvalistaMember(m);
-      };
-      btn.addEventListener('pointerdown', choose);
-      btn.addEventListener('mousedown', choose);
-      btn.addEventListener('click', choose);
+      });
     });
+  }
+
+  function setEditModalInert(on) {
+    const edit = $('member-edit-modal');
+    if (!edit) return;
+    if (on) {
+      edit.setAttribute('inert', '');
+      edit.setAttribute('aria-hidden', 'true');
+      edit.style.pointerEvents = 'none';
+    } else {
+      edit.removeAttribute('inert');
+      if (!edit.classList.contains('is-hidden')) {
+        edit.setAttribute('aria-hidden', 'false');
+      }
+      edit.style.pointerEvents = '';
+    }
   }
 
   function clearMemberForm() {
@@ -2321,7 +2375,11 @@
     }
     const avalistaInfo = getAvalistaForSave();
     if (!avalistaInfo.name) {
-      return { ok: false, message: 'Indica el avalista: busca un socio y selecciónalo en la lista.' };
+      return {
+        ok: false,
+        message:
+          'Indica el avalista: elige uno de la lista o escribe su nombre (campo Avalista).',
+      };
     }
     return { ok: true, fields: f };
   }
@@ -2416,12 +2474,12 @@
   function openMemberTermsModal() {
     const modal = $('member-terms-modal');
     if (!modal) {
-      void saveMember({ skipDniWarn: true });
+      setMemberMsg('No se pudo abrir el aviso legal. Recarga la página e inténtalo de nuevo.', true);
       return;
     }
     fillMemberTermsClubInfo();
     resetMemberTermsModal();
-    // Encima del modal "Nuevo socio": z-index alto + último en body.
+    setEditModalInert(true);
     document.body.appendChild(modal);
     if (typeof window.scOpenShiftModal === 'function') {
       window.scOpenShiftModal(modal);
@@ -2438,6 +2496,7 @@
 
   function closeMemberTermsModal() {
     const modal = $('member-terms-modal');
+    setEditModalInert(false);
     if (!modal || modal.classList.contains('is-hidden')) return;
     modal.classList.add('is-leaving');
     let done = false;
@@ -2568,7 +2627,8 @@
     const avalista_dni = avalistaInfo.dni;
     const avalistaMemberRaw = avalistaInfo.memberId || '';
     if (!avalista) {
-      const msg = 'Indica el avalista: busca un socio y selecciónalo en la lista.';
+      const msg =
+        'Indica el avalista: elige uno de la lista o escribe su nombre (campo Avalista).';
       if (fromTerms) setMemberTermsStatus(msg, true);
       setMemberMsg(msg, true);
       return;
@@ -2698,17 +2758,22 @@
       return;
     }
 
+    // Evita altas duplicadas si falla algo después del insert.
+    if ($('member-edit-id')) $('member-edit-id').value = memberId;
+    selectedMemberId = memberId;
+
     const hadPending = Object.keys(SLOT_TO_COL).some((s) => memberPendingFiles[s]);
     let uploadedCount = 0;
     if (memberId && hadPending) {
       const up = await uploadPendingAssets(memberId);
       if (!up.ok) {
-        if (fromTerms) {
-          setMemberTermsStatus(
-            ($('member-status')?.textContent || 'Socio creado, pero falló la subida de archivos.'),
-            true,
-          );
-        }
+        const msg =
+          ($('member-status')?.textContent || '').trim() ||
+          'Socio creado, pero falló la subida de archivos.';
+        if (fromTerms) setMemberTermsStatus(msg, true);
+        setMemberMsg(msg, true);
+        closeMemberTermsModal();
+        await loadMembersTable();
         return;
       }
       const keys = Object.keys(up.pathUpdates || {});
@@ -2729,6 +2794,7 @@
             if (fromTerms) setMemberTermsStatus(msg, true);
             setMemberMsg(msg, true);
           }
+          closeMemberTermsModal();
           await loadMembersTable();
           return;
         }
@@ -2748,6 +2814,7 @@
         const msg = `${id ? 'Socio guardado' : 'Socio creado'}, pero el monedero no se actualizó: ${walletSync.message}`;
         if (fromTerms) setMemberTermsStatus(msg, true);
         setMemberMsg(msg, true);
+        closeMemberTermsModal();
         await loadMembersTable();
         if (typeof window.scClubInventoryReloadMembers === 'function') {
           await window.scClubInventoryReloadMembers();
@@ -4487,25 +4554,54 @@
     });
 
     $('member-avalista-search')?.addEventListener('input', () => {
-      avalistaSelection = null;
-      if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
-      updateAvalistaPickedUi();
+      const typed = ($('member-avalista-search')?.value || '').trim();
+      if (avalistaSelection) {
+        const picked = String(avalistaSelection.name || '').trim();
+        if (typed.toLowerCase() !== picked.toLowerCase()) {
+          avalistaSelection = null;
+          if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
+          if ($('member-avalista-name')) $('member-avalista-name').value = '';
+          if ($('member-avalista-dni')) $('member-avalista-dni').value = '';
+          updateAvalistaPickedUi();
+        }
+      }
       renderAvalistaDropdown();
     });
     $('member-avalista-search')?.addEventListener('focus', () => renderAvalistaDropdown());
+    $('member-avalista-search')?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const hits = filterAvalistaHits(($('member-avalista-search')?.value || '').trim());
+      if (hits.length === 1) {
+        pickAvalistaMember(hits[0]);
+        return;
+      }
+      if (hits.length > 1) {
+        pickAvalistaMember(hits[0]);
+      }
+    });
+    window.addEventListener(
+      'resize',
+      () => {
+        positionAvalistaDropdown();
+      },
+      { passive: true },
+    );
     $('member-avalista-search')?.addEventListener('blur', () => {
-      window.setTimeout(() => hideAvalistaDropdown(), 200);
+      window.setTimeout(() => hideAvalistaDropdown(), 220);
     });
     $('member-avalista-name')?.addEventListener('input', () => {
       const typed = ($('member-avalista-name')?.value || '').trim();
-      if (avalistaSelection) {
+      if (!typed) return;
+      if (avalistaSelection?.id) {
+        avalistaSelection = { ...avalistaSelection, name: typed };
+      } else {
         avalistaSelection = {
           id: '',
           name: typed,
           dni: ($('member-avalista-dni')?.value || '').trim(),
         };
       }
-      if ($('member-avalista-member-id')) $('member-avalista-member-id').value = '';
       updateAvalistaPickedUi();
     });
     $('member-avalista-clear')?.addEventListener('click', () => clearAvalistaForm());

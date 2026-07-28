@@ -3730,7 +3730,7 @@ body.club-dark .member-camera-modal__viewport {
 
 /* ---------- Modal términos alta socio ---------- */
 .member-terms-modal {
-  z-index: 800 !important;
+  z-index: 900 !important;
 }
 
 .member-terms-modal__status {
