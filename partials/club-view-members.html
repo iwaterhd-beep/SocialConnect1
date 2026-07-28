@@ -246,7 +246,7 @@
         <section class="member-form-sc__avalista-section" aria-labelledby="member-avalista-title">
           <h3 id="member-avalista-title" class="member-form-sc__section-title">Avalista <span class="member-form-sc__required">*</span></h3>
           <p class="hint member-form-sc__avalista-lede">
-            Busca un socio del club y selecciónalo en la lista (o escribe el nombre a mano abajo).
+            Escribe el nombre y <strong>haz clic en un socio de la lista</strong>. Debe aparecer “Avalista seleccionado”.
           </p>
           <div class="member-form-sc__grid">
             <div class="form__row member-form-sc__avalista-block">
@@ -262,11 +262,12 @@
                 <button type="button" class="btn btn--ghost btn--small" id="member-avalista-clear">Quitar</button>
                 <div id="member-avalista-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
               </div>
+              <p id="member-avalista-picked" class="member-avalista-picked is-hidden" hidden></p>
               <input type="hidden" id="member-avalista-member-id" value="" />
             </div>
             <div class="form__row">
               <label for="member-avalista-name">Nombre del avalista</label>
-              <input class="input" id="member-avalista-name" type="text" autocomplete="off" placeholder="Nombre y apellidos" required />
+              <input class="input" id="member-avalista-name" type="text" autocomplete="off" placeholder="Se rellena al elegir un socio" />
             </div>
             <div class="form__row">
               <label for="member-avalista-dni">DNI / NIE del avalista</label>
