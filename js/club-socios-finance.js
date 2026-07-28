@@ -2644,6 +2644,45 @@
       return;
     }
 
+    // Comprobar en vivo que el avalista existe en este club antes del insert.
+    if (avalistaMemberRaw) {
+      let avCheck = await sb()
+        .from('club_members')
+        .select('id, display_name, club_id')
+        .eq('id', avalistaMemberRaw)
+        .eq('club_id', ctx.club.id)
+        .maybeSingle();
+      if (avCheck.error && String(avCheck.error.message || '').toLowerCase().includes('column')) {
+        avCheck = await sb()
+          .from('club_members')
+          .select('id, display_name, club_id')
+          .eq('id', avalistaMemberRaw)
+          .maybeSingle();
+      }
+      if (avCheck.error) {
+        const msg = `No se pudo comprobar el avalista: ${avCheck.error.message || 'error'}`;
+        if (fromTerms) setMemberTermsStatus(msg, true);
+        setMemberMsg(msg, true);
+        return;
+      }
+      if (!avCheck.data) {
+        const msg = `El avalista elegido no está en este club (ID ${avalistaMemberRaw}). Vuelve a elegirlo en el desplegable.`;
+        if (fromTerms) setMemberTermsStatus(msg, true);
+        setMemberMsg(msg, true);
+        return;
+      }
+      if (
+        avCheck.data.club_id != null &&
+        String(avCheck.data.club_id) !== String(ctx.club.id)
+      ) {
+        const msg =
+          'El avalista pertenece a otro club. Elige un socio de este club en el desplegable.';
+        if (fromTerms) setMemberTermsStatus(msg, true);
+        setMemberMsg(msg, true);
+        return;
+      }
+    }
+
     if (fromTerms) setMemberTermsStatus('Creando socio…', false);
     setMemberMsg('Guardando…', false);
     const row = {
@@ -2714,19 +2753,27 @@
     }
     if (
       error &&
-      error.code === '42703' &&
+      (error.code === '42703' || error.code === 'PGRST204') &&
+      String(error.message || '').toLowerCase().includes('avalista_member_id')
+    ) {
+      // Falta solo la columna de enlace; conservar nombre/dni.
+      const rowAv = { ...row };
+      delete rowAv.avalista_member_id;
+      r = await tryPersist(rowAv);
+      error = r.error;
+      if (!error) savedWithoutAvalistaColumn = true;
+    } else if (
+      error &&
+      (error.code === '42703' || error.code === 'PGRST204') &&
       String(error.message || '').toLowerCase().includes('avalista')
     ) {
-      // Solo quitar columnas de avalista si realmente no existen en BD.
       const rowAv = { ...row };
       delete rowAv.avalista;
       delete rowAv.avalista_dni;
       delete rowAv.avalista_member_id;
       r = await tryPersist(rowAv);
       error = r.error;
-      if (!error) {
-        savedWithoutAvalistaColumn = true;
-      }
+      if (!error) savedWithoutAvalistaColumn = true;
     }
 
     if (!error) {
@@ -2753,7 +2800,7 @@
         /garante|avalista.*existente|socio avalista/i.test(String(error.message || ''))
       ) {
         msg = avalistaMemberRaw
-          ? `La base de datos rechazó el avalista. Ejecuta en Supabase la migración 050_club_members_avalista_by_id.sql y vuelve a guardar (avalista: ${avalista}).`
+          ? `La base de datos sigue bloqueando el avalista (${avalista}). Ejecuta en Supabase el archivo 051_drop_avalista_db_enforcement.sql (SQL Editor → Run) y vuelve a guardar.`
           : 'Debes elegir un socio avalista en el desplegable «Socio avalista (garante)» antes de guardar.';
       } else if (
         String(error.message || '').toLowerCase().includes('club_member_counters') ||
