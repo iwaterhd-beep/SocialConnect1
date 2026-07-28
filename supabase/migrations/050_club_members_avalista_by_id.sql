@@ -1,12 +1,41 @@
--- Fix avalista: validar solo por UUID del socio (mismo club), no por nombre.
--- Evita fallos por acentos/mayúsculas (GONZLEZ vs GONZÁLEZ).
--- SECURITY DEFINER + row_security off para que el trigger no falle por RLS.
+-- PEGAR TODO ESTE ARCHIVO EN: Supabase → SQL Editor → Run
+-- Proyecto: lkpyybmqvyhevcifezws (SocialConnect)
+-- Arregla: "Debes indicar un socio avalista (garante) existente."
 
--- Quitar posibles triggers/funciones antiguas de avalista.
-drop trigger if exists club_members_enforce_existing_avalista on public.club_members;
-drop trigger if exists club_members_avalista_required on public.club_members;
-drop trigger if exists trg_club_members_avalista on public.club_members;
-drop trigger if exists enforce_avalista_member on public.club_members;
+-- Asegurar columnas de avalista
+alter table public.club_members
+  add column if not exists avalista text not null default '';
+
+alter table public.club_members
+  add column if not exists avalista_dni text not null default '';
+
+alter table public.club_members
+  add column if not exists avalista_member_id uuid references public.club_members (id) on delete set null;
+
+-- Quitar TODOS los triggers de avalista en club_members (nombres desconocidos incluidos)
+do $$
+declare
+  r record;
+begin
+  for r in
+    select t.tgname
+    from pg_trigger t
+    join pg_class c on c.oid = t.tgrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    join pg_proc p on p.oid = t.tgfoid
+    where n.nspname = 'public'
+      and c.relname = 'club_members'
+      and not t.tgisinternal
+      and (
+        t.tgname ilike '%avalista%'
+        or t.tgname ilike '%garante%'
+        or pg_get_functiondef(p.oid) ilike '%avalista%'
+        or pg_get_functiondef(p.oid) ilike '%garante%'
+      )
+  loop
+    execute format('drop trigger if exists %I on public.club_members', r.tgname);
+  end loop;
+end $$;
 
 drop function if exists public.club_members_enforce_existing_avalista();
 drop function if exists public.club_members_avalista_required();
@@ -89,7 +118,7 @@ begin
     raise exception 'Debes indicar un socio avalista (garante) existente.';
   end if;
 
-  -- Rellenar siempre nombre/dni desde el socio enlazado (fuente de verdad).
+  -- Rellenar siempre nombre/dni desde el socio enlazado.
   select
     coalesce(nullif(btrim(a.display_name), ''), nullif(btrim(concat_ws(' ', a.first_name, a.last_name)), ''), 'Socio'),
     coalesce(a.dni, '')
@@ -118,4 +147,11 @@ create trigger club_members_enforce_existing_avalista
   execute function public.club_members_enforce_existing_avalista();
 
 comment on function public.club_members_enforce_existing_avalista() is
-  'Exige avalista_member_id de un socio del mismo club; rellena nombre/dni desde ese socio. Ignora comparación por texto.';
+  'Exige avalista_member_id de un socio del mismo club; rellena nombre/dni desde ese socio.';
+
+-- Comprobación rápida (debe devolver 1 fila)
+select tgname, pg_get_triggerdef(oid) as def
+from pg_trigger
+where tgrelid = 'public.club_members'::regclass
+  and not tgisinternal
+  and tgname = 'club_members_enforce_existing_avalista';
