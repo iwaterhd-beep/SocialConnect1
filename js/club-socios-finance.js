@@ -2017,6 +2017,16 @@
     membersCache = data || [];
     fillAvalistaSelectOptions(avalistaSelection?.id || pendingSaveAvalista?.memberId || null);
     renderMembersTable();
+
+    // Mantener el KPI de inicio alineado con la lista real de socios.
+    const homeMembersEl = $('home-kpi-members');
+    if (homeMembersEl) {
+      const activeCount = (membersCache || []).filter(
+        (m) => m && m.is_active !== false && !isMemberArchived(m),
+      ).length;
+      homeMembersEl.textContent = String(activeCount);
+    }
+
     if (selectedMemberId) {
       if (membersCache.some((m) => memberIdEquals(m.id, selectedMemberId))) {
         /* Mantener selección en tabla; no reabrir modal automáticamente */
@@ -3436,26 +3446,68 @@
     if (membersEl) {
       tasks.push(
         (async () => {
-          const { count, error } = await sb()
-            .from('club_members')
-            .select('id', { count: 'exact', head: true })
-            .eq('club_id', clubId)
-            .eq('is_active', true)
-            .eq('is_archived', false);
-          if (
-            error &&
-            (error.code === '42703' ||
-              String(error.message || '').toLowerCase().includes('is_archived'))
-          ) {
-            const retry = await sb()
+          async function countActiveMembers(includeArchivedFilter) {
+            let q = sb()
               .from('club_members')
               .select('id', { count: 'exact', head: true })
               .eq('club_id', clubId)
               .eq('is_active', true);
-            membersEl.textContent = retry.error ? '—' : String(retry.count ?? 0);
+            if (includeArchivedFilter) q = q.eq('is_archived', false);
+            return q;
+          }
+
+          // Preferir el flag ya detectado al cargar socios.
+          const tryArchivedFirst = hasArchivedMemberColumn !== false;
+          let { count, error } = await countActiveMembers(tryArchivedFirst);
+
+          if (
+            error &&
+            (error.code === '42703' ||
+              error.code === 'PGRST204' ||
+              String(error.message || '').toLowerCase().includes('is_archived'))
+          ) {
+            hasArchivedMemberColumn = false;
+            ({ count, error } = await countActiveMembers(false));
+          }
+
+          // Si el head/count falla (RLS/API), contar filas visibles.
+          if (error) {
+            let listQ = sb()
+              .from('club_members')
+              .select('id, is_active, is_archived')
+              .eq('club_id', clubId)
+              .eq('is_active', true)
+              .limit(5000);
+            let list = await listQ;
+            if (
+              list.error &&
+              (list.error.code === '42703' ||
+                list.error.code === 'PGRST204' ||
+                String(list.error.message || '').toLowerCase().includes('is_archived'))
+            ) {
+              hasArchivedMemberColumn = false;
+              list = await sb()
+                .from('club_members')
+                .select('id, is_active')
+                .eq('club_id', clubId)
+                .eq('is_active', true)
+                .limit(5000);
+            }
+            if (list.error) {
+              // Último recurso: caché en memoria de la vista Socios.
+              const fromCache = (membersCache || []).filter(
+                (m) => m && m.is_active !== false && !isMemberArchived(m),
+              ).length;
+              membersEl.textContent = String(fromCache);
+              return;
+            }
+            const rows = list.data || [];
+            const n = rows.filter((m) => !isMemberArchived(m)).length;
+            membersEl.textContent = String(n);
             return;
           }
-          membersEl.textContent = error ? '—' : String(count ?? 0);
+
+          membersEl.textContent = String(count ?? 0);
         })(),
       );
     }
