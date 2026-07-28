@@ -2073,6 +2073,11 @@ body.club-dark .finance-admin-inventory-cost {
   gap: 0.65rem;
 }
 
+.finance-ventas-custom[hidden],
+.finance-ventas-custom.is-hidden {
+  display: none !important;
+}
+
 @media (min-width: 720px) {
   .finance-ventas-custom {
     grid-template-columns: repeat(2, minmax(0, 1fr)) auto;

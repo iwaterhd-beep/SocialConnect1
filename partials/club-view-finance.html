@@ -156,43 +156,97 @@
 </section>
 
 <section class="card-section sc-finance-sales sc-span-full" aria-labelledby="finance-ventas-title">
-  <h2 id="finance-ventas-title" class="sc-finance-sales__title">Ventas POS</h2>
-  <div class="finance-ventas-toolbar sc-finance-toolbar sc-finance-toolbar--center sc-toolbar-inline">
-    <input type="search" id="finance-sales-search" class="input" placeholder="Buscar producto…" autocomplete="off" />
-    <div id="finance-ventas-range" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" role="group" aria-label="Periodo">
-      <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
-      <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
-      <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
-      <button type="button" class="chip" data-finance-sales-range="all">Todas</button>
-      <button type="button" class="chip" data-finance-sales-range="custom">Fechas</button>
+  <div class="sc-finance-sales__head">
+    <div>
+      <h2 id="finance-ventas-title" class="sc-finance-sales__title">Ventas POS</h2>
+      <p class="hint sc-finance-sales__meta">Dispensaciones del TPV · incluye ventas y regalos de membresía</p>
     </div>
-    <div id="finance-ventas-custom" class="finance-ventas-custom sc-finance-toolbar__custom is-hidden" hidden>
-      <div class="form__row" style="margin-bottom: 0">
-        <label for="finance-sales-from">Desde</label>
-        <input class="input" id="finance-sales-from" type="date" />
-      </div>
-      <div class="form__row" style="margin-bottom: 0">
-        <label for="finance-sales-to">Hasta</label>
-        <input class="input" id="finance-sales-to" type="date" />
-      </div>
-      <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar</button>
+  </div>
+
+  <div class="sc-finance-sales__stats" id="finance-ventas-stats" aria-live="polite">
+    <div class="sc-finance-sales__stat">
+      <span class="sc-finance-sales__stat-label">Líneas</span>
+      <span class="sc-finance-sales__stat-value" id="finance-ventas-stat-count">—</span>
     </div>
-    <div class="form__row finance-ventas-category" style="margin-bottom: 0">
-      <label for="finance-sales-category">Categoría</label>
-      <select class="select" id="finance-sales-category">
+    <div class="sc-finance-sales__stat">
+      <span class="sc-finance-sales__stat-label">Total</span>
+      <span class="sc-finance-sales__stat-value" id="finance-ventas-stat-total">—</span>
+    </div>
+    <div class="sc-finance-sales__stat">
+      <span class="sc-finance-sales__stat-label">Efectivo</span>
+      <span class="sc-finance-sales__stat-value" id="finance-ventas-stat-cash">—</span>
+    </div>
+    <div class="sc-finance-sales__stat">
+      <span class="sc-finance-sales__stat-label">Monedero</span>
+      <span class="sc-finance-sales__stat-value" id="finance-ventas-stat-wallet">—</span>
+    </div>
+    <div class="sc-finance-sales__stat sc-finance-sales__stat--gift">
+      <span class="sc-finance-sales__stat-label">Regalos</span>
+      <span class="sc-finance-sales__stat-value" id="finance-ventas-stat-gifts">—</span>
+    </div>
+  </div>
+
+  <div class="finance-ventas-toolbar sc-finance-toolbar sc-finance-sales__filters">
+    <div class="sc-finance-sales__search-row">
+      <label class="visually-hidden" for="finance-sales-search">Buscar producto o socio</label>
+      <input
+        type="search"
+        id="finance-sales-search"
+        class="input sc-finance-sales__search"
+        placeholder="Buscar producto o socio…"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="sc-finance-sales__filter-block">
+      <span class="sc-finance-sales__filter-label">Periodo</span>
+      <div id="finance-ventas-range" class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo">
+        <button type="button" class="chip" data-finance-sales-range="today">Hoy</button>
+        <button type="button" class="chip" data-finance-sales-range="week">Semana</button>
+        <button type="button" class="chip is-active" data-finance-sales-range="30d">30 días</button>
+        <button type="button" class="chip" data-finance-sales-range="all">Todas</button>
+        <button type="button" class="chip" data-finance-sales-range="custom">Fechas</button>
+      </div>
+      <div id="finance-ventas-custom" class="finance-ventas-custom sc-finance-toolbar__custom is-hidden" hidden>
+        <div class="form__row" style="margin-bottom: 0">
+          <label for="finance-sales-from">Desde</label>
+          <input class="input" id="finance-sales-from" type="date" />
+        </div>
+        <div class="form__row" style="margin-bottom: 0">
+          <label for="finance-sales-to">Hasta</label>
+          <input class="input" id="finance-sales-to" type="date" />
+        </div>
+        <button type="button" class="btn btn--ghost btn--small" id="finance-sales-apply">Aplicar</button>
+      </div>
+    </div>
+
+    <div class="sc-finance-sales__filter-block">
+      <span class="sc-finance-sales__filter-label">Categoría</span>
+      <label class="visually-hidden" for="finance-sales-category">Categoría</label>
+      <select class="select visually-hidden" id="finance-sales-category" tabindex="-1" aria-hidden="true">
         <option value="">Todas</option>
       </select>
+      <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact" aria-label="Categorías"></div>
     </div>
-    <div id="finance-sales-cat-chips" class="chip-row sc-chip-row-compact sc-finance-toolbar__chips" aria-label="Categorías"></div>
   </div>
-  <p id="finance-ventas-summary" class="hint"></p>
-  <p id="finance-ventas-empty" class="hint" hidden>No hay ventas en este periodo.</p>
-  <div class="table-wrap sc-table-fill">
-    <table class="table-compact">
+
+  <p id="finance-ventas-summary" class="hint sc-finance-sales__summary"></p>
+
+  <div id="finance-ventas-empty" class="sc-finance-sales__empty is-hidden" hidden>
+    <p class="sc-finance-sales__empty-title">Sin movimientos en este periodo</p>
+    <p class="hint">Prueba «Todas», quita el filtro de categoría o amplía las fechas. Los regalos de membresía también aparecen aquí a 0,00 €.</p>
+    <button type="button" class="btn btn--ghost btn--small" id="finance-ventas-empty-all">
+      Ver todo el historial
+    </button>
+  </div>
+
+  <div class="table-wrap sc-table-fill sc-finance-sales__table-wrap">
+    <table class="table-compact sc-finance-sales__table">
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Producto</th>
+          <th>Cant.</th>
           <th>Socio</th>
           <th>Cobro</th>
           <th>Importe</th>

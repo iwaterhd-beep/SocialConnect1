@@ -3172,7 +3172,7 @@
 
   function financeVentasSearchLabel() {
     const q = financeVentasSearch.trim();
-    return q ? `producto «${q}»` : '';
+    return q ? `«${q}»` : '';
   }
 
   function financeVentasFilterSummaryParts() {
@@ -3184,15 +3184,32 @@
     return parts.join(' · ');
   }
 
+  function isFinanceGiftDispense(row) {
+    const notes = String(row?.notes || '').toLowerCase();
+    if (notes.includes('regalo')) return true;
+    const price = Number(row?.price_charged_eur);
+    return Number.isFinite(price) && Math.abs(price) < 0.0005 && notes.includes('membres');
+  }
+
+  function setFinanceVentasStats({ count, total, cash, wallet, gifts }) {
+    const set = (id, text) => {
+      const el = $(id);
+      if (el) el.textContent = text;
+    };
+    set('finance-ventas-stat-count', count == null ? '—' : String(count));
+    set('finance-ventas-stat-total', total == null ? '—' : formatMoney(total));
+    set('finance-ventas-stat-cash', cash == null ? '—' : formatMoney(cash));
+    set('finance-ventas-stat-wallet', wallet == null ? '—' : formatMoney(wallet));
+    set('finance-ventas-stat-gifts', gifts == null ? '—' : String(gifts));
+  }
+
   async function resolveFinanceVentasProductFilterIds() {
-    const search = financeVentasSearch.trim();
-    if (!financeVentasCategoryId && !search) return null;
+    if (!financeVentasCategoryId) return null;
 
     const build = (withArchivedFilter) => {
       let query = sb().from('inventory_products').select('id').eq('club_id', ctx.club.id);
       if (withArchivedFilter) query = query.eq('is_archived', false);
-      if (financeVentasCategoryId) query = query.eq('category_id', financeVentasCategoryId);
-      if (search) query = query.ilike('name', `%${search}%`);
+      query = query.eq('category_id', financeVentasCategoryId);
       return query;
     };
 
@@ -3208,6 +3225,43 @@
       ({ data, error } = await build(false));
     }
     if (error) throw error;
+    return (data || []).map((p) => p.id).filter(Boolean);
+  }
+
+  async function resolveFinanceVentasMemberSearchIds(search) {
+    const q = String(search || '').trim();
+    if (!q) return [];
+    const { data, error } = await sb()
+      .from('club_members')
+      .select('id')
+      .eq('club_id', ctx.club.id)
+      .ilike('display_name', `%${q}%`)
+      .limit(200);
+    if (error) return [];
+    return (data || []).map((m) => m.id).filter(Boolean);
+  }
+
+  async function resolveFinanceVentasProductSearchIds(search) {
+    const q = String(search || '').trim();
+    if (!q) return [];
+    const build = (withArchivedFilter) => {
+      let query = sb()
+        .from('inventory_products')
+        .select('id')
+        .eq('club_id', ctx.club.id)
+        .ilike('name', `%${q}%`)
+        .limit(200);
+      if (withArchivedFilter) query = query.eq('is_archived', false);
+      return query;
+    };
+    let { data, error } = await build(true);
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('is_archived'))
+    ) {
+      ({ data, error } = await build(false));
+    }
+    if (error) return [];
     return (data || []).map((p) => p.id).filter(Boolean);
   }
 
@@ -3354,6 +3408,12 @@
 
     $('finance-sales-search')?.addEventListener('input', () => {
       financeVentasSearch = $('finance-sales-search')?.value || '';
+      void refreshFinanceVentasTpv();
+    });
+
+    $('finance-ventas-empty-all')?.addEventListener('click', () => {
+      financeVentasRange = 'all';
+      renderFinanceVentasRangeChips();
       void refreshFinanceVentasTpv();
     });
 
@@ -3611,22 +3671,40 @@
     bindFinanceVentasUiOnce();
     await loadFinanceVentasCategories();
 
+    const showEmpty = (msg) => {
+      ventasBody.innerHTML = '';
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.classList.remove('is-hidden');
+        const title = emptyEl.querySelector('.sc-finance-sales__empty-title');
+        if (title && msg) title.textContent = msg;
+      }
+      if (summaryEl) summaryEl.textContent = '';
+      setFinanceVentasStats({ count: 0, total: 0, cash: 0, wallet: 0, gifts: 0 });
+    };
+
     if (financeVentasRange === 'custom' && !financeVentasFrom && !financeVentasTo) {
       ventasBody.innerHTML = '';
       if (summaryEl) {
-        summaryEl.textContent = 'Indica al menos una fecha y pulsa «Aplicar fechas».';
+        summaryEl.textContent = 'Indica al menos una fecha y pulsa «Aplicar».';
       }
-      if (emptyEl) emptyEl.hidden = true;
+      if (emptyEl) {
+        emptyEl.hidden = true;
+        emptyEl.classList.add('is-hidden');
+      }
+      setFinanceVentasStats({});
       return;
     }
 
     const bounds = getFinanceVentasBounds();
     if (financeVentasRange === 'custom' && !bounds.from && !bounds.to) {
       ventasBody.innerHTML = '';
-      if (summaryEl) {
-        summaryEl.textContent = 'Las fechas indicadas no son válidas.';
+      if (summaryEl) summaryEl.textContent = 'Las fechas indicadas no son válidas.';
+      if (emptyEl) {
+        emptyEl.hidden = true;
+        emptyEl.classList.add('is-hidden');
       }
-      if (emptyEl) emptyEl.hidden = true;
+      setFinanceVentasStats({});
       return;
     }
 
@@ -3634,23 +3712,45 @@
     try {
       productFilterIds = await resolveFinanceVentasProductFilterIds();
     } catch (prodErr) {
-      ventasBody.innerHTML = `<tr><td colspan="5">${escapeHtml(prodErr.message)}</td></tr>`;
+      ventasBody.innerHTML = `<tr><td colspan="6">${escapeHtml(prodErr.message)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
-      if (emptyEl) emptyEl.hidden = true;
+      if (emptyEl) {
+        emptyEl.hidden = true;
+        emptyEl.classList.add('is-hidden');
+      }
+      setFinanceVentasStats({});
       return;
     }
     if (productFilterIds && !productFilterIds.length) {
-      ventasBody.innerHTML = '';
-      if (emptyEl) emptyEl.hidden = false;
+      showEmpty('Sin productos en esa categoría');
       if (summaryEl) {
         summaryEl.textContent = `0 ventas en ${financeVentasFilterSummaryParts()}.`;
       }
       return;
     }
 
+    const search = financeVentasSearch.trim();
+    let searchProductIds = [];
+    let searchMemberIds = [];
+    if (search) {
+      [searchProductIds, searchMemberIds] = await Promise.all([
+        resolveFinanceVentasProductSearchIds(search),
+        resolveFinanceVentasMemberSearchIds(search),
+      ]);
+      if (!searchProductIds.length && !searchMemberIds.length) {
+        showEmpty('Sin coincidencias para la búsqueda');
+        if (summaryEl) {
+          summaryEl.textContent = `0 ventas en ${financeVentasFilterSummaryParts()}.`;
+        }
+        return;
+      }
+    }
+
+    const selectCols =
+      'price_charged_eur, created_at, product_id, member_id, payment_method, grams_charged, grams_dispensed, notes';
     let query = sb()
       .from('tpv_dispenses')
-      .select('price_charged_eur, created_at, product_id, member_id, payment_method')
+      .select(selectCols)
       .eq('club_id', ctx.club.id)
       .order('created_at', { ascending: false });
 
@@ -3665,11 +3765,17 @@
       (error.code === '42703' ||
         String(error.message || '')
           .toLowerCase()
-          .includes('payment_method'))
+          .includes('payment_method') ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('notes') ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('grams_'))
     ) {
       let q2 = sb()
         .from('tpv_dispenses')
-        .select('price_charged_eur, created_at, product_id, member_id')
+        .select('price_charged_eur, created_at, product_id, member_id, payment_method')
         .eq('club_id', ctx.club.id)
         .order('created_at', { ascending: false });
       if (bounds.from) q2 = q2.gte('created_at', bounds.from.toISOString());
@@ -3679,15 +3785,39 @@
       const retry = await q2;
       rows = retry.data;
       error = retry.error;
+      if (
+        error &&
+        (error.code === '42703' ||
+          String(error.message || '')
+            .toLowerCase()
+            .includes('payment_method'))
+      ) {
+        let q3 = sb()
+          .from('tpv_dispenses')
+          .select('price_charged_eur, created_at, product_id, member_id')
+          .eq('club_id', ctx.club.id)
+          .order('created_at', { ascending: false });
+        if (bounds.from) q3 = q3.gte('created_at', bounds.from.toISOString());
+        if (bounds.to) q3 = q3.lte('created_at', bounds.to.toISOString());
+        if (productFilterIds) q3 = q3.in('product_id', productFilterIds);
+        q3 = q3.limit(financeVentasRange === 'all' ? 5000 : 2000);
+        const retry2 = await q3;
+        rows = retry2.data;
+        error = retry2.error;
+      }
     }
     if (error) {
-      ventasBody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
+      ventasBody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
-      if (emptyEl) emptyEl.hidden = true;
+      if (emptyEl) {
+        emptyEl.hidden = true;
+        emptyEl.classList.add('is-hidden');
+      }
+      setFinanceVentasStats({});
       return;
     }
 
-    const list = rows || [];
+    let list = rows || [];
     const pids = [...new Set(list.map((r) => r.product_id).filter(Boolean))];
     const mids = [...new Set(list.map((r) => r.member_id).filter(Boolean))];
 
@@ -3696,7 +3826,7 @@
     if (pids.length) {
       const { data: pr } = await sb()
         .from('inventory_products')
-        .select('id, name, emoji')
+        .select('id, name, emoji, sale_unit')
         .in('id', pids);
       if (pr) prodMap = Object.fromEntries(pr.map((x) => [x.id, x]));
     }
@@ -3708,22 +3838,45 @@
       if (mm) memMap = Object.fromEntries(mm.map((x) => [x.id, x]));
     }
 
+    if (search) {
+      const prodSet = new Set(searchProductIds.map(String));
+      const memSet = new Set(searchMemberIds.map(String));
+      const qLower = search.toLowerCase();
+      list = list.filter((r) => {
+        if (r.product_id && prodSet.has(String(r.product_id))) return true;
+        if (r.member_id && memSet.has(String(r.member_id))) return true;
+        const pr = prodMap[r.product_id];
+        if (pr?.name && String(pr.name).toLowerCase().includes(qLower)) return true;
+        const mb = r.member_id ? memMap[r.member_id] : null;
+        if (mb?.display_name && String(mb.display_name).toLowerCase().includes(qLower)) return true;
+        const notes = String(r.notes || '').toLowerCase();
+        if (notes.includes(qLower)) return true;
+        return false;
+      });
+    }
+
     ventasBody.innerHTML = '';
     if (!list.length) {
-      if (emptyEl) emptyEl.hidden = false;
+      showEmpty('Sin movimientos en este periodo');
       if (summaryEl) {
         summaryEl.textContent = `0 ventas en ${financeVentasFilterSummaryParts()}.`;
       }
       return;
     }
-    if (emptyEl) emptyEl.hidden = true;
+    if (emptyEl) {
+      emptyEl.hidden = true;
+      emptyEl.classList.add('is-hidden');
+    }
 
     let total = 0;
     let totalCash = 0;
     let totalWallet = 0;
+    let giftCount = 0;
     list.forEach((r) => {
       const p = Number(r.price_charged_eur) || 0;
       total += p;
+      const isGift = isFinanceGiftDispense(r);
+      if (isGift) giftCount += 1;
       if (String(r.payment_method || 'cash').toLowerCase() === 'wallet') totalWallet += p;
       else totalCash += p;
       const pr = prodMap[r.product_id] || {};
@@ -3731,21 +3884,40 @@
       const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
       const mb = r.member_id ? memMap[r.member_id] : null;
       const socio = mb ? mb.display_name : '—';
+      const unit = pr.sale_unit === 'unit' ? 'ud' : 'g';
+      const qtyRaw = r.grams_charged != null ? r.grams_charged : r.grams_dispensed;
+      const qtyText =
+        qtyRaw != null && qtyRaw !== ''
+          ? `${formatQty(qtyRaw)} ${unit}`
+          : '—';
+      const giftBadge = isGift
+        ? '<span class="sc-finance-sales__gift">Regalo</span>'
+        : '';
       const tr = document.createElement('tr');
+      if (isGift) tr.classList.add('is-gift');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-        <td>${escapeHtml(prodLabel)}</td>
+        <td>${escapeHtml(prodLabel)}${giftBadge}</td>
+        <td>${escapeHtml(qtyText)}</td>
         <td>${escapeHtml(socio)}</td>
-        <td>${escapeHtml(paymentMethodLabel(r.payment_method))}</td>
+        <td>${escapeHtml(isGift ? 'Regalo' : paymentMethodLabel(r.payment_method))}</td>
         <td>${escapeHtml(formatMoney(r.price_charged_eur))}</td>
       `;
       ventasBody.appendChild(tr);
     });
 
+    setFinanceVentasStats({
+      count: list.length,
+      total,
+      cash: totalCash,
+      wallet: totalWallet,
+      gifts: giftCount,
+    });
+
     if (summaryEl) {
       const limit = financeVentasRange === 'all' ? 5000 : 2000;
       const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
-      summaryEl.textContent = `${list.length} venta(s) en ${financeVentasFilterSummaryParts()} · total ${formatMoney(total)} (${formatMoney(totalCash)} efectivo · ${formatMoney(totalWallet)} monedero)${truncated}`;
+      summaryEl.textContent = `${list.length} línea(s) en ${financeVentasFilterSummaryParts()}${truncated}`;
     }
   }
 
