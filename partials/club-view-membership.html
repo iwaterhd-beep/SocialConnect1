@@ -1,5 +1,5 @@
 <div class="club-view-stage sc-membership">
-  <section class="card-section sc-membership-hero" aria-labelledby="membership-title">
+  <section class="card-section sc-membership-panel" aria-labelledby="membership-title">
     <div class="sc-membership-hero__row">
       <div class="sc-section-head" style="margin: 0">
         <h2 id="membership-title">Membresía</h2>
@@ -13,104 +13,100 @@
     <p id="membership-gate" class="hint is-hidden" hidden>
       Esta sección es solo para administradores del club.
     </p>
+
+    <div id="membership-admin" class="sc-membership-admin is-hidden" hidden>
+      <details class="sc-membership-howto">
+        <summary>Cómo funciona</summary>
+        <ul class="sc-membership-tips">
+          <li><strong>Nombres:</strong> cámbialos a “Socio”, “Oro”, “Platino”… El código interno (standard / premium / vip) no cambia.</li>
+          <li><strong>Auto-VIP:</strong> si lo activas, el socio sube a VIP al superar el umbral de gasto en la ventana de días.</li>
+          <li><strong>VIP manual:</strong> si lo asignas a mano en Socios, la regla automática no lo baja.</li>
+          <li><strong>Regalos:</strong> elige un producto del TPV. Al subir de nivel, en la primera venta del socio se añade gratis al ticket.</li>
+        </ul>
+      </details>
+
+      <div class="sc-membership-block" aria-labelledby="membership-tiers-title">
+        <div class="sc-membership-block__head">
+          <h3 id="membership-tiers-title">Niveles del club</h3>
+          <p class="hint">Pulsa un nivel para abrirlo y editarlo.</p>
+        </div>
+        <div id="membership-tiers-grid" class="sc-membership-tiers" aria-live="polite">
+          <p class="hint" id="membership-tiers-loading">Cargando niveles…</p>
+        </div>
+      </div>
+
+      <div class="sc-membership-block sc-membership-rewards" aria-labelledby="membership-rewards-title">
+        <div class="sc-membership-block__head">
+          <h3 id="membership-rewards-title">Regalos y objetivos</h3>
+          <p class="hint">Producto del TPV · se añade <strong>gratis</strong> al ticket al subir de nivel</p>
+        </div>
+
+        <div class="sc-membership-reward-form">
+          <div class="sc-membership-reward-form__grid">
+            <div class="form__row">
+              <label for="reward-product">Producto del TPV (regalo)</label>
+              <select class="input" id="reward-product">
+                <option value="">— Elige un producto del inventario —</option>
+              </select>
+              <p class="hint">Se añadirá gratis al ticket la primera vez que el socio compre tras subir a ese nivel.</p>
+            </div>
+            <div class="form__row">
+              <label for="reward-tier">Nivel asociado</label>
+              <select class="input" id="reward-tier">
+                <option value="">Cualquiera</option>
+                <option value="standard">Estándar</option>
+                <option value="premium">Premium</option>
+                <option value="vip">VIP</option>
+              </select>
+            </div>
+            <div class="form__row">
+              <label for="reward-trigger">Cuándo se aplica</label>
+              <select class="input" id="reward-trigger">
+                <option value="on_upgrade">Al subir de nivel</option>
+                <option value="spend_threshold">Por gasto acumulado</option>
+                <option value="birthday">Cumpleaños</option>
+                <option value="manual">Manual / nota interna</option>
+              </select>
+            </div>
+            <div class="form__row is-hidden" id="reward-spend-wrap" hidden>
+              <label for="reward-spend">Gasto objetivo (€)</label>
+              <input class="input" id="reward-spend" type="number" min="0" step="0.01" placeholder="Ej. 200" />
+            </div>
+          </div>
+          <div class="form__row">
+            <label for="reward-desc">Instrucciones para el equipo</label>
+            <input
+              class="input"
+              id="reward-desc"
+              type="text"
+              placeholder="Qué entregar y cómo anotarlo"
+              autocomplete="off"
+            />
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn" id="reward-add">Añadir regalo</button>
+          </div>
+        </div>
+
+        <div class="table-wrap sc-membership-rewards-table">
+          <table class="table-compact">
+            <thead>
+              <tr>
+                <th>Regalo</th>
+                <th>Nivel</th>
+                <th>Cuándo</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="membership-rewards-tbody">
+              <tr>
+                <td colspan="5" class="hint">Sin regalos todavía.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </section>
-
-  <div id="membership-admin" class="sc-membership-admin is-hidden" hidden>
-    <details class="sc-membership-howto card-section">
-      <summary>Cómo funciona</summary>
-      <ul class="sc-membership-tips">
-        <li><strong>Nombres:</strong> cámbialos a “Socio”, “Oro”, “Platino”… El código interno (standard / premium / vip) no cambia.</li>
-        <li><strong>Auto-VIP:</strong> si lo activas, el socio sube a VIP al superar el umbral de gasto en la ventana de días.</li>
-        <li><strong>VIP manual:</strong> si lo asignas a mano en Socios, la regla automática no lo baja.</li>
-        <li><strong>Regalos:</strong> elige un producto del TPV. Al subir de nivel, en la primera venta del socio se añade gratis al ticket.</li>
-      </ul>
-    </details>
-
-    <section class="card-section" aria-labelledby="membership-tiers-title">
-      <div class="sc-section-head">
-        <h2 id="membership-tiers-title">Niveles del club</h2>
-        <p class="hint sc-section-head__meta">
-          Pulsa un nivel para abrirlo y editarlo. Los cambios se reflejan en Socios y POS.
-        </p>
-      </div>
-      <div id="membership-tiers-grid" class="sc-membership-tiers" aria-live="polite">
-        <p class="hint" id="membership-tiers-loading">Cargando niveles…</p>
-      </div>
-    </section>
-
-    <section class="card-section sc-membership-rewards" aria-labelledby="membership-rewards-title">
-      <div class="sc-section-head">
-        <h2 id="membership-rewards-title">Regalos y objetivos</h2>
-        <p class="hint sc-section-head__meta">
-          Producto del TPV · se añade <strong>gratis</strong> al ticket al subir de nivel
-        </p>
-      </div>
-
-      <div class="sc-membership-reward-form">
-        <div class="sc-membership-reward-form__grid">
-          <div class="form__row">
-            <label for="reward-product">Producto del TPV (regalo)</label>
-            <select class="input" id="reward-product">
-              <option value="">— Elige un producto del inventario —</option>
-            </select>
-            <p class="hint">Se añadirá gratis al ticket la primera vez que el socio compre tras subir a ese nivel.</p>
-          </div>
-          <div class="form__row">
-            <label for="reward-tier">Nivel asociado</label>
-            <select class="input" id="reward-tier">
-              <option value="">Cualquiera</option>
-              <option value="standard">Estándar</option>
-              <option value="premium">Premium</option>
-              <option value="vip">VIP</option>
-            </select>
-          </div>
-          <div class="form__row">
-            <label for="reward-trigger">Cuándo se aplica</label>
-            <select class="input" id="reward-trigger">
-              <option value="on_upgrade">Al subir de nivel</option>
-              <option value="spend_threshold">Por gasto acumulado</option>
-              <option value="birthday">Cumpleaños</option>
-              <option value="manual">Manual / nota interna</option>
-            </select>
-          </div>
-          <div class="form__row is-hidden" id="reward-spend-wrap" hidden>
-            <label for="reward-spend">Gasto objetivo (€)</label>
-            <input class="input" id="reward-spend" type="number" min="0" step="0.01" placeholder="Ej. 200" />
-          </div>
-        </div>
-        <div class="form__row">
-          <label for="reward-desc">Instrucciones para el equipo</label>
-          <input
-            class="input"
-            id="reward-desc"
-            type="text"
-            placeholder="Qué entregar y cómo anotarlo"
-            autocomplete="off"
-          />
-        </div>
-        <div class="row-actions">
-          <button type="button" class="btn" id="reward-add">Añadir regalo</button>
-        </div>
-      </div>
-
-      <div class="table-wrap sc-membership-rewards-table">
-        <table class="table-compact">
-          <thead>
-            <tr>
-              <th>Regalo</th>
-              <th>Nivel</th>
-              <th>Cuándo</th>
-              <th>Estado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="membership-rewards-tbody">
-            <tr>
-              <td colspan="5" class="hint">Sin regalos todavía.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
 </div>
