@@ -806,11 +806,163 @@
     const d = Number(parts[2]);
     const birth = new Date(y, mo, d);
     if (Number.isNaN(birth.getTime())) return null;
+    if (birth.getFullYear() !== y || birth.getMonth() !== mo || birth.getDate() !== d) return null;
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const mDiff = today.getMonth() - birth.getMonth();
     if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
     return age;
+  }
+
+  const BIRTH_MONTHS = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
+  let memberBirthUiBound = false;
+
+  function daysInMonth(year, month1to12) {
+    const y = Number(year);
+    const m = Number(month1to12);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return 31;
+    return new Date(y, m, 0).getDate();
+  }
+
+  function ensureMemberBirthSelectOptions() {
+    const daySel = $('member-birth-day');
+    const monthSel = $('member-birth-month');
+    const yearSel = $('member-birth-year');
+    if (!daySel || !monthSel || !yearSel) return;
+
+    if (monthSel.options.length <= 1) {
+      BIRTH_MONTHS.forEach((label, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i + 1);
+        opt.textContent = label;
+        monthSel.appendChild(opt);
+      });
+    }
+
+    const minAge = getClubMinAge();
+    const nowY = new Date().getFullYear();
+    const maxY = nowY - Math.max(1, minAge);
+    const minY = nowY - 110;
+    const prevYear = yearSel.value;
+    yearSel.innerHTML = '<option value="">Año</option>';
+    for (let y = maxY; y >= minY; y--) {
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearSel.appendChild(opt);
+    }
+    if (prevYear && [...yearSel.options].some((o) => o.value === prevYear)) {
+      yearSel.value = prevYear;
+    }
+
+    refreshMemberBirthDayOptions(false);
+  }
+
+  function refreshMemberBirthDayOptions(keepSelection) {
+    const daySel = $('member-birth-day');
+    const monthSel = $('member-birth-month');
+    const yearSel = $('member-birth-year');
+    if (!daySel) return;
+    const prev = keepSelection === false ? '' : daySel.value;
+    const month = Number(monthSel?.value || 0);
+    const year = Number(yearSel?.value || 0);
+    const maxDay = daysInMonth(year || 2000, month || 1);
+    daySel.innerHTML = '<option value="">Día</option>';
+    for (let d = 1; d <= maxDay; d++) {
+      const opt = document.createElement('option');
+      opt.value = String(d);
+      opt.textContent = String(d);
+      daySel.appendChild(opt);
+    }
+    if (prev && Number(prev) <= maxDay) daySel.value = prev;
+  }
+
+  function syncMemberBirthHiddenFromSelects() {
+    const day = Number(($('member-birth-day')?.value || '').trim());
+    const month = Number(($('member-birth-month')?.value || '').trim());
+    const year = Number(($('member-birth-year')?.value || '').trim());
+    const hidden = $('member-birth');
+    const hint = $('member-birth-hint');
+    if (!day || !month || !year) {
+      if (hidden) hidden.value = '';
+      if (hint) hint.textContent = '';
+      return '';
+    }
+    const maxDay = daysInMonth(year, month);
+    if (day > maxDay) {
+      if (hidden) hidden.value = '';
+      if (hint) hint.textContent = 'Fecha no válida.';
+      return '';
+    }
+    const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (hidden) hidden.value = iso;
+    const age = memberAgeFromBirthIso(iso);
+    if (hint) {
+      if (age == null) hint.textContent = '';
+      else hint.textContent = `${age} años`;
+    }
+    return iso;
+  }
+
+  function setMemberBirthIso(iso) {
+    ensureMemberBirthSelectOptions();
+    const daySel = $('member-birth-day');
+    const monthSel = $('member-birth-month');
+    const yearSel = $('member-birth-year');
+    const hidden = $('member-birth');
+    const hint = $('member-birth-hint');
+    const raw = iso ? String(iso).slice(0, 10) : '';
+    if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      if (daySel) daySel.value = '';
+      if (monthSel) monthSel.value = '';
+      if (yearSel) yearSel.value = '';
+      if (hidden) hidden.value = '';
+      if (hint) hint.textContent = '';
+      refreshMemberBirthDayOptions(false);
+      return;
+    }
+    const [ys, ms, ds] = raw.split('-');
+    const y = Number(ys);
+    const m = Number(ms);
+    const d = Number(ds);
+    if (yearSel && ![...yearSel.options].some((o) => o.value === String(y))) {
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearSel.appendChild(opt);
+    }
+    if (yearSel) yearSel.value = String(y);
+    if (monthSel) monthSel.value = String(m);
+    refreshMemberBirthDayOptions(false);
+    if (daySel) daySel.value = String(d);
+    if (hidden) hidden.value = raw;
+    const age = memberAgeFromBirthIso(raw);
+    if (hint) hint.textContent = age != null ? `${age} años` : '';
+  }
+
+  function bindMemberBirthUiOnce() {
+    if (memberBirthUiBound) return;
+    memberBirthUiBound = true;
+    const onChange = () => {
+      refreshMemberBirthDayOptions(true);
+      syncMemberBirthHiddenFromSelects();
+    };
+    $('member-birth-day')?.addEventListener('change', () => syncMemberBirthHiddenFromSelects());
+    $('member-birth-month')?.addEventListener('change', onChange);
+    $('member-birth-year')?.addEventListener('change', onChange);
   }
 
   function formatMemberCode(m) {
@@ -1223,7 +1375,7 @@
       $('member-avalista-member-id').value = row.avalista_member_id || '';
     }
     if ($('member-avalista-search')) $('member-avalista-search').value = avName;
-    $('member-birth').value = row.birth_date ? String(row.birth_date).slice(0, 10) : '';
+    setMemberBirthIso(row.birth_date ? String(row.birth_date).slice(0, 10) : '');
     $('member-phone').value = row.phone || '';
     $('member-email').value = row.email || '';
     $('member-code').value = (() => {
@@ -1274,7 +1426,8 @@
     document.querySelector('.sc-members-list tr.is-selected')?.scrollIntoView({ block: 'nearest' });
   }
 
-  async function showMemberProfile(memberId) {
+  async function showMemberProfile(memberId, opts) {
+    const options = opts && typeof opts === 'object' ? opts : {};
     let m = membersCache.find((x) => memberIdEquals(x.id, memberId));
     try {
       if (ctx?.club?.id) {
@@ -1298,7 +1451,7 @@
       closeMemberModals();
       return;
     }
-    if (typeof window.scConfirmMemberMissingDni === 'function') {
+    if (!options.skipDniWarn && typeof window.scConfirmMemberMissingDni === 'function') {
       const ok = await window.scConfirmMemberMissingDni(m);
       if (!ok) return;
     }
@@ -1521,7 +1674,7 @@
     if ($('member-second-last-name')) $('member-second-last-name').value = '';
     $('member-dni').value = '';
     clearAvalistaForm();
-    $('member-birth').value = '';
+    setMemberBirthIso('');
     $('member-phone').value = '';
     $('member-email').value = '';
     $('member-code').value = '';
@@ -1996,6 +2149,7 @@
   }
 
   function readMemberFormFields() {
+    syncMemberBirthHiddenFromSelects();
     const id = ($('member-edit-id')?.value || '').trim();
     const first = formatMemberName($('member-first-name')?.value || '');
     const firstSurname = formatMemberName($('member-last-name')?.value || '');
@@ -2049,6 +2203,12 @@
     if (!f.firstSurname) {
       return { ok: false, message: 'Indica el primer apellido.' };
     }
+    const daySel = ($('member-birth-day')?.value || '').trim();
+    const monthSel = ($('member-birth-month')?.value || '').trim();
+    const yearSel = ($('member-birth-year')?.value || '').trim();
+    if ((daySel || monthSel || yearSel) && !(daySel && monthSel && yearSel)) {
+      return { ok: false, message: 'Completa día, mes y año de nacimiento, o déjalos vacíos.' };
+    }
     if (f.birthRaw) {
       const age = memberAgeFromBirthIso(f.birthRaw);
       const minAge = getClubMinAge();
@@ -2059,7 +2219,18 @@
         return { ok: false, message: `El socio debe tener al menos ${minAge} años cumplidos.` };
       }
     }
+    const avalista = ($('member-avalista-name')?.value || '').trim();
+    if (!avalista) {
+      return { ok: false, message: 'Indica el avalista (nombre obligatorio).' };
+    }
     return { ok: true, fields: f };
+  }
+
+  function setMemberTermsStatus(text, isError) {
+    const el = $('member-terms-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('msg--error', Boolean(isError));
   }
 
   function getClubLegalInfoForTerms() {
@@ -2124,6 +2295,7 @@
       const el = $(id);
       if (el) el.checked = false;
     });
+    setMemberTermsStatus('', false);
     updateMemberTermsConfirmBtn();
     const scroll = $('member-terms-scroll');
     if (scroll) scroll.scrollTop = 0;
@@ -2144,16 +2316,22 @@
   function openMemberTermsModal() {
     const modal = $('member-terms-modal');
     if (!modal) {
-      void saveMember();
+      void saveMember({ skipDniWarn: true });
       return;
     }
     fillMemberTermsClubInfo();
     resetMemberTermsModal();
-    // Encima del modal "Nuevo socio" (mismo z-index base → reordenar al final de body).
+    // Encima del modal "Nuevo socio": z-index alto + último en body.
     document.body.appendChild(modal);
-    window.scOpenShiftModal(modal);
+    if (typeof window.scOpenShiftModal === 'function') {
+      window.scOpenShiftModal(modal);
+    } else {
+      modal.classList.remove('is-hidden', 'is-leaving');
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+    }
     window.setTimeout(() => {
-      $('member-terms-scroll')?.focus?.();
+      $('member-terms-chk1')?.focus?.();
       updateMemberTermsConfirmBtn();
     }, 50);
   }
@@ -2162,11 +2340,17 @@
     const modal = $('member-terms-modal');
     if (!modal || modal.classList.contains('is-hidden')) return;
     modal.classList.add('is-leaving');
+    let done = false;
     const finish = () => {
+      if (done) return;
+      done = true;
       modal.classList.remove('is-leaving');
       modal.classList.add('is-hidden');
       modal.hidden = true;
       modal.setAttribute('aria-hidden', 'true');
+      if (typeof window.scSyncClubModalOpenClass === 'function') {
+        window.scSyncClubModalOpenClass();
+      }
     };
     modal.addEventListener('animationend', finish, { once: true });
     window.setTimeout(finish, 280);
@@ -2176,12 +2360,12 @@
     if (memberSaving) return;
     const validation = validateMemberFormFields();
     if (!validation.ok) {
-      closeMemberTermsModal();
+      setMemberTermsStatus(validation.message, true);
       setMemberMsg(validation.message, true);
       return;
     }
-    closeMemberTermsModal();
-    await saveMember();
+    setMemberTermsStatus('Creando socio…', false);
+    await saveMember({ skipDniWarn: true, fromTerms: true });
   }
 
   function bindMemberTermsUi() {
@@ -2249,10 +2433,13 @@
     openMemberTermsModal();
   }
 
-  async function saveMember() {
+  async function saveMember(opts) {
     if (memberSaving) return;
+    const options = opts && typeof opts === 'object' ? opts : {};
+    const fromTerms = options.fromTerms === true;
     const validation = validateMemberFormFields();
     if (!validation.ok) {
+      if (fromTerms) setMemberTermsStatus(validation.message, true);
       setMemberMsg(validation.message, true);
       return;
     }
@@ -2280,10 +2467,13 @@
     const avalista_dni = ($('member-avalista-dni')?.value || '').trim();
     const avalistaMemberRaw = ($('member-avalista-member-id')?.value || '').trim();
     if (!avalista) {
-      setMemberMsg('Indica el avalista (nombre obligatorio).', true);
+      const msg = 'Indica el avalista (nombre obligatorio).';
+      if (fromTerms) setMemberTermsStatus(msg, true);
+      setMemberMsg(msg, true);
       return;
     }
 
+    if (fromTerms) setMemberTermsStatus('Creando socio…', false);
     setMemberMsg('Guardando…', false);
     const row = {
       club_id: ctx.club.id,
@@ -2374,29 +2564,36 @@
     }
 
     if (error) {
+      let msg = error.message || 'No se pudo guardar.';
       if (
         error.code === '42703' ||
         (error.message &&
           (error.message.includes('first_name') ||
             error.message.includes('column')))
       ) {
-        setMemberMsg(
-          'Ejecuta la migración 011_club_members_profile.sql en Supabase para guardar el perfil completo.',
-          true,
-        );
+        msg =
+          'Ejecuta la migración 011_club_members_profile.sql en Supabase para guardar el perfil completo.';
       } else if (
         error.code === '23505' &&
         String(error.message || '').toLowerCase().includes('rfid')
       ) {
-        setMemberMsg('Esa chapa RFID ya está asignada a otro socio de este club.', true);
-      } else {
-        setMemberMsg(error.message || 'No se pudo guardar.', true);
+        msg = 'Esa chapa RFID ya está asignada a otro socio de este club.';
+      } else if (
+        String(error.message || '').toLowerCase().includes('club_member_counters') ||
+        String(error.message || '').toLowerCase().includes('row-level security')
+      ) {
+        msg =
+          'No se pudo crear el socio (permisos / contador). Ejecuta en Supabase la migración 044_club_member_counters_rls.sql.';
       }
+      if (fromTerms) setMemberTermsStatus(msg, true);
+      setMemberMsg(msg, true);
       return;
     }
 
     if (!memberId) {
-      setMemberMsg('No se pudo obtener el identificador del socio guardado.', true);
+      const msg = 'No se pudo obtener el identificador del socio guardado.';
+      if (fromTerms) setMemberTermsStatus(msg, true);
+      setMemberMsg(msg, true);
       return;
     }
 
@@ -2404,7 +2601,15 @@
     let uploadedCount = 0;
     if (memberId && hadPending) {
       const up = await uploadPendingAssets(memberId);
-      if (!up.ok) return;
+      if (!up.ok) {
+        if (fromTerms) {
+          setMemberTermsStatus(
+            ($('member-status')?.textContent || 'Socio creado, pero falló la subida de archivos.'),
+            true,
+          );
+        }
+        return;
+      }
       const keys = Object.keys(up.pathUpdates || {});
       uploadedCount = up.uploadedCount || keys.length;
       if (keys.length) {
@@ -2414,12 +2619,14 @@
           .eq('id', memberId);
         if (pe) {
           if (isMissingStorageColErr(pe)) {
-            setMemberMsg(
-              'Socio guardado; ejecuta 012_club_member_storage.sql para enlazar archivos.',
-              true,
-            );
+            const msg =
+              'Socio guardado; ejecuta 012_club_member_storage.sql para enlazar archivos.';
+            if (fromTerms) setMemberTermsStatus(msg, true);
+            setMemberMsg(msg, true);
           } else {
-            setMemberMsg(pe.message || 'No se pudieron guardar las rutas de archivos.', true);
+            const msg = pe.message || 'No se pudieron guardar las rutas de archivos.';
+            if (fromTerms) setMemberTermsStatus(msg, true);
+            setMemberMsg(msg, true);
           }
           await loadMembersTable();
           return;
@@ -2437,10 +2644,9 @@
     if (memberId) {
       const walletSync = await syncMemberWalletFromForm(memberId);
       if (!walletSync.ok) {
-        setMemberMsg(
-          `${id ? 'Socio guardado' : 'Socio creado'}, pero el monedero no se actualizó: ${walletSync.message}`,
-          true,
-        );
+        const msg = `${id ? 'Socio guardado' : 'Socio creado'}, pero el monedero no se actualizó: ${walletSync.message}`;
+        if (fromTerms) setMemberTermsStatus(msg, true);
+        setMemberMsg(msg, true);
         await loadMembersTable();
         if (typeof window.scClubInventoryReloadMembers === 'function') {
           await window.scClubInventoryReloadMembers();
@@ -2453,7 +2659,7 @@
       uploadedCount > 0
         ? ` ${uploadedCount} archivo${uploadedCount === 1 ? '' : 's'} guardado${uploadedCount === 1 ? '' : 's'}.`
         : '';
-    setMemberMsg(
+    const okMsg =
       (savedWithoutRfidColumn
         ? 'Socio guardado. Ejecuta en Supabase 045_club_members_rfid.sql para poder guardar la chapa RFID.'
         : savedWithoutAvalistaColumn
@@ -2462,11 +2668,14 @@
             ? 'Socio guardado. Ejecuta en Supabase la migración 021_club_members_tier_valid_until.sql para poder guardar la vigencia Premium/VIP.'
             : isNew
               ? 'Socio creado.'
-              : 'Socio actualizado.') + filesNote,
+              : 'Socio actualizado.') + filesNote;
+    setMemberMsg(
+      okMsg,
       savedWithoutRfidColumn || savedWithoutAvalistaColumn || savedWithoutValidUntilColumn,
     );
     selectedMemberId = memberId;
     closeMemberTermsModal();
+    closeMemberModals();
     await loadMembersTable();
     if (typeof window.scClubInventoryReloadMembers === 'function') {
       await window.scClubInventoryReloadMembers();
@@ -2476,15 +2685,15 @@
     }
     const savedMember = membersCache.find((m) => memberIdEquals(m.id, memberId));
     if (savedMember) {
-      await showMemberProfile(memberId);
+      await showMemberProfile(memberId, { skipDniWarn: options.skipDniWarn === true || isNew });
     } else if (isNew) {
-      closeMemberModals();
       clearMemberForm();
-    } else {
-      closeMemberModals();
+      setMemberMsg(okMsg, false);
     }
     } catch (err) {
-      setMemberMsg(err?.message || 'Error inesperado al guardar el socio.', true);
+      const msg = err?.message || 'Error inesperado al guardar el socio.';
+      if (fromTerms) setMemberTermsStatus(msg, true);
+      setMemberMsg(msg, true);
     } finally {
       setMemberSavingUi(false);
     }
@@ -4236,6 +4445,8 @@
     ctx = c;
     bindMemberTermsUi();
     bindMemberCameraUi();
+    bindMemberBirthUiOnce();
+    ensureMemberBirthSelectOptions();
     bindMembersUi();
     bindMembersCsvUi();
     try {

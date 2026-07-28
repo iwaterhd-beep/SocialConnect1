@@ -2244,6 +2244,30 @@ body.club-dark .member-view-avalista-link:hover {
   grid-template-columns: 1fr;
 }
 
+.member-birth-picks {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 0.7fr) minmax(7rem, 1.2fr) minmax(5.5rem, 0.9fr);
+  gap: 0.45rem;
+}
+
+.member-birth-picks .input {
+  min-width: 0;
+  padding-inline: 0.55rem;
+}
+
+.form__row--birth .form__label,
+.form__row--birth > .form__label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--tx2, #374151);
+}
+
+body.club-dark .form__row--birth .form__label {
+  color: #cbd5e1;
+}
+
 .member-form-sc__type {
   margin-top: 0.5rem;
 }
@@ -3687,7 +3711,12 @@ body.club-dark .member-camera-modal__viewport {
 
 /* ---------- Modal términos alta socio ---------- */
 .member-terms-modal {
-  z-index: 260;
+  z-index: 800 !important;
+}
+
+.member-terms-modal__status {
+  margin: 0 0 0.75rem;
+  min-height: 1.25rem;
 }
 
 .member-terms-modal__panel {

@@ -276,9 +276,21 @@
         </section>
 
         <div class="member-form-sc__grid">
-          <div class="form__row">
-            <label for="member-birth">Fecha nacimiento</label>
-            <input class="input" id="member-birth" type="date" />
+          <div class="form__row form__row--birth">
+            <span class="form__label" id="member-birth-label">Fecha nacimiento</span>
+            <div class="member-birth-picks" role="group" aria-labelledby="member-birth-label">
+              <select class="input" id="member-birth-day" aria-label="Día">
+                <option value="">Día</option>
+              </select>
+              <select class="input" id="member-birth-month" aria-label="Mes">
+                <option value="">Mes</option>
+              </select>
+              <select class="input" id="member-birth-year" aria-label="Año">
+                <option value="">Año</option>
+              </select>
+            </div>
+            <input type="hidden" id="member-birth" value="" />
+            <p class="hint hint--small" id="member-birth-hint" style="margin-top: 0.35rem"></p>
           </div>
           <div class="form__row">
             <label for="member-phone">Teléfono</label>
@@ -380,13 +392,13 @@
           </label>
         </div>
 
+        <p id="member-status" class="msg member-form-sc__status" role="status" aria-live="polite"></p>
+
         <div class="member-form-sc__actions sc-sticky-actions">
           <button type="button" class="btn btn--ghost btn--danger is-hidden" id="member-archive">Eliminar socio</button>
           <button type="button" class="btn btn--ghost" id="member-cancel">Cancelar</button>
           <button type="button" class="btn" id="member-save">Guardar socio</button>
         </div>
-
-        <p id="member-status" class="msg" role="status" aria-live="polite"></p>
       </div>
     </div>
   </section>
