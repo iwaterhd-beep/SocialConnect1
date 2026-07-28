@@ -246,33 +246,23 @@
         <section class="member-form-sc__avalista-section" aria-labelledby="member-avalista-title">
           <h3 id="member-avalista-title" class="member-form-sc__section-title">Avalista <span class="member-form-sc__required">*</span></h3>
           <p class="hint member-form-sc__avalista-lede">
-            Obligatorio: busca un <strong>socio ya existente</strong> y haz clic en él (o Enter).
-            Debe salir en verde <strong>Avalista seleccionado</strong>. Escribir solo el nombre no vale.
+            Elige un <strong>socio ya dado de alta</strong> en este club. La base de datos no acepta solo un nombre escrito.
           </p>
           <div class="member-form-sc__grid">
             <div class="form__row member-form-sc__avalista-block">
-              <label for="member-avalista-search">Buscar socio avalista</label>
+              <label for="member-avalista-select">Socio avalista (garante)</label>
               <div class="member-avalista-wrap">
-                <input
-                  type="search"
-                  id="member-avalista-search"
-                  class="input"
-                  placeholder="Nombre, DNI o código…"
-                  autocomplete="off"
-                />
+                <select id="member-avalista-select" class="input" aria-required="true">
+                  <option value="">— Elige un socio existente —</option>
+                </select>
                 <button type="button" class="btn btn--ghost btn--small" id="member-avalista-clear">Quitar</button>
-                <div id="member-avalista-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
               </div>
               <p id="member-avalista-picked" class="member-avalista-picked is-hidden" hidden></p>
               <input type="hidden" id="member-avalista-member-id" value="" />
-            </div>
-            <div class="form__row">
-              <label for="member-avalista-name">Nombre del avalista</label>
-              <input class="input" id="member-avalista-name" type="text" autocomplete="off" placeholder="Se rellena al elegir un socio" />
-            </div>
-            <div class="form__row">
-              <label for="member-avalista-dni">DNI / NIE del avalista</label>
-              <input class="input" id="member-avalista-dni" type="text" inputmode="text" autocomplete="off" placeholder="Opcional" />
+              <input type="hidden" id="member-avalista-name" value="" />
+              <input type="hidden" id="member-avalista-dni" value="" />
+              <input type="hidden" id="member-avalista-search" value="" />
+              <div id="member-avalista-dropdown" class="tpv-member-dropdown is-hidden" hidden></div>
             </div>
           </div>
         </section>
