@@ -2199,8 +2199,9 @@ body.club-dark .member-form-sc__avalista-section {
   width: max(100%, 16rem);
 }
 
-.member-avalista-wrap .input[type='search'] {
-  flex: 1 1 12rem;
+.member-avalista-wrap .input[type='search'],
+.member-avalista-wrap select.input {
+  flex: 1 1 14rem;
   min-width: 0;
 }
 
