@@ -2189,6 +2189,14 @@ body.club-dark .member-form-sc__avalista-section {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: flex-start;
+  z-index: 5;
+}
+
+.member-avalista-wrap .tpv-member-dropdown {
+  z-index: 80;
+  right: auto;
+  min-width: min(100%, 22rem);
+  width: max(100%, 16rem);
 }
 
 .member-avalista-wrap .input[type='search'] {
