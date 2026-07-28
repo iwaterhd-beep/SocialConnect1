@@ -24,9 +24,9 @@
   let financeVentasCategories = [];
   let financeVentasSearch = '';
   let financeVentasUiBound = false;
-  const financeShiftsFilter = { range: '30d', from: '', to: '' };
-  const financeAdjustFilter = { range: '30d', from: '', to: '' };
-  const financeWalletFilter = { range: '30d', from: '', to: '', search: '' };
+  const financeShiftsFilter = { range: 'all', from: '', to: '' };
+  const financeAdjustFilter = { range: 'all', from: '', to: '' };
+  const financeWalletFilter = { range: 'all', from: '', to: '', search: '' };
   let financeSectionFiltersBound = false;
 
   const BUCKET = 'club_member_docs';
