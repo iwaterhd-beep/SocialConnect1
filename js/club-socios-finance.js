@@ -3229,6 +3229,36 @@
     set('finance-ventas-stat-gifts', gifts == null ? '—' : String(gifts));
   }
 
+  /**
+   * PostgREST/Supabase suele cortar en 1000 filas. Pagina con .range() hasta agotar.
+   * @param {(from:number,to:number)=>Promise<{data:any[]|null,error:any}>} fetchPage
+   */
+  async function fetchAllSupabasePages(fetchPage, options = {}) {
+    const pageSize = Math.max(100, Number(options.pageSize) || 1000);
+    const maxRows = Math.max(pageSize, Number(options.maxRows) || 100000);
+    const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+    const all = [];
+    let from = 0;
+    let lastError = null;
+
+    while (from < maxRows) {
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await fetchPage(from, to);
+      if (error) {
+        lastError = error;
+        break;
+      }
+      const chunk = data || [];
+      if (!chunk.length) break;
+      all.push(...chunk);
+      if (onProgress) onProgress(all.length);
+      if (chunk.length < pageSize) break;
+      from += pageSize;
+    }
+
+    return { data: all, error: lastError, truncated: all.length >= maxRows };
+  }
+
   async function resolveFinanceVentasProductFilterIds() {
     if (!financeVentasCategoryId) return null;
 
@@ -3792,66 +3822,86 @@
       }
     }
 
-    const selectCols =
+    const selectColsFull =
       'price_charged_eur, created_at, product_id, member_id, payment_method, grams_charged, grams_dispensed, notes';
-    let query = sb()
-      .from('tpv_dispenses')
-      .select(selectCols)
-      .eq('club_id', ctx.club.id)
-      .order('created_at', { ascending: false });
+    const selectColsPay =
+      'price_charged_eur, created_at, product_id, member_id, payment_method';
+    const selectColsBasic = 'price_charged_eur, created_at, product_id, member_id';
 
-    if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
-    if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
-    if (productFilterIds) query = query.in('product_id', productFilterIds);
-    query = query.limit(financeVentasRange === 'all' ? 5000 : 2000);
+    const buildDispensePageQuery = (cols, from, to) => {
+      let q = sb()
+        .from('tpv_dispenses')
+        .select(cols)
+        .eq('club_id', ctx.club.id)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      if (bounds.from) q = q.gte('created_at', bounds.from.toISOString());
+      if (bounds.to) q = q.lte('created_at', bounds.to.toISOString());
+      if (productFilterIds) q = q.in('product_id', productFilterIds);
+      return q;
+    };
 
-    let { data: rows, error } = await query;
+    if (summaryEl) {
+      summaryEl.textContent =
+        financeVentasRange === 'all'
+          ? 'Cargando todo el historial de ventas…'
+          : 'Cargando ventas…';
+    }
+
+    let selectCols = selectColsFull;
+    let pageResult = await fetchAllSupabasePages(
+      (from, to) => buildDispensePageQuery(selectCols, from, to),
+      {
+        pageSize: 1000,
+        maxRows: financeVentasRange === 'all' ? 100000 : 5000,
+        onProgress: (n) => {
+          if (summaryEl && financeVentasRange === 'all') {
+            summaryEl.textContent = `Cargando historial… ${n.toLocaleString('es-ES')} líneas`;
+          }
+        },
+      },
+    );
+
     if (
-      error &&
-      (error.code === '42703' ||
-        String(error.message || '')
+      pageResult.error &&
+      (pageResult.error.code === '42703' ||
+        String(pageResult.error.message || '')
           .toLowerCase()
           .includes('payment_method') ||
-        String(error.message || '')
+        String(pageResult.error.message || '')
           .toLowerCase()
           .includes('notes') ||
-        String(error.message || '')
+        String(pageResult.error.message || '')
           .toLowerCase()
           .includes('grams_'))
     ) {
-      let q2 = sb()
-        .from('tpv_dispenses')
-        .select('price_charged_eur, created_at, product_id, member_id, payment_method')
-        .eq('club_id', ctx.club.id)
-        .order('created_at', { ascending: false });
-      if (bounds.from) q2 = q2.gte('created_at', bounds.from.toISOString());
-      if (bounds.to) q2 = q2.lte('created_at', bounds.to.toISOString());
-      if (productFilterIds) q2 = q2.in('product_id', productFilterIds);
-      q2 = q2.limit(financeVentasRange === 'all' ? 5000 : 2000);
-      const retry = await q2;
-      rows = retry.data;
-      error = retry.error;
+      selectCols = selectColsPay;
+      pageResult = await fetchAllSupabasePages(
+        (from, to) => buildDispensePageQuery(selectCols, from, to),
+        {
+          pageSize: 1000,
+          maxRows: financeVentasRange === 'all' ? 100000 : 5000,
+        },
+      );
       if (
-        error &&
-        (error.code === '42703' ||
-          String(error.message || '')
+        pageResult.error &&
+        (pageResult.error.code === '42703' ||
+          String(pageResult.error.message || '')
             .toLowerCase()
             .includes('payment_method'))
       ) {
-        let q3 = sb()
-          .from('tpv_dispenses')
-          .select('price_charged_eur, created_at, product_id, member_id')
-          .eq('club_id', ctx.club.id)
-          .order('created_at', { ascending: false });
-        if (bounds.from) q3 = q3.gte('created_at', bounds.from.toISOString());
-        if (bounds.to) q3 = q3.lte('created_at', bounds.to.toISOString());
-        if (productFilterIds) q3 = q3.in('product_id', productFilterIds);
-        q3 = q3.limit(financeVentasRange === 'all' ? 5000 : 2000);
-        const retry2 = await q3;
-        rows = retry2.data;
-        error = retry2.error;
+        selectCols = selectColsBasic;
+        pageResult = await fetchAllSupabasePages(
+          (from, to) => buildDispensePageQuery(selectCols, from, to),
+          {
+            pageSize: 1000,
+            maxRows: financeVentasRange === 'all' ? 100000 : 5000,
+          },
+        );
       }
     }
+
+    const { data: rows, error, truncated } = pageResult;
     if (error) {
       ventasBody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
       if (summaryEl) summaryEl.textContent = '';
@@ -3961,9 +4011,10 @@
     });
 
     if (summaryEl) {
-      const limit = financeVentasRange === 'all' ? 5000 : 2000;
-      const truncated = list.length >= limit ? ` · mostrando las ${limit} más recientes` : '';
-      summaryEl.textContent = `${list.length} línea(s) en ${financeVentasFilterSummaryParts()}${truncated}`;
+      const truncNote = truncated
+        ? ' · se alcanzó el límite de carga (100.000); afina el periodo si faltan'
+        : '';
+      summaryEl.textContent = `${list.length.toLocaleString('es-ES')} línea(s) en ${financeVentasFilterSummaryParts()}${truncNote}`;
     }
   }
 
