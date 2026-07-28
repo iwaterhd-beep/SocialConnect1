@@ -101,15 +101,121 @@
     return { ...gate, club };
   }
 
+  const homeShiftsFilter = { range: '7d', from: '', to: '' };
+  let homeShiftsFilterBound = false;
+  let homeShiftsCtxRef = null;
+
+  function startOfLocalDay(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+
+  function endOfLocalDay(d) {
+    const x = new Date(d);
+    x.setHours(23, 59, 59, 999);
+    return x;
+  }
+
+  function parseHomeShiftDateInput(str, endOfDay) {
+    if (!str) return null;
+    const parts = String(str).split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(day)) return null;
+    const d = new Date(y, m, day);
+    return endOfDay ? endOfLocalDay(d) : startOfLocalDay(d);
+  }
+
+  function getHomeShiftsDateBounds(range, fromStr, toStr) {
+    const now = new Date();
+    if (range === 'today') {
+      return { from: startOfLocalDay(now), to: null };
+    }
+    if (range === '7d') {
+      const from = startOfLocalDay(now);
+      from.setDate(from.getDate() - 6);
+      return { from, to: null };
+    }
+    if (range === '30d') {
+      const from = startOfLocalDay(now);
+      from.setDate(from.getDate() - 29);
+      return { from, to: null };
+    }
+    if (range === 'custom') {
+      return {
+        from: parseHomeShiftDateInput(fromStr, false),
+        to: parseHomeShiftDateInput(toStr, true),
+      };
+    }
+    return { from: null, to: null };
+  }
+
+  function homeShiftsRangeLabel(range, fromStr, toStr) {
+    if (range === 'today') return 'hoy';
+    if (range === '7d') return 'los últimos 7 días';
+    if (range === '30d') return 'los últimos 30 días';
+    if (range === 'all') return 'todo el historial';
+    if (fromStr && toStr) return `del ${fromStr} al ${toStr}`;
+    if (fromStr) return `desde ${fromStr}`;
+    if (toStr) return `hasta ${toStr}`;
+    return 'el rango elegido';
+  }
+
   async function fetchRecentShifts(clubId) {
-    const { data, error } = await sb()
+    const bounds = getHomeShiftsDateBounds(
+      homeShiftsFilter.range,
+      homeShiftsFilter.from,
+      homeShiftsFilter.to,
+    );
+
+    let query = sb()
       .from('shifts')
       .select('*')
       .eq('club_id', clubId)
       .order('opened_at', { ascending: false })
-      .limit(20);
+      .limit(homeShiftsFilter.range === 'all' ? 100 : 50);
+
+    if (bounds.from) query = query.gte('opened_at', bounds.from.toISOString());
+    if (bounds.to) query = query.lte('opened_at', bounds.to.toISOString());
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
+  }
+
+  function bindHomeShiftsFilter(ctx) {
+    homeShiftsCtxRef = ctx;
+    if (homeShiftsFilterBound) return;
+    homeShiftsFilterBound = true;
+
+    const customWrap = $('home-shifts-custom');
+    document.querySelectorAll('[data-home-shifts-range]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const range = btn.getAttribute('data-home-shifts-range');
+        if (!range) return;
+        homeShiftsFilter.range = range;
+        document.querySelectorAll('[data-home-shifts-range]').forEach((b) => {
+          b.classList.toggle('is-active', b === btn);
+        });
+        if (customWrap) {
+          const show = range === 'custom';
+          customWrap.classList.toggle('is-hidden', !show);
+          customWrap.hidden = !show;
+        }
+        if (range !== 'custom' && homeShiftsCtxRef) {
+          void refreshShiftsUI(homeShiftsCtxRef);
+        }
+      });
+    });
+
+    $('home-shifts-apply')?.addEventListener('click', () => {
+      homeShiftsFilter.from = ($('home-shifts-from')?.value || '').trim();
+      homeShiftsFilter.to = ($('home-shifts-to')?.value || '').trim();
+      if (homeShiftsCtxRef) void refreshShiftsUI(homeShiftsCtxRef);
+    });
   }
 
   async function getOpenShift(clubId) {
@@ -169,8 +275,13 @@
   }
 
   async function refreshShiftsUI(ctx) {
+    bindHomeShiftsFilter(ctx);
     const open = await getOpenShift(ctx.club.id);
-    const recent = await fetchRecentShifts(ctx.club.id);
+    let recent = await fetchRecentShifts(ctx.club.id);
+    // Mantener el turno abierto visible aunque quede fuera del filtro de fechas
+    if (open && !recent.some((r) => r.id === open.id)) {
+      recent = [open, ...recent];
+    }
     let staffMap = {};
     try {
       const ids = [];
@@ -206,22 +317,35 @@
     updateShellShiftIndicators(!!open);
 
     const tbody = $('shifts-tbody');
+    const emptyEl = $('home-shifts-empty');
     if (tbody) {
       tbody.innerHTML = '';
-      recent.forEach((row) => {
-        const tr = document.createElement('tr');
-        const state = row.closed_at ? 'Cerrado' : 'Abierto';
-        const openedBy = staffEmailLabel(staffMap, row.opened_by);
-        const closedBy = row.closed_at ? staffEmailLabel(staffMap, row.closed_by) : '—';
-        tr.innerHTML = `
+      if (!recent.length) {
+        if (emptyEl) {
+          emptyEl.hidden = false;
+          emptyEl.textContent = `No hay turnos en ${homeShiftsRangeLabel(
+            homeShiftsFilter.range,
+            homeShiftsFilter.from,
+            homeShiftsFilter.to,
+          )}.`;
+        }
+      } else {
+        if (emptyEl) emptyEl.hidden = true;
+        recent.forEach((row) => {
+          const tr = document.createElement('tr');
+          const state = row.closed_at ? 'Cerrado' : 'Abierto';
+          const openedBy = staffEmailLabel(staffMap, row.opened_by);
+          const closedBy = row.closed_at ? staffEmailLabel(staffMap, row.closed_by) : '—';
+          tr.innerHTML = `
           <td>${escapeHtml(formatTs(row.opened_at))}</td>
           <td>${escapeHtml(formatTs(row.closed_at))}</td>
           <td>${escapeHtml(openedBy)}</td>
           <td>${escapeHtml(closedBy)}</td>
           <td>${escapeHtml(state)}</td>
         `;
-        tbody.appendChild(tr);
-      });
+          tbody.appendChild(tr);
+        });
+      }
     }
 
     if (typeof window.scClubRefreshStockUi === 'function') {
