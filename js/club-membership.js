@@ -1147,41 +1147,21 @@
     syncRewardQtyUnitLabel();
     await loadRewards();
     renderRewards();
-    setMsg('Regalo añadido. Se entregará gratis en el TPV al subir de nivel.', false);
+    setMsg('Regalo añadido. En el TPV se entregará gratis a socios de ese nivel (una vez).', false);
   }
 
   /**
-   * Crea grants pendientes cuando un socio sube de nivel (manual o auto-VIP).
-   * Solo para regalos on_upgrade con product_id del nivel destino.
+   * Inserta grants pendientes (ignora duplicados unique member_id+reward_id).
    */
-  async function grantUpgradeRewards(memberId, fromTier, toTier) {
-    if (!ctx?.club?.id || !sb() || !memberId || !toTier) return { ok: false, created: 0 };
-    if (tierRank(toTier) <= tierRank(fromTier || 'standard')) {
-      return { ok: true, created: 0 };
+  async function insertRewardGrants(memberId, rewards) {
+    if (!ctx?.club?.id || !sb() || !memberId || !rewards?.length) {
+      return { ok: false, created: 0 };
     }
     if (!hasRewardGrantsTable) return { ok: false, created: 0 };
 
-    let rewards = rewardsCache;
-    if (!rewards.length) {
-      try {
-        await loadRewards();
-        rewards = rewardsCache;
-      } catch (_) {
-        rewards = [];
-      }
-    }
-
-    const matching = (rewards || []).filter((r) => {
-      if (!r?.is_active) return false;
-      if (r.trigger_type !== 'on_upgrade') return false;
-      if (!r.product_id) return false;
-      if (r.tier_key && r.tier_key !== toTier) return false;
-      return true;
-    });
-    if (!matching.length) return { ok: true, created: 0 };
-
     let created = 0;
-    for (const r of matching) {
+    for (const r of rewards) {
+      if (!r?.id || !r.product_id) continue;
       const qtyRaw = Number(r.quantity);
       const quantity = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
       const row = {
@@ -1213,9 +1193,9 @@
           hasRewardGrantsTable = false;
           return { ok: false, created, needMigration: true };
         }
-        // unique violation = already granted
+        // unique = ya concedido (pending o fulfilled)
         if (error.code === '23505') continue;
-        console.warn('grantUpgradeRewards', error);
+        console.warn('insertRewardGrants', error);
         continue;
       }
       created += 1;
@@ -1223,8 +1203,84 @@
     return { ok: true, created };
   }
 
+  async function ensureRewardsLoaded() {
+    if (rewardsCache.length) return rewardsCache;
+    try {
+      await loadRewards();
+    } catch (_) {
+      /* ignore */
+    }
+    return rewardsCache;
+  }
+
+  function isMemberBirthdayToday(member) {
+    const iso = member?.birth_date;
+    if (!iso) return false;
+    const raw = String(iso).slice(0, 10);
+    const parts = raw.split('-');
+    if (parts.length !== 3) return false;
+    const mo = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!Number.isFinite(mo) || !Number.isFinite(d)) return false;
+    const today = new Date();
+    return today.getMonth() + 1 === mo && today.getDate() === d;
+  }
+
+  /**
+   * Crea grants pendientes cuando un socio sube de nivel (manual o auto-VIP).
+   * Solo para regalos on_upgrade con product_id del nivel destino (o cualquiera).
+   */
+  async function grantUpgradeRewards(memberId, fromTier, toTier) {
+    if (!memberId || !toTier) return { ok: false, created: 0 };
+    if (tierRank(toTier) <= tierRank(fromTier || 'standard')) {
+      return { ok: true, created: 0 };
+    }
+    const rewards = await ensureRewardsLoaded();
+    const matching = (rewards || []).filter((r) => {
+      if (!r?.is_active) return false;
+      if (r.trigger_type !== 'on_upgrade') return false;
+      if (!r.product_id) return false;
+      if (r.tier_key && r.tier_key !== toTier) return false;
+      return true;
+    });
+    return insertRewardGrants(memberId, matching);
+  }
+
+  /**
+   * Al seleccionar socio en TPV: crea grants pendientes que le correspondan ya
+   * (nivel actual o cumpleaños), para que el regalo aparezca aunque el upgrade
+   * fuera anterior a configurar el regalo.
+   */
+  async function syncEligibleGrantsForMember(member) {
+    if (!member?.id || !ctx?.club?.id) return { ok: false, created: 0 };
+    const rewards = await ensureRewardsLoaded();
+    const tier = member.member_type || 'standard';
+    const birthday = isMemberBirthdayToday(member);
+
+    const matching = (rewards || []).filter((r) => {
+      if (!r?.is_active || !r.product_id) return false;
+      if (r.tier_key && r.tier_key !== tier) return false;
+
+      if (r.trigger_type === 'on_upgrade') {
+        // Nivel concreto → socios de ese nivel. Sin nivel (cualquiera) → no Estándar.
+        if (r.tier_key) return r.tier_key === tier;
+        return tier !== 'standard';
+      }
+      if (r.trigger_type === 'birthday') {
+        return birthday;
+      }
+      return false;
+    });
+
+    return insertRewardGrants(member.id, matching);
+  }
+
   window.scMembershipGrantOnTierUpgrade = async function (memberId, fromTier, toTier) {
     return grantUpgradeRewards(memberId, fromTier, toTier);
+  };
+
+  window.scMembershipSyncEligibleGrants = async function (member) {
+    return syncEligibleGrantsForMember(member);
   };
 
   async function toggleReward(id, nextActive) {
@@ -1361,11 +1417,12 @@
         renderRewards();
       }
       await loadTiers();
+      // Cargar regalos también para no-admin (TPV necesita sync de grants)
+      await loadRewards();
       if (isAdmin()) {
         renderTiers();
         await loadRewardProducts();
         fillRewardProductSelect();
-        await loadRewards();
         renderRewards();
       }
       notifyLabelsUpdated();

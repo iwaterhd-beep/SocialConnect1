@@ -2915,6 +2915,13 @@
     await renderTpvMemberChipDisplay(m);
     syncTpvMemberFieldVipFromSelection();
     updateTpvWalletUi();
+    if (typeof window.scMembershipSyncEligibleGrants === 'function') {
+      try {
+        await window.scMembershipSyncEligibleGrants(m);
+      } catch (e) {
+        console.warn('scMembershipSyncEligibleGrants', e);
+      }
+    }
     await applyPendingMembershipGifts(m);
   }
 
