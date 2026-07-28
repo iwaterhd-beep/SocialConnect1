@@ -109,6 +109,14 @@
   gap: 0.15rem;
 }
 
+.sc-membership-block__head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .sc-membership-block__head h3 {
   margin: 0;
   font-size: 1rem;
@@ -118,6 +126,15 @@
 
 .sc-membership-block__head .hint {
   margin: 0;
+}
+
+.sc-membership-tier__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--tier-color, #64748b) 18%, transparent);
 }
 
 .sc-membership-tiers {

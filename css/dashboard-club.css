@@ -2487,6 +2487,12 @@ body.club-dark .member-view-docs__item {
   border-color: color-mix(in srgb, var(--pill-color, var(--member-tier-vip, #ca8a04)) 45%, #fff);
 }
 
+.member-type-pill--custom {
+  background: color-mix(in srgb, var(--pill-color, #7c3aed) 18%, #fff);
+  color: var(--pill-color, #6d28d9);
+  border-color: color-mix(in srgb, var(--pill-color, #7c3aed) 40%, #fff);
+}
+
 .member-type-pill--expired {
   opacity: 0.85;
   text-decoration: line-through;

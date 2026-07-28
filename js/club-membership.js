@@ -46,6 +46,9 @@
     },
   ];
 
+  const BUILTIN_TIER_KEYS = new Set(['standard', 'premium', 'vip']);
+  const CUSTOM_TIER_COLORS = ['#7c3aed', '#db2777', '#ea580c', '#0284c7', '#16a34a', '#4f46e5'];
+
   let ctx = null;
   let uiBound = false;
   let tiersCache = [];
@@ -54,15 +57,62 @@
   let migrationMissing = false;
   let hasRewardProductColumn = true;
   let hasRewardGrantsTable = true;
+  let customTiersAllowed = true;
 
   function sb() {
     return window.scSupabase || window.supabaseClient || null;
   }
 
   function tierRank(key) {
-    if (key === 'vip') return 2;
-    if (key === 'premium') return 1;
+    const k = key || 'standard';
+    const row = tiersCache.find((x) => x.tier_key === k);
+    if (row && row.sort_order != null) return Number(row.sort_order) || 0;
+    if (k === 'vip') return 2;
+    if (k === 'premium') return 1;
     return 0;
+  }
+
+  function isBuiltinTier(key) {
+    return BUILTIN_TIER_KEYS.has(String(key || ''));
+  }
+
+  function slugifyTierKey(name) {
+    const base = String(name || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_')
+      .slice(0, 28);
+    let key = base || 'nivel';
+    if (!/^[a-z]/.test(key)) key = `n_${key}`.slice(0, 32);
+    if (BUILTIN_TIER_KEYS.has(key) || key === 'expired' || key === 'archived') {
+      key = `custom_${key}`.slice(0, 32);
+    }
+    const used = new Set(tiersCache.map((t) => t.tier_key));
+    if (!used.has(key)) return key;
+    for (let i = 2; i < 100; i++) {
+      const candidate = `${key.slice(0, 28)}_${i}`.slice(0, 32);
+      if (!used.has(candidate)) return candidate;
+    }
+    return `nivel_${Date.now().toString(36)}`.slice(0, 32);
+  }
+
+  function nextCustomColor() {
+    const used = new Set(tiersCache.map((t) => normalizeHex(t.color_hex)));
+    const free = CUSTOM_TIER_COLORS.find((c) => !used.has(c));
+    return free || CUSTOM_TIER_COLORS[tiersCache.length % CUSTOM_TIER_COLORS.length];
+  }
+
+  function nextSortOrder() {
+    let max = -1;
+    tiersCache.forEach((t) => {
+      const n = Number(t.sort_order);
+      if (Number.isFinite(n) && n > max) max = n;
+    });
+    return max + 1;
   }
 
   function escapeHtml(s) {
@@ -201,7 +251,8 @@
       if (row?.display_name) return row.display_name;
       if (k === 'premium') return 'Premium';
       if (k === 'vip') return 'VIP';
-      return 'Estándar';
+      if (k === 'standard') return 'Estándar';
+      return k;
     };
     window.scClubMembershipTierColor = function (key) {
       const k = key || 'standard';
@@ -270,8 +321,9 @@
     }
 
     migrationMissing = false;
-    const byKey = Object.fromEntries((data || []).map((r) => [r.tier_key, r]));
-    tiersCache = DEFAULT_TIERS.map((def) => {
+    const rows = data || [];
+    const byKey = Object.fromEntries(rows.map((r) => [r.tier_key, r]));
+    const merged = DEFAULT_TIERS.map((def) => {
       const row = byKey[def.tier_key];
       return row
         ? {
@@ -282,6 +334,26 @@
           }
         : { ...def, id: null, club_id: ctx.club.id };
     });
+    rows.forEach((row) => {
+      if (BUILTIN_TIER_KEYS.has(row.tier_key)) return;
+      merged.push({
+        id: row.id,
+        club_id: row.club_id,
+        tier_key: row.tier_key,
+        display_name: (row.display_name || row.tier_key).trim() || row.tier_key,
+        color_hex: normalizeHex(row.color_hex, '#7c3aed'),
+        description: row.description || '',
+        benefits_text: row.benefits_text || '',
+        auto_upgrade_enabled: Boolean(row.auto_upgrade_enabled),
+        spend_threshold_eur: Number(row.spend_threshold_eur) || 0,
+        spend_window_days: Math.max(1, Number(row.spend_window_days) || 7),
+        default_valid_days: row.default_valid_days,
+        is_enabled: row.is_enabled !== false,
+        sort_order: Number(row.sort_order) || merged.length,
+      });
+    });
+    merged.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+    tiersCache = merged;
     publishTierGlobal();
     return tiersCache;
   }
@@ -292,6 +364,9 @@
     }
     if (key === 'premium') {
       return 'Solo referencia para el equipo. La regla automática del POS aplica únicamente al nivel VIP.';
+    }
+    if (!isBuiltinTier(key)) {
+      return 'Nivel personalizado. Asígnarlo a mano en Socios. La auto-subida por gasto del POS sigue aplicando solo a VIP.';
     }
     return '';
   }
@@ -330,33 +405,7 @@
             Nivel base · sin auto-upgrade. Renómbralo si quieres (ej. “Socio”).
           </p>
         `;
-      } else if (key === 'premium') {
-        autoBlock = `
-          <div class="sc-membership-tier__auto sc-membership-tier__auto--ref">
-            <p class="sc-membership-tier__auto-title">
-              Gasto POS
-              <span class="sc-membership-tier__auto-badge">Referencia</span>
-            </p>
-            <label class="sc-membership-tier__toggle">
-              <input type="checkbox" data-field="auto_upgrade_enabled" ${t.auto_upgrade_enabled ? 'checked' : ''} />
-              Mostrar como objetivo interno
-            </label>
-            <div class="sc-membership-tier__auto-grid">
-              <div class="form__row">
-                <label>Umbral (€)</label>
-                <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
-                  value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
-              </div>
-              <div class="form__row">
-                <label>Ventana (días)</label>
-                <input class="input" data-field="spend_window_days" type="number" min="1" max="365" step="1"
-                  value="${escapeHtml(String(t.spend_window_days ?? 7))}" />
-              </div>
-            </div>
-            <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(key))}</p>
-          </div>
-        `;
-      } else {
+      } else if (key === 'vip') {
         autoBlock = `
           <div class="sc-membership-tier__auto sc-membership-tier__auto--live">
             <p class="sc-membership-tier__auto-title">
@@ -382,7 +431,41 @@
             <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(key))}</p>
           </div>
         `;
+      } else {
+        autoBlock = `
+          <div class="sc-membership-tier__auto sc-membership-tier__auto--ref">
+            <p class="sc-membership-tier__auto-title">
+              Gasto POS
+              <span class="sc-membership-tier__auto-badge">Referencia</span>
+            </p>
+            <label class="sc-membership-tier__toggle">
+              <input type="checkbox" data-field="auto_upgrade_enabled" ${t.auto_upgrade_enabled ? 'checked' : ''} />
+              Mostrar como objetivo interno
+            </label>
+            <div class="sc-membership-tier__auto-grid">
+              <div class="form__row">
+                <label>Umbral (€)</label>
+                <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
+                  value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
+              </div>
+              <div class="form__row">
+                <label>Ventana (días)</label>
+                <input class="input" data-field="spend_window_days" type="number" min="1" max="365" step="1"
+                  value="${escapeHtml(String(t.spend_window_days ?? 7))}" />
+              </div>
+            </div>
+            <p class="sc-membership-tier__hint">${escapeHtml(autoHintFor(key))}</p>
+          </div>
+        `;
       }
+
+      const deleteBtn = !isBuiltinTier(key)
+        ? `<div class="sc-membership-tier__actions">
+            <button type="button" class="btn btn--ghost btn--small btn--danger" data-tier-delete>
+              Eliminar nivel
+            </button>
+          </div>`
+        : '';
 
       card.innerHTML = `
         <button type="button" class="sc-membership-tier__summary" data-tier-toggle aria-expanded="false">
@@ -442,6 +525,7 @@
             </div>
           </div>
           ${autoBlock}
+          ${deleteBtn}
         </div>
       `;
 
@@ -497,12 +581,123 @@
       enabledInput?.addEventListener('change', () => {
         card.classList.toggle('is-disabled', !enabledInput.checked);
       });
+      card.querySelector('[data-tier-delete]')?.addEventListener('click', () => {
+        void removeCustomTier(key);
+      });
 
       setOpen(false);
       grid.appendChild(card);
     });
 
     syncRewardTierOptions();
+  }
+
+  function addCustomTier() {
+    if (!isAdmin()) {
+      setMsg('Solo el administrador puede crear niveles.', true);
+      return;
+    }
+    if (!customTiersAllowed && !migrationMissing) {
+      setMsg(
+        'Para crear más niveles ejecuta 054_custom_membership_tiers.sql en Supabase.',
+        true,
+      );
+      return;
+    }
+    const fromDom = document.querySelectorAll('#membership-tiers-grid [data-tier-key]').length
+      ? readTiersFromDom()
+      : tiersCache.slice();
+    tiersCache = fromDom;
+    const suggested = `Nivel ${tiersCache.length + 1}`;
+    const raw = window.prompt('Nombre del nuevo nivel:', suggested);
+    if (raw == null) return;
+    const display_name = String(raw).trim().slice(0, 40) || suggested;
+    const tier_key = slugifyTierKey(display_name);
+    const row = {
+      id: null,
+      club_id: ctx?.club?.id || null,
+      tier_key,
+      display_name,
+      color_hex: nextCustomColor(),
+      description: '',
+      benefits_text: '',
+      auto_upgrade_enabled: false,
+      spend_threshold_eur: 0,
+      spend_window_days: 7,
+      default_valid_days: null,
+      is_enabled: true,
+      sort_order: nextSortOrder(),
+    };
+    tiersCache = [...fromDom.filter((t) => t.tier_key !== tier_key), row];
+    publishTierGlobal();
+    renderTiers();
+    const card = document.querySelector(
+      `#membership-tiers-grid [data-tier-key="${CSS.escape(tier_key)}"]`,
+    );
+    if (card) {
+      card.querySelector('[data-tier-toggle]')?.click();
+      card.querySelector('[data-field="display_name"]')?.focus?.();
+    }
+    setMsg(
+      migrationMissing
+        ? 'Nivel añadido en esta sesión. Ejecuta las migraciones de membresía para guardarlo.'
+        : 'Nivel añadido. Pulsa «Guardar cambios» para fijarlo en la nube.',
+      false,
+    );
+    notifyLabelsUpdated();
+  }
+
+  async function removeCustomTier(tierKey) {
+    if (!isAdmin() || isBuiltinTier(tierKey)) return;
+    const name = window.scClubMembershipTierLabel?.(tierKey) || tierKey;
+    if (!window.confirm(`¿Eliminar el nivel «${name}»? Los socios con este tipo deberán reasignarse.`)) {
+      return;
+    }
+
+    const fromDom = document.querySelectorAll('#membership-tiers-grid [data-tier-key]').length
+      ? readTiersFromDom()
+      : tiersCache.slice();
+    const prev = fromDom.find((t) => t.tier_key === tierKey) || tiersCache.find((t) => t.tier_key === tierKey);
+
+    if (prev?.id && sb() && ctx?.club?.id && !migrationMissing) {
+      let memberCount = 0;
+      let { count, error: countErr } = await sb()
+        .from('club_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', ctx.club.id)
+        .eq('member_type', tierKey)
+        .eq('is_archived', false);
+      if (countErr) {
+        ({ count, error: countErr } = await sb()
+          .from('club_members')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', ctx.club.id)
+          .eq('member_type', tierKey));
+      }
+      if (!countErr) memberCount = count || 0;
+      if (memberCount > 0) {
+        setMsg(
+          `Hay ${memberCount} socio(s) con este nivel. Cámbiales el tipo en Socios antes de eliminarlo.`,
+          true,
+        );
+        return;
+      }
+      const { error } = await sb()
+        .from('club_membership_tiers')
+        .delete()
+        .eq('id', prev.id)
+        .eq('club_id', ctx.club.id);
+      if (error) {
+        setMsg(error.message || 'No se pudo eliminar el nivel.', true);
+        return;
+      }
+    }
+
+    tiersCache = fromDom.filter((t) => t.tier_key !== tierKey);
+    publishTierGlobal();
+    renderTiers();
+    notifyLabelsUpdated();
+    setMsg(`Nivel «${name}» eliminado.`, false);
   }
 
   function readTiersFromDom() {
@@ -591,10 +786,24 @@
         );
         return;
       }
+      const msg = String(error.message || '');
+      if (
+        msg.includes('tier_key') ||
+        msg.includes('club_membership_tiers_tier_key') ||
+        error.code === '23514'
+      ) {
+        customTiersAllowed = false;
+        setMsg(
+          'Para guardar niveles nuevos ejecuta 054_custom_membership_tiers.sql en Supabase.',
+          true,
+        );
+        return;
+      }
       setMsg(error.message || 'No se pudieron guardar los niveles.', true);
       return;
     }
 
+    customTiersAllowed = true;
     await loadTiers();
     renderTiers();
     notifyLabelsUpdated();
@@ -982,6 +1191,7 @@
     if (uiBound) return;
     uiBound = true;
     $('membership-tiers-save')?.addEventListener('click', () => void saveTiers());
+    $('membership-tier-add')?.addEventListener('click', () => addCustomTier());
     $('reward-add')?.addEventListener('click', () => void addReward());
     $('reward-trigger')?.addEventListener('change', syncRewardSpendVisibility);
     $('reward-product')?.addEventListener('change', syncRewardQtyUnitLabel);

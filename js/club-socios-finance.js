@@ -662,12 +662,35 @@
     }
     if (t === 'premium') return 'Premium';
     if (t === 'vip') return 'VIP';
-    return 'Estándar';
+    if (t === 'standard') return 'Estándar';
+    return t || 'Estándar';
+  }
+
+  function getConfiguredMemberTiers() {
+    const list = window.scClubMembershipTiers;
+    if (Array.isArray(list) && list.length) {
+      return list.filter((t) => t && t.tier_key && t.is_enabled !== false);
+    }
+    return [
+      { tier_key: 'standard', display_name: 'Estándar' },
+      { tier_key: 'premium', display_name: 'Premium' },
+      { tier_key: 'vip', display_name: 'VIP' },
+    ];
+  }
+
+  function isKnownMemberType(key) {
+    const k = String(key || '').trim();
+    if (!k) return false;
+    return getConfiguredMemberTiers().some((t) => t.tier_key === k);
+  }
+
+  function isElevatedMemberType(key) {
+    return String(key || 'standard') !== 'standard';
   }
 
   function isMemberTierExpired(m) {
     const t = m.member_type || 'standard';
-    if (t !== 'premium' && t !== 'vip') return false;
+    if (!isElevatedMemberType(t)) return false;
     const vu = m.member_type_valid_until;
     if (vu == null || String(vu).trim() === '') return false;
     const raw = String(vu).slice(0, 10);
@@ -1203,15 +1226,9 @@
 
   function memberTypeShortSuffix(m) {
     const t = m.member_type || 'standard';
-    if (t === 'vip') {
-      const name = memberTypeLabel('vip');
-      return isMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
-    }
-    if (t === 'premium') {
-      const name = memberTypeLabel('premium');
-      return isMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
-    }
-    return '';
+    if (!isElevatedMemberType(t)) return '';
+    const name = memberTypeLabel(t);
+    return isMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
   }
 
   function memberTypePillHtml(m) {
@@ -1222,7 +1239,8 @@
     let cls = 'member-type-pill';
     if (t === 'vip') cls += ' member-type-pill--vip';
     else if (t === 'premium') cls += ' member-type-pill--premium';
-    else cls += ' member-type-pill--standard';
+    else if (t === 'standard') cls += ' member-type-pill--standard';
+    else cls += ' member-type-pill--custom';
     if (expired) cls += ' member-type-pill--expired';
     const color =
       typeof window.scClubMembershipTierColor === 'function'
@@ -1235,7 +1253,7 @@
   function memberTierDetailLine(m) {
     const t = m.member_type || 'standard';
     const parts = [];
-    if (t === 'premium' || t === 'vip') {
+    if (isElevatedMemberType(t)) {
       const vu = m.member_type_valid_until;
       if (vu != null && String(vu).trim() !== '') {
         const iso = String(vu).slice(0, 10);
@@ -1600,7 +1618,7 @@
     }
 
     const extra = [];
-    if (m.member_type === 'premium' || m.member_type === 'vip') {
+    if (isElevatedMemberType(m.member_type)) {
       const te = memberTierDetailLine(m);
       if (te) extra.push(te);
     }
@@ -1635,10 +1653,11 @@
   }
 
   function setMemberTypeUi(value) {
-    const v = value === 'premium' || value === 'vip' ? value : 'standard';
+    const raw = String(value || 'standard').trim() || 'standard';
+    const v = isKnownMemberType(raw) ? raw : 'standard';
     const hidden = $('member-type-value');
     if (hidden) hidden.value = v;
-    document.querySelectorAll('[data-member-type]').forEach((btn) => {
+    document.querySelectorAll('#member-type-seg [data-member-type], .member-type-seg [data-member-type]').forEach((btn) => {
       const on = btn.getAttribute('data-member-type') === v;
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1646,7 +1665,7 @@
       btn.textContent = memberTypeLabel(key);
     });
     const wrap = $('member-type-valid-wrap');
-    const show = v === 'premium' || v === 'vip';
+    const show = isElevatedMemberType(v);
     if (wrap) {
       wrap.hidden = !show;
       wrap.classList.toggle('is-hidden', !show);
@@ -1654,16 +1673,48 @@
     if (!show && $('member-type-valid-until')) $('member-type-valid-until').value = '';
   }
 
+  function rebuildMemberTypeControls() {
+    const tiers = getConfiguredMemberTiers();
+    const seg =
+      document.querySelector('#member-type-seg') ||
+      document.querySelector('.member-form-sc .member-type-seg') ||
+      document.querySelector('.member-type-seg[aria-labelledby="member-type-label"]');
+    if (seg) {
+      if (!seg.id) seg.id = 'member-type-seg';
+      const current = $('member-type-value')?.value || 'standard';
+      seg.innerHTML = tiers
+        .map((t) => {
+          const key = escapeHtml(t.tier_key);
+          const label = escapeHtml(t.display_name || memberTypeLabel(t.tier_key));
+          return `<button type="button" class="member-type-seg__btn" data-member-type="${key}" aria-pressed="false">${label}</button>`;
+        })
+        .join('');
+      setMemberTypeUi(current);
+    }
+
+    const filter = $('members-type-filter');
+    if (filter) {
+      const keep = membersTypeFilter;
+      const chips = [
+        { key: '', label: 'Todos' },
+        ...tiers.map((t) => ({
+          key: t.tier_key,
+          label: t.display_name || memberTypeLabel(t.tier_key),
+        })),
+        { key: 'expired', label: 'Caducados' },
+        { key: 'archived', label: 'Archivados' },
+      ];
+      filter.innerHTML = chips
+        .map((c) => {
+          const on = (c.key || '') === (keep || '');
+          return `<button type="button" class="chip${on ? ' is-active' : ''}" data-members-type-filter="${escapeHtml(c.key)}">${escapeHtml(c.label)}</button>`;
+        })
+        .join('');
+    }
+  }
+
   function syncMembershipLabelsInUi() {
-    document.querySelectorAll('[data-members-type-filter]').forEach((btn) => {
-      const key = btn.getAttribute('data-members-type-filter') || '';
-      if (!key || key === 'expired') return;
-      btn.textContent = memberTypeLabel(key);
-    });
-    document.querySelectorAll('[data-member-type]').forEach((btn) => {
-      const key = btn.getAttribute('data-member-type') || 'standard';
-      btn.textContent = memberTypeLabel(key);
-    });
+    rebuildMemberTypeControls();
     try {
       if ($('members-tbody')) renderMembersTable();
     } catch (_) {
@@ -2382,10 +2433,10 @@
     const notes = ($('member-notes')?.value || '').trim();
     const is_active = $('member-active')?.checked !== false;
     const mtRaw = ($('member-type-value')?.value || 'standard').trim();
-    const member_type = mtRaw === 'premium' || mtRaw === 'vip' ? mtRaw : 'standard';
+    const member_type = isKnownMemberType(mtRaw) ? mtRaw : 'standard';
     const validRaw = ($('member-type-valid-until')?.value || '').trim();
     let member_type_valid_until = null;
-    if (member_type === 'premium' || member_type === 'vip') {
+    if (isElevatedMemberType(member_type)) {
       member_type_valid_until = validRaw === '' ? null : validRaw;
     }
     const feeRaw = ($('member-enrollment-fee')?.value || '').trim();
@@ -4213,17 +4264,27 @@
   }
 
   function tipoExportEs(member_type) {
-    if (member_type === 'premium') return 'Premium';
-    if (member_type === 'vip') return 'VIP';
-    return 'Estándar';
+    return memberTypeLabel(member_type || 'standard');
   }
 
   function normalizeTipoImport(s) {
-    const t = String(s || '')
-      .trim()
+    const raw = String(s || '').trim();
+    if (!raw) return 'standard';
+    const t = raw
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+    const tiers = getConfiguredMemberTiers();
+    const byKey = tiers.find((x) => x.tier_key === t || x.tier_key === raw);
+    if (byKey) return byKey.tier_key;
+    const byName = tiers.find((x) => {
+      const n = String(x.display_name || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      return n === t || n.includes(t) || t.includes(n);
+    });
+    if (byName) return byName.tier_key;
     if (t.includes('premium')) return 'premium';
     if (t.includes('vip')) return 'vip';
     return 'standard';
@@ -4424,7 +4485,7 @@
       const tipo = normalizeTipoImport(csvCell(row, idx, 'tipo'));
       const tipoVigRaw = csvCell(row, idx, 'tipo_vigencia').trim();
       let member_type_valid_until = null;
-      if ((tipo === 'premium' || tipo === 'vip') && tipoVigRaw) {
+      if (tipo !== 'standard' && tipoVigRaw) {
         member_type_valid_until = parseBirthDateCsv(tipoVigRaw);
       }
       const activo = normalizeEstadoImport(csvCell(row, idx, 'estado'));
@@ -4804,22 +4865,26 @@
       if (matches.length === 1) void showMemberProfile(matches[0].id);
     });
 
-    document.querySelectorAll('[data-members-type-filter]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        membersTypeFilter = btn.getAttribute('data-members-type-filter') || '';
-        document.querySelectorAll('[data-members-type-filter]').forEach((b) => {
-          const on = (b.getAttribute('data-members-type-filter') || '') === membersTypeFilter;
+    // Delegación: filtros y tipos se regeneran al cambiar membresías
+    document.body.addEventListener('click', (e) => {
+      const filterBtn = e.target?.closest?.('[data-members-type-filter]');
+      if (filterBtn && filterBtn.closest('#members-type-filter')) {
+        membersTypeFilter = filterBtn.getAttribute('data-members-type-filter') || '';
+        document.querySelectorAll('#members-type-filter [data-members-type-filter]').forEach((b) => {
+          const on =
+            (b.getAttribute('data-members-type-filter') || '') === membersTypeFilter;
           b.classList.toggle('is-active', on);
         });
         renderMembersTable();
-      });
-    });
-    document.querySelectorAll('[data-member-type]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const v = btn.getAttribute('data-member-type') || 'standard';
+        return;
+      }
+      const typeBtn = e.target?.closest?.('[data-member-type]');
+      if (typeBtn && typeBtn.closest('.member-type-seg')) {
+        const v = typeBtn.getAttribute('data-member-type') || 'standard';
         setMemberTypeUi(v);
-      });
+      }
     });
+
 
     ['member-first-name', 'member-last-name', 'member-second-last-name', 'member-dni'].forEach((id) => {
       $(id)?.addEventListener('input', function () {
@@ -4906,6 +4971,11 @@
     ensureMemberBirthSelectOptions();
     bindMembersUi();
     bindMembersCsvUi();
+    try {
+      rebuildMemberTypeControls();
+    } catch (_) {
+      /* ok */
+    }
     try {
       await loadMembersTable();
       await refreshFinance();

@@ -2673,7 +2673,7 @@
 
   function tpvMemberTierExpired(m) {
     const t = m?.member_type || 'standard';
-    if (t !== 'premium' && t !== 'vip') return false;
+    if (t === 'standard') return false;
     const vu = m?.member_type_valid_until;
     if (vu == null || String(vu).trim() === '') return false;
     const raw = String(vu).slice(0, 10);
@@ -2760,19 +2760,12 @@
 
   function tpvMemberTierSuffix(m) {
     const t = m?.member_type || 'standard';
-    if (t === 'vip') {
-      const name = typeof window.scClubMembershipTierLabel === 'function'
-        ? window.scClubMembershipTierLabel('vip')
-        : 'VIP';
-      return tpvMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
-    }
-    if (t === 'premium') {
-      const name = typeof window.scClubMembershipTierLabel === 'function'
-        ? window.scClubMembershipTierLabel('premium')
-        : 'Premium';
-      return tpvMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
-    }
-    return '';
+    if (t === 'standard') return '';
+    const name =
+      typeof window.scClubMembershipTierLabel === 'function'
+        ? window.scClubMembershipTierLabel(t)
+        : t;
+    return tpvMemberTierExpired(m) ? ` · ${name} cad.` : ` · ${name}`;
   }
 
   function tpvChipMemberInitials(m) {
