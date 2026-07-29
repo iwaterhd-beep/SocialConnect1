@@ -1,11 +1,19 @@
 <div class="club-view-stage sc-home-grid">
+  <div class="sc-home-atmosphere" aria-hidden="true">
+    <span class="sc-home-blob sc-home-blob--a"></span>
+    <span class="sc-home-blob sc-home-blob--b"></span>
+    <span class="sc-home-blob sc-home-blob--c"></span>
+  </div>
+
 <section class="card-section sc-home-summary sc-card--flat sc-home-shortcuts" aria-labelledby="home-next-title">
   <div class="sc-home-shortcuts__hero">
     <div class="sc-home-shortcuts__glow" aria-hidden="true"></div>
+    <div class="sc-home-shortcuts__orb sc-home-shortcuts__orb--1" aria-hidden="true"></div>
+    <div class="sc-home-shortcuts__orb sc-home-shortcuts__orb--2" aria-hidden="true"></div>
     <div class="sc-home-shortcuts__head">
-      <p class="sc-home-eyebrow">Panel del club</p>
-      <h2 id="home-next-title">Accesos rápidos</h2>
-      <p class="hint sc-home-shortcuts__lede">Salta a la sección que necesitas ahora.</p>
+      <p class="sc-home-eyebrow">Hoy en el club</p>
+      <h2 id="home-next-title">¿Qué quieres hacer?</h2>
+      <p class="hint sc-home-shortcuts__lede">Elige un acceso y arranca en un toque.</p>
     </div>
   </div>
   <nav class="sc-quick-nav" aria-label="Ir a sección">
@@ -13,70 +21,91 @@
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
       </span>
-      <span class="sc-quick-nav__label">POS</span>
-      <span class="sc-quick-nav__desc">Ventas</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">POS</span>
+        <span class="sc-quick-nav__desc">Ventas</span>
+      </span>
     </button>
-    <button type="button" class="sc-quick-nav__item" data-quick-nav="inventory" style="--accent:#0284c7">
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="inventory" style="--accent:#2563eb">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Catálogo</span>
-      <span class="sc-quick-nav__desc">Productos</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Catálogo</span>
+        <span class="sc-quick-nav__desc">Productos</span>
+      </span>
     </button>
-    <button type="button" class="sc-quick-nav__item" data-quick-nav="stock" style="--accent:#d97706">
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="stock" style="--accent:#ea580c">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Contaje</span>
-      <span class="sc-quick-nav__desc">Stock del turno</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Contaje</span>
+        <span class="sc-quick-nav__desc">Stock del turno</span>
+      </span>
     </button>
     <button type="button" class="sc-quick-nav__item" data-quick-nav="members" style="--accent:#0d9488">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Socios</span>
-      <span class="sc-quick-nav__desc">Fichas</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Socios</span>
+        <span class="sc-quick-nav__desc">Fichas</span>
+      </span>
     </button>
     <button type="button" class="sc-quick-nav__item" data-quick-nav="finance" style="--accent:#059669">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Finanzas</span>
-      <span class="sc-quick-nav__desc">Resumen</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Finanzas</span>
+        <span class="sc-quick-nav__desc">Resumen</span>
+      </span>
     </button>
-    <button type="button" class="sc-quick-nav__item" data-quick-nav="membership" data-admin-only="1" style="--accent:#ca8a04">
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="membership" data-admin-only="1" style="--accent:#d97706">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6L12 2z"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Membresía</span>
-      <span class="sc-quick-nav__desc">VIP y Premium</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Membresía</span>
+        <span class="sc-quick-nav__desc">VIP y Premium</span>
+      </span>
     </button>
-    <button type="button" class="sc-quick-nav__item" data-quick-nav="settings" style="--accent:#64748b">
+    <button type="button" class="sc-quick-nav__item" data-quick-nav="settings" style="--accent:#475569">
       <span class="sc-quick-nav__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </span>
-      <span class="sc-quick-nav__label">Ajustes</span>
-      <span class="sc-quick-nav__desc">Club y cuenta</span>
+      <span class="sc-quick-nav__copy">
+        <span class="sc-quick-nav__label">Ajustes</span>
+        <span class="sc-quick-nav__desc">Club y cuenta</span>
+      </span>
     </button>
   </nav>
 </section>
 
 <section class="card-section sc-home-kpis" aria-labelledby="home-kpis-title">
-  <h2 id="home-kpis-title" class="visually-hidden">Resumen del día</h2>
+  <div class="sc-home-kpis__head">
+    <p class="sc-home-eyebrow">Pulso del día</p>
+    <h2 id="home-kpis-title">Resumen</h2>
+  </div>
   <div class="sc-home-kpis-grid">
     <button type="button" class="sc-home-kpi sc-home-kpi--sales" data-quick-nav="finance" style="--accent:#16a34a">
+      <span class="sc-home-kpi__dot" aria-hidden="true"></span>
       <span class="sc-home-kpi__label">Ventas hoy</span>
       <span class="sc-home-kpi__value" id="home-kpi-sales">—</span>
     </button>
     <button type="button" class="sc-home-kpi sc-home-kpi--members" data-quick-nav="members" style="--accent:#0d9488">
+      <span class="sc-home-kpi__dot" aria-hidden="true"></span>
       <span class="sc-home-kpi__label">Socios activos</span>
       <span class="sc-home-kpi__value" id="home-kpi-members">—</span>
     </button>
-    <button type="button" class="sc-home-kpi sc-home-kpi--alerts" data-quick-nav="inventory" style="--accent:#dc2626">
+    <button type="button" class="sc-home-kpi sc-home-kpi--alerts" data-quick-nav="inventory" style="--accent:#e11d48">
+      <span class="sc-home-kpi__dot" aria-hidden="true"></span>
       <span class="sc-home-kpi__label">Stock bajo</span>
       <span class="sc-home-kpi__value" id="home-kpi-alerts">—</span>
     </button>
     <button type="button" class="sc-home-kpi sc-home-kpi--shift" data-quick-nav="home" style="--accent:#16a34a">
+      <span class="sc-home-kpi__dot" aria-hidden="true"></span>
       <span class="sc-home-kpi__label">Turno</span>
       <span class="sc-home-kpi__value sc-home-kpi__pill" id="home-kpi-shift">—</span>
     </button>
@@ -85,9 +114,10 @@
 
 <section class="card-section sc-home-shift" aria-labelledby="shift-title">
   <div class="sc-home-shift__hero">
+    <div class="sc-home-shift__glow" aria-hidden="true"></div>
     <div class="sc-section-head" style="margin:0">
       <div>
-        <p class="sc-home-eyebrow">Caja</p>
+        <p class="sc-home-eyebrow">Caja en vivo</p>
         <h2 id="shift-title">Turno de caja</h2>
       </div>
       <p id="shift-state" class="hint sc-section-head__meta sc-home-shift__state">Cargando…</p>
@@ -114,8 +144,8 @@
       <input class="input" id="note-close" placeholder="Ej. Arqueo OK" />
     </div>
   </div>
-  <div class="row-actions">
-    <button type="button" class="btn" id="btn-open-shift">Abrir turno</button>
+  <div class="row-actions sc-home-shift__actions">
+    <button type="button" class="btn sc-home-shift__open-btn" id="btn-open-shift">Abrir turno</button>
     <button type="button" class="btn btn--ghost" id="btn-close-shift" disabled>Cerrar turno</button>
   </div>
   <div class="sc-finance-toolbar sc-home-shifts-toolbar" style="margin-top: 1rem">
