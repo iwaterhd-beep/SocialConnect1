@@ -7,9 +7,9 @@
   --sidebar-w: 248px;
   --sidebar-w-collapsed: 76px;
   --header-h: 56px;
-  --bg-app: #f5f7f9;
+  --bg-app: #e8f2ec;
   --bg-surface: #ffffff;
-  --border-subtle: #e8ecf0;
+  --border-subtle: #dce8e1;
   --border-strong: #d1d9e0;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
@@ -68,6 +68,9 @@ body.club-app.has-club-topnav {
   min-height: 0;
   overflow: auto;
   padding: var(--space-4) var(--space-5) var(--space-6);
+  background:
+    linear-gradient(180deg, rgba(22, 163, 74, 0.06), transparent 11rem),
+    linear-gradient(125deg, #dff3e8 0%, #e7eef8 46%, #f4efe4 100%);
 }
 
 .app-status {
@@ -707,8 +710,10 @@ body.club-app.has-club-topnav {
 .club-app .card-section {
   padding: var(--space-5) var(--space-5);
   border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
     0 10px 28px rgba(15, 23, 42, 0.06);
@@ -719,8 +724,10 @@ body.club-app.has-club-topnav {
 .club-app .has-club-topnav .card-section {
   padding: var(--space-5) var(--space-5);
   border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
     0 10px 28px rgba(15, 23, 42, 0.06);
@@ -800,10 +807,11 @@ body.club-app.has-club-topnav {
   border: 1px solid var(--border-subtle);
 }
 
-/* Home grid — color + geometry (sin blobs) */
+/* Home — estilo limpio, colorido y animado (sin blobs) */
 .sc-home-grid {
   position: relative;
   grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
 }
 
 .sc-home-grid .sc-home-shift {
@@ -824,56 +832,26 @@ body.club-app.has-club-topnav {
 
 .sc-home-shortcuts {
   position: relative;
-  padding: 1rem 1.1rem 1.15rem !important;
+  padding: 1.1rem 1.15rem 1.2rem !important;
   overflow: hidden;
-  isolation: isolate;
-  border: 1px solid rgba(22, 163, 74, 0.16) !important;
-  background:
-    linear-gradient(#fff, #fff) padding-box,
-    linear-gradient(120deg, #22c55e, #38bdf8, #f59e0b, #22c55e) border-box !important;
-  background-size: 100% 100%, 220% 220%;
-  animation: sc-home-border-shift 10s linear infinite;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
     0 14px 32px rgba(15, 23, 42, 0.06) !important;
-}
-
-.sc-home-shortcuts::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(22, 163, 74, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14, 165, 233, 0.04) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 78%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .sc-home-shortcuts__hero {
   position: relative;
   z-index: 1;
   margin: 0 0 1rem;
-  padding: 1.05rem 1.1rem 1.05rem 1.2rem;
-  border-radius: 16px;
+  padding: 0.95rem 1.05rem 0.95rem 1.15rem;
+  border-radius: 14px;
   border: 1px solid rgba(22, 163, 74, 0.16);
-  background:
-    linear-gradient(90deg, rgba(22, 163, 74, 0.12), rgba(14, 165, 233, 0.08) 48%, rgba(245, 158, 11, 0.1));
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.16), rgba(255, 255, 255, 0.45));
   box-shadow: inset 4px 0 0 #16a34a;
-  overflow: hidden;
-}
-
-.sc-home-shortcuts__hero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #16a34a, #0ea5e9, #f59e0b, #16a34a);
-  background-size: 220% 100%;
-  animation: sc-home-stripe 4.5s linear infinite;
 }
 
 .sc-home-shortcuts__head {
@@ -885,34 +863,39 @@ body.club-app.has-club-topnav {
 .sc-home-kpis__head h2,
 .sc-home-shift__hero h2 {
   margin: 0 !important;
-  font-size: 1.35rem !important;
+  font-size: 1.28rem !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
+  color: #0f172a !important;
 }
 
 .sc-home-shortcuts__lede {
-  margin: 0.3rem 0 0 !important;
-  max-width: 28rem;
+  margin: 0.28rem 0 0 !important;
+  max-width: 32rem;
+  color: #64748b !important;
 }
 
 .sc-home-eyebrow {
-  margin: 0 0 0.2rem;
-  font-size: 0.7rem;
+  margin: 0 0 0.18rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: #15803d;
+  color: #16a34a;
 }
 
 .sc-home-kpis {
-  padding: 1rem 1.1rem 1.15rem !important;
+  padding: 1.1rem 1.15rem 1.2rem !important;
   grid-column: 1 / -1;
-  border: 1px solid rgba(13, 148, 136, 0.14) !important;
-  background: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
 }
 
 .sc-home-kpis__head {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.9rem;
 }
 
 .sc-home-kpis-grid {
@@ -928,26 +911,26 @@ body.club-app.has-club-topnav {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.35rem;
-  min-height: 6.25rem;
-  padding: 1rem 1.05rem 1rem 1.15rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, #e2e8f0);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 10%, transparent);
+  gap: 0.4rem;
+  min-height: 6.1rem;
+  padding: 1rem 1rem 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, #e5e7eb);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 7%, #fff);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 8%, transparent);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(10px);
-  animation: sc-home-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(0.12s + var(--i) * 60ms);
+  transform: translateY(8px);
+  animation: sc-home-pop 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(0.1s + var(--i) * 50ms);
   transition:
-    border-color 180ms ease,
-    box-shadow 200ms ease,
+    border-color 160ms ease,
+    box-shadow 180ms ease,
     transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    background 180ms ease;
+    background 160ms ease;
 }
 
 .sc-home-kpi:nth-child(1) { --i: 0; }
@@ -961,30 +944,15 @@ body.club-app.has-club-topnav {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 5px;
-  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #fff));
-}
-
-.sc-home-kpi::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), transparent 85%);
-  transform: scaleX(0.35);
-  transform-origin: left center;
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: 4px;
+  background: var(--accent);
 }
 
 .sc-home-kpi:hover {
-  border-color: color-mix(in srgb, var(--accent) 55%, #cbd5e1);
-  background: color-mix(in srgb, var(--accent) 6%, #fff);
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 16%, rgba(15, 23, 42, 0.05));
-  transform: translateY(-3px);
-}
-
-.sc-home-kpi:hover::after {
-  transform: scaleX(1);
+  border-color: color-mix(in srgb, var(--accent) 48%, #cbd5e1);
+  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 14%, rgba(15, 23, 42, 0.04));
+  transform: translateY(-2px);
 }
 
 .sc-home-kpi:active {
@@ -993,59 +961,59 @@ body.club-app.has-club-topnav {
 
 .sc-home-kpi:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 26%, transparent);
 }
 
 .sc-home-kpi__dot {
   position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 2px;
+  top: 0.95rem;
+  right: 0.95rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
   background: var(--accent);
-  animation: sc-home-tick 1.8s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+.sc-home-kpi--shift .sc-home-kpi__dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .sc-home-kpi__label {
   position: relative;
   z-index: 1;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: color-mix(in srgb, var(--accent) 48%, #64748b);
+  color: color-mix(in srgb, var(--accent) 42%, #64748b);
 }
 
 .sc-home-kpi__value {
   position: relative;
   z-index: 1;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: color-mix(in srgb, var(--accent) 45%, #0f172a);
-  line-height: 1.15;
+  color: #0f172a;
+  line-height: 1.1;
 }
 
 .sc-home-kpi__value.is-alert {
   color: #e11d48;
 }
 
-.sc-home-kpi--alerts .sc-home-kpi__dot {
-  animation-duration: 1.1s;
-}
-
 .sc-home-kpi__pill {
   display: inline-flex;
   align-items: center;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  padding: 4px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 12%, #fff);
-  color: color-mix(in srgb, var(--accent) 70%, #334155);
+  background: #fff;
+  color: color-mix(in srgb, var(--accent) 65%, #334155);
   width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .sc-home-kpi__pill.is-open {
@@ -1070,8 +1038,8 @@ body.club-app.has-club-topnav {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 0.65rem;
 }
 
 .sc-quick-nav__item {
@@ -1081,26 +1049,26 @@ body.club-app.has-club-topnav {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.55rem;
-  min-height: 7.25rem;
-  padding: 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, #e2e8f0);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--accent) 7%, #fff);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 10%, transparent);
+  gap: 0.65rem;
+  min-height: 7rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, #e5e7eb);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 8%, #fff);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 8%, transparent);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(10px);
-  animation: sc-home-pop 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(var(--i) * 50ms);
+  transform: translateY(8px);
+  animation: sc-home-pop 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 40ms);
   transition:
-    border-color 180ms ease,
-    box-shadow 200ms ease,
+    border-color 160ms ease,
+    box-shadow 180ms ease,
     transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    background 180ms ease;
+    background 160ms ease;
 }
 
 .sc-quick-nav__item:nth-child(1) { --i: 0; }
@@ -1119,44 +1087,57 @@ body.club-app.has-club-topnav {
   background: var(--accent);
 }
 
-.sc-quick-nav__item::after {
-  content: "";
+.sc-quick-nav__go {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    color-mix(in srgb, var(--accent) 14%, transparent) 50%,
-    transparent 65%
-  );
-  transform: translateX(-130%);
-  transition: transform 480ms ease;
-  pointer-events: none;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, #e5e7eb);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.sc-quick-nav__item:hover::after {
-  transform: translateX(130%);
+.sc-quick-nav__go::before {
+  content: "";
+  width: 0.35rem;
+  height: 0.35rem;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-left: -1px;
 }
 
 .sc-quick-nav__item:hover {
-  border-color: color-mix(in srgb, var(--accent) 60%, #cbd5e1);
-  background: color-mix(in srgb, var(--accent) 12%, #fff);
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 18%, rgba(15, 23, 42, 0.05));
-  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 45%, #cbd5e1);
+  background: color-mix(in srgb, var(--accent) 13%, #fff);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 14%, rgba(15, 23, 42, 0.04));
+  transform: translateY(-2px);
+}
+
+.sc-quick-nav__item:hover .sc-quick-nav__go {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .sc-quick-nav__item:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .sc-quick-nav__item.is-active {
-  border-color: color-mix(in srgb, var(--accent) 65%, #cbd5e1);
+  border-color: color-mix(in srgb, var(--accent) 55%, #cbd5e1);
   background: color-mix(in srgb, var(--accent) 16%, #fff);
 }
 
 .sc-quick-nav__item:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 26%, transparent);
   border-color: var(--accent);
 }
 
@@ -1164,73 +1145,64 @@ body.club-app.has-club-topnav {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.55rem;
+  height: 2.55rem;
   border-radius: 12px;
   background: var(--accent);
   color: #fff;
   border: 0;
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 6px 12px color-mix(in srgb, var(--accent) 28%, transparent);
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sc-quick-nav__item:hover .sc-quick-nav__icon {
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-1px) scale(1.04);
 }
 
 .sc-quick-nav__icon svg {
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .sc-quick-nav__copy {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.12rem;
   position: relative;
   z-index: 1;
+  padding-right: 1.4rem;
 }
 
 .sc-quick-nav__label {
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: color-mix(in srgb, var(--accent) 30%, #0f172a);
+  color: #0f172a;
 }
 
 .sc-quick-nav__desc {
   font-size: 0.72rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--accent) 35%, #64748b);
+  color: #64748b;
 }
 
 .sc-home-shift {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(22, 163, 74, 0.14) !important;
-  background: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
 }
 
 .sc-home-shift__hero {
   position: relative;
   margin: 0 0 1rem;
-  padding: 1rem 1.05rem 1rem 1.2rem;
-  border-radius: 16px;
-  background: linear-gradient(90deg, rgba(22, 163, 74, 0.12), rgba(245, 158, 11, 0.08));
+  padding: 0.95rem 1.05rem 0.95rem 1.15rem;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.16), rgba(245, 158, 11, 0.1));
   border: 1px solid rgba(22, 163, 74, 0.16);
   box-shadow: inset 4px 0 0 #16a34a;
-  overflow: hidden;
-}
-
-.sc-home-shift__hero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #16a34a, #f59e0b, #16a34a);
-  background-size: 200% 100%;
-  animation: sc-home-stripe 5s linear infinite;
 }
 
 .sc-home-shift__state {
@@ -1238,23 +1210,29 @@ body.club-app.has-club-topnav {
 }
 
 .sc-home-shift__actions .sc-home-shift__open-btn {
-  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.24);
-  transition: transform 140ms ease, box-shadow 180ms ease;
+  box-shadow: 0 8px 16px rgba(22, 163, 74, 0.22);
+  transition: transform 140ms ease, box-shadow 160ms ease;
 }
 
 .sc-home-shift__actions .sc-home-shift__open-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(22, 163, 74, 0.3);
+  box-shadow: 0 12px 22px rgba(22, 163, 74, 0.28);
 }
 
 .sc-home-shift__actions .sc-home-shift__open-btn:active:not(:disabled) {
   transform: scale(0.97);
 }
 
+.sc-home-shifts-toolbar .chip.is-active {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
 @keyframes sc-home-pop {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -1262,33 +1240,10 @@ body.club-app.has-club-topnav {
   }
 }
 
-@keyframes sc-home-stripe {
-  from { background-position: 0% 0; }
-  to { background-position: 200% 0; }
-}
-
-@keyframes sc-home-border-shift {
-  from { background-position: 0 0, 0% 50%; }
-  to { background-position: 0 0, 100% 50%; }
-}
-
-@keyframes sc-home-tick {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.85); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .sc-home-kpi,
-  .sc-quick-nav__item,
-  .sc-home-shortcuts,
-  .sc-home-shortcuts__hero::after,
-  .sc-home-shift__hero::after,
-  .sc-home-kpi__dot {
-    animation: none !important;
-  }
-
-  .sc-home-kpi,
   .sc-quick-nav__item {
+    animation: none !important;
     opacity: 1;
     transform: none;
   }
@@ -1296,7 +1251,8 @@ body.club-app.has-club-topnav {
   .sc-home-kpi,
   .sc-quick-nav__item,
   .sc-quick-nav__icon,
-  .sc-home-shift__open-btn {
+  .sc-home-shift__open-btn,
+  .sc-quick-nav__go {
     transition: none !important;
   }
 }
@@ -1304,45 +1260,51 @@ body.club-app.has-club-topnav {
 body.club-dark.club-app .sc-home-shortcuts,
 body.club-dark.club-app .sc-home-kpis,
 body.club-dark.club-app .sc-home-shift {
-  background: #1e293b !important;
+  background: rgba(30, 41, 59, 0.82) !important;
   border-color: #334155 !important;
-  animation: none;
-}
-
-body.club-dark.club-app .sc-home-shortcuts::before {
-  background-image:
-    linear-gradient(rgba(74, 222, 128, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 body.club-dark.club-app .sc-home-shortcuts__hero,
 body.club-dark.club-app .sc-home-shift__hero {
-  background: linear-gradient(90deg, rgba(22, 163, 74, 0.18), rgba(14, 165, 233, 0.1));
-  border-color: rgba(34, 197, 94, 0.24);
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.16), rgba(15, 23, 42, 0.2));
+  border-color: rgba(34, 197, 94, 0.22);
 }
 
 body.club-dark.club-app .sc-home-eyebrow {
   color: #86efac;
 }
 
+body.club-dark.club-app .sc-home-shortcuts h2,
+body.club-dark.club-app .sc-home-kpis__head h2,
+body.club-dark.club-app .sc-home-shift__hero h2,
+body.club-dark.club-app .sc-quick-nav__label,
+body.club-dark.club-app .sc-home-kpi__value {
+  color: #f1f5f9 !important;
+}
+
+body.club-dark.club-app .sc-home-shortcuts__lede,
+body.club-dark.club-app .sc-quick-nav__desc,
+body.club-dark.club-app .sc-home-kpi__label {
+  color: #94a3b8 !important;
+}
+
 body.club-dark.club-app .sc-quick-nav__item {
-  background: color-mix(in srgb, var(--accent) 14%, #0f172a);
-  border-color: color-mix(in srgb, var(--accent) 32%, #334155);
+  background: color-mix(in srgb, var(--accent) 12%, #0f172a);
+  border-color: color-mix(in srgb, var(--accent) 28%, #334155);
   box-shadow: none;
 }
 
 body.club-dark.club-app .sc-home-kpi {
-  background: #0f172a;
-  border-color: color-mix(in srgb, var(--accent) 32%, #334155);
+  background: color-mix(in srgb, var(--accent) 10%, #0f172a);
+  border-color: color-mix(in srgb, var(--accent) 28%, #334155);
   box-shadow: none;
 }
 
-body.club-dark.club-app .sc-home-kpi:hover {
-  background: color-mix(in srgb, var(--accent) 12%, #0f172a);
-}
-
-body.club-dark.club-app .sc-home-kpi__value {
-  color: #e2e8f0;
+body.club-dark.club-app .sc-home-kpi:hover,
+body.club-dark.club-app .sc-quick-nav__item:hover {
+  background: color-mix(in srgb, var(--accent) 16%, #0f172a);
 }
 
 body.club-dark.club-app .sc-home-kpi__value.is-alert {
@@ -1350,20 +1312,28 @@ body.club-dark.club-app .sc-home-kpi__value.is-alert {
 }
 
 body.club-dark.club-app .sc-quick-nav__item.is-active {
-  background: color-mix(in srgb, var(--accent) 20%, #0f172a);
+  background: color-mix(in srgb, var(--accent) 18%, #0f172a);
 }
 
-body.club-dark.club-app .sc-quick-nav__icon {
-  color: #fff;
+body.club-dark.club-app .sc-quick-nav__go {
+  background: #0f172a;
+  border-color: #334155;
 }
 
-body.club-dark.club-app .sc-home-kpi__label,
-body.club-dark.club-app .sc-quick-nav__desc {
-  color: #94a3b8;
+body.club-dark.club-app .sc-home-kpi__pill {
+  background: #0f172a;
 }
 
-body.club-dark.club-app .sc-quick-nav__label {
-  color: #f1f5f9;
+body.club-dark.club-app .sc-home-kpi__pill.is-open {
+  background: color-mix(in srgb, #16a34a 22%, #0f172a);
+  color: #86efac;
+  border-color: #166534;
+}
+
+body.club-dark.club-app .sc-home-shifts-toolbar .chip.is-active {
+  background: color-mix(in srgb, #16a34a 22%, #0f172a);
+  border-color: #166534;
+  color: #86efac;
 }
 
 body.club-dark.club-app .sc-home-shift__state.shift-state--open {
@@ -1371,7 +1341,6 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   border-color: #166534;
   color: #86efac;
 }
-
 
 /* Settings grid */
 .sc-settings-grid {
@@ -1535,6 +1504,12 @@ body.club-dark.club-app {
   color-scheme: dark;
 }
 
+body.club-dark.club-app .app-main {
+  background:
+    linear-gradient(180deg, rgba(22, 163, 74, 0.1), transparent 12rem),
+    linear-gradient(125deg, #0c1612 0%, #0f172a 48%, #14111a 100%);
+}
+
 body.club-dark.club-app .app-sidebar,
 body.club-dark.club-app .app-header {
   background: var(--bg-surface);
@@ -1665,8 +1640,10 @@ body.club-dark.club-app .app-sidebar__theme-switch {
 body.club-dark.club-app .card-section,
 body.club-dark.club-app .has-club-topnav .card-section,
 body.club-dark.club-app .tpv-shell--stage {
-  background: var(--bg-surface);
-  border-color: var(--border-subtle);
+  background: rgba(17, 24, 32, 0.82);
+  border-color: rgba(42, 54, 72, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 body.club-dark.club-app .has-club-topnav th {
