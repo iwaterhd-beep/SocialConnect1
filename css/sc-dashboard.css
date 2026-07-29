@@ -1345,52 +1345,83 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   color: #86efac;
 }
 
-/* Settings grid */
-.sc-settings-grid {
-  grid-template-columns: repeat(12, 1fr);
-  gap: var(--space-4);
+/* Settings — viewport fit (sin scroll de página) */
+.club-app:has(#club-view-settings:not(.is-hidden):not([hidden])) .app-main {
+  overflow: hidden;
+  padding-bottom: var(--space-3);
+}
+
+.club-app .club-view-stage.sc-settings-grid,
+.club-app .has-club-topnav .club-view-stage.sc-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.55fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'legal legal legal'
+    'currency password team';
+  gap: 10px;
+  height: calc(100dvh - var(--header-h) - 28px);
+  max-height: calc(100dvh - var(--header-h) - 28px);
+  overflow: hidden;
+  align-content: stretch;
 }
 
 .sc-settings-grid .sc-settings-legal {
-  grid-column: 1 / -1;
+  grid-area: legal;
 }
 
 .sc-settings-grid .sc-settings-currency {
-  grid-column: span 4;
-}
-
-.sc-settings-grid .sc-settings-team {
-  grid-column: span 8;
+  grid-area: currency;
+  min-height: 0;
+  overflow: auto;
 }
 
 .sc-settings-grid .sc-settings-password {
-  grid-column: span 6;
+  grid-area: password;
+  min-height: 0;
+  overflow: auto;
 }
 
-.sc-settings-grid:not(:has(#club-team-section:not([hidden]))) .sc-settings-currency {
-  grid-column: span 6;
+.sc-settings-grid .sc-settings-team {
+  grid-area: team;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.sc-settings-grid:not(:has(#club-team-section:not([hidden]))) .sc-settings-password {
-  grid-column: span 6;
+.sc-settings-grid:not(:has(#club-team-section:not([hidden]))) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'legal legal'
+    'currency password';
+}
+
+.club-app .sc-settings-grid > .card-section {
+  padding: 12px 14px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .sc-settings-head {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2rem;
+  gap: 0.1rem;
   position: relative;
-  padding-left: 0.85rem;
-  margin-bottom: var(--space-3);
+  padding-left: 0.75rem;
+  margin-bottom: 0.55rem;
+  flex-shrink: 0;
 }
 
 .sc-settings-head::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0.2rem;
-  bottom: 0.2rem;
+  top: 0.15rem;
+  bottom: 0.15rem;
   width: 3px;
   border-radius: 2px;
   background: #16a34a;
@@ -1409,63 +1440,84 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 }
 
 .sc-settings-head__eyebrow {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #15803d;
-  line-height: 1.2;
-}
-
-.sc-settings-currency .sc-settings-head__eyebrow {
-  color: #0f766e;
-}
-
-.sc-settings-team .sc-settings-head__eyebrow {
-  color: #1d4ed8;
-}
-
-.sc-settings-password .sc-settings-head__eyebrow {
-  color: #b45309;
+  display: none;
 }
 
 .sc-settings-head h2 {
   margin: 0 !important;
+  font-size: 0.9375rem !important;
   line-height: 1.2;
 }
 
 .sc-settings-head__meta {
-  margin: 0.1rem 0 0 !important;
-  font-size: 0.8125rem;
-  line-height: 1.35;
-  max-width: 40rem;
+  margin: 0 !important;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  max-width: none;
 }
 
-.sc-settings-legal .grid.grid--2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.sc-settings-legal__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px 12px !important;
+  margin: 0 !important;
 }
 
-.sc-settings-legal .form__row {
+.sc-settings-legal .form__row,
+.sc-settings-currency .form__row,
+.sc-settings-team .form__row,
+.sc-settings-password .form__row {
+  margin: 0;
   min-width: 0;
 }
 
-.sc-settings-legal .form__row .input {
+.sc-settings-legal .form__row--span-2 {
+  grid-column: span 2;
+}
+
+.sc-settings-legal .form__row .input,
+.sc-settings-currency .form__row .input,
+.sc-settings-team .form__row .input,
+.sc-settings-password .form__row .input {
   width: 100%;
   min-width: 0;
+  min-height: 36px;
   box-sizing: border-box;
+}
+
+.club-app .sc-settings-grid label {
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.sc-settings-actions,
+.club-app .sc-settings-grid .row-actions {
+  margin-top: 0.55rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.club-app .sc-settings-grid .msg:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+.club-app .sc-settings-grid .msg:not(:empty) {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
 }
 
 .sc-settings-currency__body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 8px;
+  flex: 1;
 }
 
 .sc-settings-currency__shortcuts-label {
   display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.8125rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -1474,8 +1526,8 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   display: inline-flex;
   flex-wrap: nowrap;
   gap: 0;
-  padding: 3px;
-  border-radius: 12px;
+  padding: 2px;
+  border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(248, 250, 252, 0.9);
   width: fit-content;
@@ -1484,11 +1536,12 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 .club-app .sc-settings-currency__chips .chip {
   border: none;
   background: transparent;
-  border-radius: 9px;
-  padding: 7px 12px;
+  border-radius: 8px;
+  padding: 5px 10px;
   box-shadow: none;
   font-weight: 600;
-  min-width: 2.5rem;
+  min-width: 2.25rem;
+  font-size: 0.75rem;
 }
 
 .club-app .sc-settings-currency__chips .chip:hover {
@@ -1505,24 +1558,84 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 }
 
 .sc-settings-currency__preview {
-  margin-top: 0.5rem !important;
+  margin-top: 0.25rem !important;
+  font-size: 0.75rem !important;
+}
+
+.sc-settings-currency .hint--small {
+  margin-top: 0.25rem !important;
+  font-size: 0.7rem;
+}
+
+.sc-settings-team .sc-compact-grid {
+  gap: 8px 12px !important;
+  flex-shrink: 0;
 }
 
 .sc-settings-team__table {
-  margin-top: var(--space-3);
+  margin-top: 0.55rem;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.sc-settings-password .sc-compact-grid {
+  gap: 8px 12px !important;
+}
+
+.sc-settings-password .form__row + .form__row,
+.sc-settings-password form > .form__row {
+  margin-top: 8px;
+}
+
+.sc-settings-password .btn {
+  margin-top: 0.55rem;
 }
 
 @media (max-width: 1100px) {
-  .sc-settings-grid .sc-settings-currency,
-  .sc-settings-grid .sc-settings-team,
-  .sc-settings-grid .sc-settings-password {
-    grid-column: 1 / -1;
+  .club-app .club-view-stage.sc-settings-grid,
+  .club-app .has-club-topnav .club-view-stage.sc-settings-grid {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas:
+      'legal'
+      'currency'
+      'password'
+      'team';
+  }
+
+  .club-app:has(#club-view-settings:not(.is-hidden):not([hidden])) .app-main {
+    overflow: auto;
+  }
+
+  .sc-settings-legal__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sc-settings-legal .form__row--span-2 {
+    grid-column: span 2;
+  }
+
+  .sc-settings-team {
+    overflow: visible;
+  }
+
+  .sc-settings-team__table {
+    max-height: 220px;
   }
 }
 
 @media (max-width: 768px) {
-  .sc-settings-legal .grid.grid--2 {
-    grid-template-columns: 1fr;
+  .sc-settings-legal__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sc-settings-legal .form__row--span-2 {
+    grid-column: auto;
   }
 }
 
