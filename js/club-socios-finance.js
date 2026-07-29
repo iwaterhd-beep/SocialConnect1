@@ -5448,6 +5448,33 @@
     $('finance-refresh')?.addEventListener('click', () => refreshFinance());
   }
 
+  function syncFinanceCollapsesForViewport() {
+    const desktop = window.matchMedia('(min-width: 901px)').matches;
+    document.querySelectorAll('.sc-finance-collapse').forEach((el) => {
+      if (desktop) el.open = true;
+      else el.open = false;
+    });
+  }
+
+  function bindFinanceCollapsesOnce() {
+    if (bindFinanceCollapsesOnce._bound) return;
+    bindFinanceCollapsesOnce._bound = true;
+    syncFinanceCollapsesForViewport();
+    const mq = window.matchMedia('(min-width: 901px)');
+    const onChange = () => syncFinanceCollapsesForViewport();
+    if (typeof mq.addEventListener === 'function') mq.addEventListener('change', onChange);
+    else if (typeof mq.addListener === 'function') mq.addListener(onChange);
+
+    document.querySelectorAll('.sc-finance-collapse').forEach((el) => {
+      el.addEventListener('toggle', (ev) => {
+        if (window.matchMedia('(min-width: 901px)').matches && !el.open) {
+          el.open = true;
+          ev.preventDefault?.();
+        }
+      });
+    });
+  }
+
   window.scInitClubSociosFinance = async function (c) {
     ctx = c;
     bindMemberTermsUi();
@@ -5456,6 +5483,7 @@
     ensureMemberBirthSelectOptions();
     bindMembersUi();
     bindMembersCsvUi();
+    bindFinanceCollapsesOnce();
     try {
       rebuildMemberTypeControls();
     } catch (_) {
