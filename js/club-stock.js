@@ -35,6 +35,22 @@
     return x.toLocaleString('es-ES', { maximumFractionDigits: 3 });
   }
 
+  function categoryAccentColor(name) {
+    const n = String(name || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (/weed|flor|flower|cogollo/.test(n)) return '#16a34a';
+    if (/hash|resina|polen/.test(n)) return '#d97706';
+    if (/extract|aceite|oil|concentrado/.test(n)) return '#0d9488';
+    if (/bebida|drink|agua|refresco/.test(n)) return '#2563eb';
+    if (/comida|food|snack/.test(n)) return '#ea580c';
+    if (/paraf|accesor/.test(n)) return '#475569';
+    if (/pre.?roll|preroll|porro/.test(n)) return '#65a30d';
+    if (/edible|comest/.test(n)) return '#c2410c';
+    return '#16a34a';
+  }
+
   function getShiftStockDelta(ev) {
     if (!ev) return null;
     if (ev.delta_grams != null && ev.delta_grams !== '') {
@@ -199,6 +215,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'chip' + (active ? ' is-active' : '');
+      b.style.setProperty('--cat-accent', val ? categoryAccentColor(label) : '#16a34a');
       b.textContent = label;
       b.addEventListener('click', () => {
         state.filterCategoryId = val;

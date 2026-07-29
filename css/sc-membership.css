@@ -20,31 +20,39 @@
 
 .sc-membership-hero {
   position: relative;
-  margin: -0.15rem -0.1rem 0;
-  padding: 0.85rem 0.95rem 1rem;
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(22, 163, 74, 0.1) 0%, rgba(14, 165, 233, 0.08) 48%, rgba(245, 158, 11, 0.09) 100%);
-  border: 1px solid rgba(22, 163, 74, 0.14);
+  margin: 0;
+  padding: 1rem 1.1rem 1.05rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 28px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
 
-.sc-membership-hero__glow {
+.sc-membership-hero::before {
+  content: '';
   position: absolute;
-  inset: -40% auto auto -10%;
-  width: 16rem;
-  height: 16rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.28), transparent 68%);
-  pointer-events: none;
-  animation: sc-membership-glow 7s ease-in-out infinite alternate;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #16a34a 0%, #0d9488 55%, #d97706 100%);
+  border-radius: 16px 0 0 16px;
+}
+
+.sc-membership-hero__glow {
+  display: none;
 }
 
 .sc-membership-hero__eyebrow {
   margin: 0 0 0.2rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #15803d;
 }
@@ -99,10 +107,12 @@
 }
 
 .sc-membership-howto {
-  padding: 0.55rem 0.75rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 12px;
-  border: 1px solid rgba(22, 163, 74, 0.14);
-  background: color-mix(in srgb, #dcfce7 55%, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(240, 253, 244, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   box-shadow: none;
 }
 
@@ -145,7 +155,14 @@
 .sc-membership-block {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .sc-membership-block__head {
@@ -251,7 +268,7 @@
 .sc-membership-tiers {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.65rem;
 }
 
 .sc-membership-tier {
@@ -262,101 +279,92 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--tier-color) 28%, #e2e8f0);
-  border-radius: 18px;
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--tier-color) 16%, #fff) 0%,
-      color-mix(in srgb, var(--tier-color) 5%, #fff) 48%,
-      #fff 100%
-    );
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 6px 18px color-mix(in srgb, var(--tier-color) 12%, transparent);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   overflow: hidden;
   opacity: 0;
-  transform: translateY(10px);
-  animation: sc-membership-tier-in 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(var(--i) * 70ms);
+  transform: translateY(8px);
+  animation: sc-membership-tier-in 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 60ms);
   transition:
-    border-color 200ms ease,
-    box-shadow 220ms ease,
-    transform 180ms var(--ease-out, ease-out),
-    background 200ms ease;
+    border-color 180ms ease,
+    box-shadow 200ms ease,
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sc-membership-tier::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 5px;
-  background: linear-gradient(180deg, var(--tier-color), color-mix(in srgb, var(--tier-color) 55%, #fff));
+  width: 4px;
+  background: var(--tier-color);
   z-index: 1;
 }
 
 .sc-membership-tier::after {
-  content: "";
-  position: absolute;
-  top: -2.5rem;
-  right: -1.5rem;
-  width: 7.5rem;
-  height: 7.5rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--tier-color) 22%, transparent), transparent 70%);
-  pointer-events: none;
-  opacity: 0.9;
-  transition: opacity 200ms ease, transform 280ms ease;
+  display: none;
 }
 
 .sc-membership-tier:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--tier-color) 48%, #cbd5e1);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 14px 30px color-mix(in srgb, var(--tier-color) 18%, rgba(15, 23, 42, 0.06));
+  border-color: color-mix(in srgb, var(--tier-color) 40%, #cbd5e1);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .sc-membership-tier:hover::after {
-  opacity: 1;
-  transform: scale(1.08);
+  display: none;
 }
 
 .sc-membership-tier.is-disabled {
   animation: none;
   opacity: 0.62;
   transform: none;
-  filter: grayscale(0.25);
+  filter: grayscale(0.2);
 }
 
 .sc-membership-tier.is-open {
   transform: translateY(0);
-  border-color: color-mix(in srgb, var(--tier-color) 55%, #cbd5e1);
+  border-color: color-mix(in srgb, var(--tier-color) 45%, #cbd5e1);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 16px 36px color-mix(in srgb, var(--tier-color) 20%, rgba(15, 23, 42, 0.08));
+    0 0 0 1px color-mix(in srgb, var(--tier-color) 18%, transparent),
+    0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .sc-membership-tier.is-open::after {
-  opacity: 1;
-  transform: scale(1.15);
+  display: none;
 }
 
 .sc-membership-tier__summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.85rem 1rem;
+  gap: 0.75rem 1rem;
   width: 100%;
   margin: 0;
-  padding: 1rem 1.05rem 1rem 1.25rem;
+  padding: 0.85rem 0.95rem 0.85rem 1.15rem;
   border: 0;
   background: transparent;
   cursor: pointer;
   text-align: left;
   font: inherit;
   color: inherit;
-  transition: background 160ms ease;
+  transition: background 150ms ease;
+}
+
+.sc-membership-tier__rank {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--tier-color) 80%, #0f172a);
+  background: color-mix(in srgb, var(--tier-color) 14%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 28%, transparent);
 }
 
 .sc-membership-tier__summary:hover {
@@ -411,16 +419,16 @@
 .sc-membership-tier__chevron {
   display: inline-grid;
   place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  margin-left: 0.1rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tier-color) 14%, #fff);
-  border: 1px solid color-mix(in srgb, var(--tier-color) 28%, transparent);
+  width: 1.65rem;
+  height: 1.65rem;
+  margin-left: 0.05rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tier-color) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 24%, transparent);
   transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    background 160ms ease,
-    border-color 160ms ease;
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 150ms ease,
+    border-color 150ms ease;
 }
 
 .sc-membership-tier__chevron::before {
@@ -435,8 +443,8 @@
 
 .sc-membership-tier.is-open .sc-membership-tier__chevron {
   transform: rotate(180deg);
-  background: color-mix(in srgb, var(--tier-color) 22%, #fff);
-  border-color: color-mix(in srgb, var(--tier-color) 42%, transparent);
+  background: color-mix(in srgb, var(--tier-color) 20%, #fff);
+  border-color: color-mix(in srgb, var(--tier-color) 38%, transparent);
 }
 
 .sc-membership-tier__body {
@@ -482,29 +490,29 @@
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.82rem;
-  letter-spacing: 0.01em;
-  background: color-mix(in srgb, var(--tier-color) 18%, #fff);
-  color: color-mix(in srgb, var(--tier-color) 78%, #0f172a);
-  border: 1px solid color-mix(in srgb, var(--tier-color) 38%, #fff);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--tier-color) 16%, transparent);
-  transition: transform 160ms var(--ease-out, ease-out), box-shadow 180ms ease;
+  padding: 0.32rem 0.7rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+  background: color-mix(in srgb, var(--tier-color) 14%, #fff);
+  color: color-mix(in srgb, var(--tier-color) 72%, #0f172a);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 30%, transparent);
+  box-shadow: none;
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sc-membership-tier:hover .sc-membership-tier__preview {
   transform: translateY(-1px);
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--tier-color) 22%, transparent);
+  box-shadow: none;
 }
 
 .sc-membership-tier__status {
   display: inline-flex;
   align-items: center;
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -689,14 +697,20 @@
 .sc-membership-tier__gift-count {
   display: inline-flex;
   align-items: center;
-  padding: 0.16rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: color-mix(in srgb, var(--tier-color) 75%, #0f172a);
-  background: color-mix(in srgb, var(--tier-color) 16%, #fff);
-  border: 1px solid color-mix(in srgb, var(--tier-color) 32%, transparent);
+  background: color-mix(in srgb, var(--tier-color) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 28%, transparent);
+}
+
+.sc-membership-tier__gift-count.is-empty {
+  color: #94a3b8;
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .sc-membership-tier-gifts {
@@ -987,7 +1001,28 @@ body.club-dark .sc-membership-empty {
 
 body.club-dark .sc-membership-admin,
 body.club-dark .sc-membership-block {
-  border-color: #334155;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+body.club-dark .sc-membership-hero {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.club-dark .sc-membership-tier {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.club-dark .sc-membership-tier__rank {
+  background: color-mix(in srgb, var(--tier-color) 18%, #0f172a);
+}
+
+body.club-dark .sc-membership-tier__gift-count.is-empty {
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 body.club-dark .sc-membership-tier.is-open .sc-membership-tier__summary {

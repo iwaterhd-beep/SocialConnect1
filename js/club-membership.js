@@ -543,10 +543,9 @@
       }
 
       const giftCount = rewardsForTier(key).length;
-      const giftBadge =
-        giftCount > 0
-          ? `<span class="sc-membership-tier__gift-count">${giftCount} regalo${giftCount === 1 ? '' : 's'}</span>`
-          : '';
+      const giftBadge = `<span class="sc-membership-tier__gift-count${
+        giftCount > 0 ? '' : ' is-empty'
+      }">${giftCount} regalo${giftCount === 1 ? '' : 's'}</span>`;
       const statusBadge = enabled
         ? '<span class="sc-membership-tier__status is-on" data-tier-status>Activo</span>'
         : '<span class="sc-membership-tier__status is-off" data-tier-status>Pausado</span>';
@@ -561,6 +560,7 @@
 
       card.innerHTML = `
         <button type="button" class="sc-membership-tier__summary" data-tier-toggle aria-expanded="false">
+          <span class="sc-membership-tier__rank" aria-hidden="true">${index + 1}</span>
           <span class="sc-membership-tier__summary-main">
             <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
             <span class="sc-membership-tier__lede" data-tier-lede>${escapeHtml((t.description || '').trim() || 'Sin descripción')}</span>
@@ -1217,16 +1217,13 @@
     if (!meta) return;
     const count = rewardsForTier(tierKey).length;
     let badge = meta.querySelector('.sc-membership-tier__gift-count');
-    if (count <= 0) {
-      badge?.remove();
-      return;
-    }
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'sc-membership-tier__gift-count';
-      const keyEl = meta.querySelector('.sc-membership-tier__key');
-      meta.insertBefore(badge, keyEl || meta.firstChild);
+      const statusEl = meta.querySelector('[data-tier-status]');
+      meta.insertBefore(badge, statusEl || meta.firstChild);
     }
+    badge.classList.toggle('is-empty', count <= 0);
     badge.textContent = `${count} regalo${count === 1 ? '' : 's'}`;
   }
 

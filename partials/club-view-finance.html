@@ -1,19 +1,23 @@
 <div class="club-view-stage sc-finance-layout">
 <section class="card-section sc-finance-kpis-card" aria-labelledby="finance-title">
-  <div class="sc-section-head">
-    <h2 id="finance-title">Resumen</h2>
+  <div class="sc-finance-hero">
+    <div class="sc-section-head" style="margin: 0">
+      <p class="sc-finance-hero__eyebrow">Club · cifras</p>
+      <h2 id="finance-title">Resumen</h2>
+      <p class="hint sc-section-head__meta">Ventas y valoraciones del periodo.</p>
+    </div>
     <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
   </div>
   <div class="finance-kpis" id="finance-kpis">
-    <div class="finance-kpi sc-kpi">
+    <div class="finance-kpi sc-kpi" style="--kpi-i: 0">
       <span class="finance-kpi__label">Hoy</span>
       <span class="finance-kpi__value" id="finance-kpi-today">—</span>
     </div>
-    <div class="finance-kpi sc-kpi">
+    <div class="finance-kpi sc-kpi" style="--kpi-i: 1">
       <span class="finance-kpi__label">7 días</span>
       <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
     </div>
-    <div class="finance-kpi sc-kpi">
+    <div class="finance-kpi sc-kpi" style="--kpi-i: 2">
       <span class="finance-kpi__label">30 días</span>
       <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
     </div>
