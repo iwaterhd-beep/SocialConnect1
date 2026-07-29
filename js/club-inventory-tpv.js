@@ -1896,7 +1896,11 @@
     state.tpvPendingCartRowId = null;
     state.tpvSelectedId = '';
     if ($('tpv-selected-product')) $('tpv-selected-product').value = '';
-    if ($('tpv-selected-label')) $('tpv-selected-label').textContent = 'Selecciona un producto';
+    const selectedLabel = $('tpv-selected-label');
+    if (selectedLabel) {
+      selectedLabel.textContent = 'Selecciona un producto';
+      selectedLabel.classList.add('tpv-receipt__product--placeholder');
+    }
     if ($('tpv-stock-hint')) $('tpv-stock-hint').textContent = '';
     syncTpvStockWrapVisibility();
     updateTpvUnitLabels({ sale_unit: 'grams' });
@@ -1928,7 +1932,11 @@
     if ($('tpv-selected-product')) $('tpv-selected-product').value = idNorm;
 
     const em = (p.emoji || '').trim();
-    $('tpv-selected-label').textContent = `${em ? em + ' ' : ''}${p.name}`;
+    const selectedLabel = $('tpv-selected-label');
+    if (selectedLabel) {
+      selectedLabel.textContent = `${em ? em + ' ' : ''}${p.name}`;
+      selectedLabel.classList.remove('tpv-receipt__product--placeholder');
+    }
 
     const defG =
       unitKey(p) === 'unit'
@@ -3225,9 +3233,35 @@
     const total = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
     totalEl.textContent = formatMoney(total);
     syncTpvCobrarAmount(total);
+
+    const countEl = $('tpv-cart-count');
+    if (countEl) {
+      countEl.textContent = String(lines.length);
+      countEl.classList.toggle('is-empty', !lines.length);
+    }
+    const clearBtn = $('tpv-clear-cart');
+    if (clearBtn) {
+      clearBtn.hidden = !lines.length;
+      clearBtn.disabled = !lines.length;
+    }
+    wrap.classList.toggle('tpv-receipt__lines--empty', !lines.length);
+
     wrap.innerHTML = '';
     if (!lines.length) {
-      wrap.innerHTML = '<p class="tpv-receipt__empty">Añade productos desde la rejilla</p>';
+      wrap.innerHTML = `
+        <div class="tpv-receipt__empty">
+          <span class="tpv-receipt__empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M6 7h15l-1.4 8.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.6L5.2 3.5A1 1 0 0 0 4.2 2.8H2"/>
+              <circle cx="10" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/>
+            </svg>
+          </span>
+          <p class="tpv-receipt__empty-title">Ticket vacío</p>
+          <p class="tpv-receipt__empty-hint">Toca un producto de la rejilla para añadirlo</p>
+        </div>
+      `;
+      toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
+      updateTpvWalletUi();
       return;
     }
     lines.forEach((line) => {
@@ -3246,7 +3280,7 @@
         </div>
         <div class="tpv-cart-line__side">
           <strong>${escapeHtml(formatMoney(line.price_charged_eur))}</strong>
-          <button type="button" class="btn btn--ghost btn--small" data-tpv-cart-del="${line.cart_row_id}">Quitar</button>
+          <button type="button" class="btn btn--ghost btn--small" data-tpv-cart-del="${line.cart_row_id}" aria-label="Quitar línea">Quitar</button>
         </div>
       `;
       wrap.appendChild(row);

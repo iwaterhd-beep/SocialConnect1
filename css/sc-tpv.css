@@ -420,8 +420,8 @@
 
 .club-app .tpv-pos .tpv-receipt__head {
   flex-shrink: 0;
-  padding: 14px 16px 16px;
-  background: #0f172a;
+  padding: 16px 16px 18px;
+  background: linear-gradient(165deg, #0f172a 0%, #1e293b 100%);
   color: #fff;
 }
 
@@ -430,15 +430,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .club-app .tpv-pos .tpv-receipt__eyebrow {
   font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .club-app .tpv-pos .tpv-receipt__stock {
@@ -459,11 +459,18 @@
 
 .club-app .tpv-pos .tpv-receipt__product {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.3;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
   color: #fff;
+  min-height: 1.4em;
+}
+
+.club-app .tpv-pos .tpv-receipt__product--placeholder {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: -0.01em;
 }
 
 .club-app .tpv-pos .tpv-receipt__body {
@@ -472,24 +479,24 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: #fafbfc;
+  background: #f4f6f8;
   scrollbar-width: thin;
 }
 
 .club-app .tpv-pos .tpv-receipt__section-label {
   margin: 0 0 8px;
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #64748b;
 }
 
 /* Cart */
 .club-app .tpv-pos .tpv-receipt__cart {
-  padding: 12px 14px;
+  padding: 14px 14px 12px;
   background: #fff;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid #e8edf2;
 }
 
 .club-app .tpv-pos .tpv-receipt__cart-bar {
@@ -497,35 +504,74 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.club-app .tpv-pos .tpv-receipt__cart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .club-app .tpv-pos .tpv-receipt__cart-bar .tpv-receipt__section-label {
   margin: 0;
 }
 
+.club-app .tpv-pos .tpv-receipt__cart-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.club-app .tpv-pos .tpv-receipt__cart-count.is-empty {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
 .club-app .tpv-pos .tpv-receipt__text-btn {
   border: none;
   background: none;
-  padding: 0;
+  padding: 4px 2px;
   font-family: inherit;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #64748b;
+  color: #94a3b8;
   cursor: pointer;
+  transition: color 0.12s ease;
 }
 
-.club-app .tpv-pos .tpv-receipt__text-btn:hover {
+.club-app .tpv-pos .tpv-receipt__text-btn:hover:not(:disabled) {
   color: #dc2626;
+}
+
+.club-app .tpv-pos .tpv-receipt__text-btn:disabled,
+.club-app .tpv-pos .tpv-receipt__text-btn[hidden] {
+  display: none;
 }
 
 .club-app .tpv-pos .tpv-receipt__lines {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 140px;
+  max-height: 168px;
   overflow-y: auto;
   margin-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.club-app .tpv-pos .tpv-receipt__lines--empty {
+  max-height: none;
 }
 
 .club-app .tpv-pos .tpv-receipt__line,
@@ -534,21 +580,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 10px 11px;
+  border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #eef2f6;
-  animation: tpvLineIn 0.2s ease both;
+  animation: tpvLineIn 0.18s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 @keyframes tpvLineIn {
   from {
     opacity: 0;
-    transform: translateX(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
@@ -557,12 +603,14 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: #0f172a;
+  line-height: 1.3;
 }
 
 .club-app .tpv-pos .tpv-cart-line__meta {
   font-size: 0.6875rem;
   color: #64748b;
-  margin-top: 2px;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
 }
 
 .club-app .tpv-pos .tpv-cart-line__side {
@@ -577,6 +625,7 @@
   font-size: 0.8125rem;
   font-weight: 700;
   color: #059669;
+  font-variant-numeric: tabular-nums;
 }
 
 .club-app .tpv-pos .tpv-cart-line__side .btn {
@@ -587,49 +636,98 @@
 
 .club-app .tpv-pos .tpv-receipt__empty,
 .club-app .tpv-pos .tpv-cart-empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   margin: 0;
-  padding: 16px 8px;
+  padding: 22px 12px;
   text-align: center;
-  font-size: 0.8125rem;
+  border-radius: 14px;
+  border: 1px dashed #dbe3ec;
+  background: linear-gradient(180deg, #fbfcfd 0%, #f4f7fa 100%);
+}
+
+.club-app .tpv-pos .tpv-receipt__empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e8edf2;
   color: #94a3b8;
+}
+
+.club-app .tpv-pos .tpv-receipt__empty-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.club-app .tpv-pos .tpv-receipt__empty-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #94a3b8;
+  max-width: 16rem;
 }
 
 .club-app .tpv-pos .tpv-receipt__total {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding-top: 10px;
+  padding: 12px 0 2px;
   border-top: 1px solid #eef2f6;
 }
 
 .club-app .tpv-pos .tpv-receipt__total-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: #64748b;
 }
 
 .club-app .tpv-pos .tpv-receipt__total-value,
 .club-app .tpv-pos .tpv-receipt__total #tpv-cart-total {
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 /* Composer */
 .club-app .tpv-pos .tpv-receipt__composer {
-  padding: 12px 14px 14px;
+  padding: 12px 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   overflow: visible;
+}
+
+.club-app .tpv-pos .tpv-receipt__block {
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e8edf2;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+.club-app .tpv-pos .tpv-receipt__block .tpv-receipt__section-label {
+  margin-bottom: 10px;
 }
 
 .club-app .tpv-pos .tpv-receipt__input {
   width: 100%;
-  min-height: 36px;
-  padding: 8px 11px;
+  min-height: 40px;
+  padding: 8px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fff;
@@ -645,18 +743,27 @@
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
 }
 
+.club-app .tpv-pos .tpv-receipt__input--with-icon {
+  padding-left: 36px;
+}
+
 .club-app .tpv-pos .tpv-receipt__input--num {
   text-align: center;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
+  min-height: 44px;
+  font-size: 0.9375rem;
 }
 
 .club-app .tpv-pos .tpv-receipt__input--price {
   text-align: center;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.0625rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #059669;
+  min-height: 44px;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
 }
 
 .club-app .tpv-pos .tpv-receipt__input--locked,
@@ -668,7 +775,8 @@
 
 .club-app .tpv-pos .tpv-receipt__input--price:read-only {
   color: #059669;
-  font-weight: 700;
+  font-weight: 800;
+  background: #f0fdf4;
 }
 
 .club-app .tpv-pos .tpv-receipt__qty-grid--unit {
@@ -685,19 +793,46 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   display: flex;
   align-items: center;
   gap: 6px;
+  position: relative;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-search .tpv-receipt__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.club-app .tpv-pos .tpv-receipt__field-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .club-app .tpv-pos .tpv-receipt__icon-btn {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   font-size: 1.125rem;
   line-height: 1;
   color: #64748b;
   cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.club-app .tpv-pos .tpv-receipt__icon-btn:hover {
+  border-color: #cbd5e1;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.club-app .tpv-pos .tpv-receipt__icon-btn:active {
+  transform: scale(0.96);
 }
 
 .club-app .tpv-pos .tpv-cart-line--gift {
@@ -713,6 +848,10 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   letter-spacing: 0.02em;
   color: #b45309;
   text-transform: uppercase;
+}
+
+.club-app .tpv-pos .tpv-receipt__member-chip {
+  margin-top: 10px;
 }
 
 .club-app .tpv-pos .tpv-receipt__member-chip.tpv-member-chip-wrap--birthday {
@@ -774,47 +913,64 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
 .club-app .tpv-pos .tpv-receipt__field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
 .club-app .tpv-pos .tpv-receipt__field > span {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: #64748b;
+  text-align: center;
+}
+
+.club-app .tpv-pos .tpv-receipt__qty-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .club-app .tpv-pos .tpv-receipt__qty-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.1fr;
+  grid-template-columns: 1fr 1fr 1.15fr;
   gap: 8px;
 }
 
 .club-app .tpv-pos .tpv-receipt__hint {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 0.6875rem;
   color: #64748b;
   line-height: 1.4;
+}
+
+.club-app .tpv-pos .tpv-receipt__hint:empty {
+  display: none;
 }
 
 .club-app .tpv-pos .tpv-receipt__stepper {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
 }
 
 .club-app .tpv-pos .tpv-receipt__step {
-  min-height: 30px;
+  min-height: 36px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   font-family: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.12s ease;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease,
+    transform 0.12s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .club-app .tpv-pos .tpv-receipt__step:hover:not(:disabled) {
@@ -823,35 +979,57 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   background: #f0fdf4;
 }
 
+.club-app .tpv-pos .tpv-receipt__step:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.club-app .tpv-pos .tpv-receipt__step--minus:hover:not(:disabled) {
+  border-color: #f87171;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
 .club-app .tpv-pos .tpv-receipt__pay-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .club-app .tpv-pos .tpv-receipt__pay-opt {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 38px;
+  gap: 7px;
+  min-height: 44px;
   padding: 0 10px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
   background: #fff;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.club-app .tpv-pos .tpv-receipt__pay-icon {
+  display: flex;
+  color: currentColor;
+  opacity: 0.7;
 }
 
 .club-app .tpv-pos .tpv-receipt__pay-opt:has(input:checked) {
-  border-color: #22c55e;
+  border-color: #16a34a;
   background: #f0fdf4;
-  color: #059669;
-  font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
+  color: #047857;
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.12);
+}
+
+.club-app .tpv-pos .tpv-receipt__pay-opt:has(input:checked) .tpv-receipt__pay-icon {
+  opacity: 1;
 }
 
 .club-app .tpv-pos .tpv-receipt__pay-opt input {
@@ -861,7 +1039,7 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
 }
 
 .club-app .tpv-pos .tpv-receipt__field--note {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* Footer cobrar */
@@ -869,12 +1047,13 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   flex-shrink: 0;
   padding: 12px 14px 14px;
   background: #fff;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid #e8edf2;
+  box-shadow: 0 -8px 24px -16px rgba(15, 23, 42, 0.12);
 }
 
 .club-app .tpv-pos .tpv-receipt__cobrar {
   width: 100%;
-  min-height: 54px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -886,13 +1065,20 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   color: #fff;
   cursor: pointer;
   box-shadow: 0 10px 28px rgba(22, 163, 74, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: transform 0.14s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.14s ease,
+    filter 0.14s ease;
 }
 
 .club-app .tpv-pos .tpv-receipt__cobrar:hover:not(:disabled) {
   filter: brightness(1.04);
   transform: translateY(-1px);
   box-shadow: 0 14px 32px rgba(22, 163, 74, 0.4);
+}
+
+.club-app .tpv-pos .tpv-receipt__cobrar:active:not(:disabled) {
+  transform: scale(0.985);
+  filter: brightness(0.98);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.28);
 }
 
 .club-app .tpv-pos .tpv-receipt__cobrar:disabled {
@@ -908,7 +1094,7 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
 }
 
 .club-app .tpv-pos .tpv-receipt__cobrar-amount {
-  font-size: 1.125rem;
+  font-size: 1.1875rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -1064,7 +1250,8 @@ body.club-dark.club-app .tpv-pos .tpv-receipt {
 }
 
 body.club-dark.club-app .tpv-pos .tpv-receipt__cart,
-body.club-dark.club-app .tpv-pos .tpv-receipt__footer {
+body.club-dark.club-app .tpv-pos .tpv-receipt__footer,
+body.club-dark.club-app .tpv-pos .tpv-receipt__block {
   background: var(--bg-surface);
   border-color: var(--border-subtle);
 }
@@ -1079,9 +1266,45 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input {
   color: var(--text-primary);
 }
 
+body.club-dark.club-app .tpv-pos .tpv-receipt__input--price {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
 body.club-dark.club-app .tpv-pos .tpv-receipt__lines .tpv-cart-line {
   background: rgba(0, 0, 0, 0.15);
   border-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__empty {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__empty-icon {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__empty-title {
+  color: var(--text-primary);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__cart-count.is-empty {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__pay-opt,
+body.club-dark.club-app .tpv-pos .tpv-receipt__step,
+body.club-dark.club-app .tpv-pos .tpv-receipt__icon-btn {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+body.club-dark.club-app .tpv-pos .tpv-receipt__stepper {
+  border-top-color: var(--border-subtle);
 }
 
 /* Anular reglas legacy de dashboard-club en layout POS nuevo */

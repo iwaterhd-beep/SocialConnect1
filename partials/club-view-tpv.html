@@ -44,15 +44,18 @@
               <span class="tpv-receipt__eyebrow">Ticket activo</span>
               <p id="tpv-stock-hint" class="tpv-receipt__stock"></p>
             </div>
-            <div id="tpv-selected-label" class="tpv-receipt__product">Selecciona un producto</div>
+            <div id="tpv-selected-label" class="tpv-receipt__product tpv-receipt__product--placeholder">Selecciona un producto</div>
           </header>
           <input type="hidden" id="tpv-selected-product" value="" />
 
           <div class="tpv-receipt__body">
             <section class="tpv-receipt__cart" aria-labelledby="tpv-lbl-cart">
               <div class="tpv-receipt__cart-bar">
-                <h3 class="tpv-receipt__section-label" id="tpv-lbl-cart">Pedido</h3>
-                <button type="button" class="tpv-receipt__text-btn" id="tpv-clear-cart">Vaciar</button>
+                <div class="tpv-receipt__cart-title">
+                  <h3 class="tpv-receipt__section-label" id="tpv-lbl-cart">Pedido</h3>
+                  <span id="tpv-cart-count" class="tpv-receipt__cart-count is-empty" aria-live="polite">0</span>
+                </div>
+                <button type="button" class="tpv-receipt__text-btn" id="tpv-clear-cart" disabled hidden>Vaciar</button>
               </div>
               <div id="tpv-cart-list" class="tpv-receipt__lines"></div>
               <div class="tpv-receipt__total">
@@ -62,19 +65,22 @@
             </section>
 
             <section class="tpv-receipt__composer">
-              <div class="tpv-receipt__member" aria-labelledby="tpv-lbl-socio">
+              <div class="tpv-receipt__block tpv-receipt__member" aria-labelledby="tpv-lbl-socio">
                 <h3 class="tpv-receipt__section-label" id="tpv-lbl-socio">Socio</h3>
                 <div class="tpv-receipt__member-search tpv-member-field">
                   <label class="visually-hidden" for="tpv-member-search">Buscar socio</label>
+                  <svg class="tpv-receipt__field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" /><path d="M20 20l-3-3" />
+                  </svg>
                   <input
                     type="search"
                     id="tpv-member-search"
-                    class="tpv-receipt__input"
-                    placeholder="Buscar o pasar chapa RFID…"
+                    class="tpv-receipt__input tpv-receipt__input--with-icon"
+                    placeholder="Nombre o chapa RFID…"
                     autocomplete="off"
                     spellcheck="false"
                   />
-                  <button type="button" class="tpv-receipt__icon-btn" id="tpv-member-clear" title="Quitar socio">×</button>
+                  <button type="button" class="tpv-receipt__icon-btn" id="tpv-member-clear" title="Quitar socio" aria-label="Quitar socio">×</button>
                   <div id="tpv-member-dropdown" class="tpv-member-dropdown is-hidden" role="listbox" hidden></div>
                 </div>
                 <input type="hidden" id="tpv-selected-member" value="" />
@@ -108,40 +114,48 @@
                 </details>
               </div>
 
-              <div class="tpv-receipt__qty" aria-labelledby="tpv-lbl-grams">
+              <div class="tpv-receipt__block tpv-receipt__qty" aria-labelledby="tpv-lbl-grams">
                 <h3 class="tpv-receipt__section-label" id="tpv-lbl-grams">Cantidad</h3>
-                <div class="tpv-receipt__qty-grid" id="tpv-qty-grid">
-                  <label class="tpv-receipt__field">
-                    <span id="tpv-label-charged">Ticket</span>
-                    <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-charged" inputmode="decimal" placeholder="0,5" />
-                  </label>
-                  <label class="tpv-receipt__field" id="tpv-field-real">
-                    <span id="tpv-label-real">Reales</span>
-                    <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-dispensed" inputmode="decimal" placeholder="0,52" />
-                  </label>
-                  <label class="tpv-receipt__field tpv-receipt__field--price">
-                    <span data-currency-label="Precio {s}">Precio €</span>
-                    <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" />
-                  </label>
-                </div>
-                <p id="tpv-margin-hint" class="tpv-receipt__hint"></p>
-                <div class="tpv-receipt__stepper" id="tpv-stepper" aria-label="Ajuste rápido">
-                  <button type="button" class="tpv-receipt__step" data-tpv-step="-0.1">−0,1</button>
-                  <button type="button" class="tpv-receipt__step" data-tpv-step="-0.05">−0,05</button>
-                  <button type="button" class="tpv-receipt__step" data-tpv-step="0.05">+0,05</button>
-                  <button type="button" class="tpv-receipt__step" data-tpv-step="0.1">+0,1</button>
+                <div class="tpv-receipt__qty-panel">
+                  <div class="tpv-receipt__qty-grid" id="tpv-qty-grid">
+                    <label class="tpv-receipt__field">
+                      <span id="tpv-label-charged">Ticket</span>
+                      <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-charged" inputmode="decimal" placeholder="0,5" />
+                    </label>
+                    <label class="tpv-receipt__field" id="tpv-field-real">
+                      <span id="tpv-label-real">Reales</span>
+                      <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-dispensed" inputmode="decimal" placeholder="0,52" />
+                    </label>
+                    <label class="tpv-receipt__field tpv-receipt__field--price">
+                      <span data-currency-label="Precio {s}">Precio €</span>
+                      <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" />
+                    </label>
+                  </div>
+                  <p id="tpv-margin-hint" class="tpv-receipt__hint"></p>
+                  <div class="tpv-receipt__stepper" id="tpv-stepper" aria-label="Ajuste rápido">
+                    <button type="button" class="tpv-receipt__step tpv-receipt__step--minus" data-tpv-step="-0.1">−0,1</button>
+                    <button type="button" class="tpv-receipt__step tpv-receipt__step--minus" data-tpv-step="-0.05">−0,05</button>
+                    <button type="button" class="tpv-receipt__step tpv-receipt__step--plus" data-tpv-step="0.05">+0,05</button>
+                    <button type="button" class="tpv-receipt__step tpv-receipt__step--plus" data-tpv-step="0.1">+0,1</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="tpv-receipt__pay" aria-labelledby="tpv-lbl-pay-method">
+              <div class="tpv-receipt__block tpv-receipt__pay" aria-labelledby="tpv-lbl-pay-method">
                 <h3 class="tpv-receipt__section-label" id="tpv-lbl-pay-method">Pago</h3>
                 <div class="tpv-receipt__pay-row">
                   <label class="tpv-receipt__pay-opt">
                     <input type="radio" name="tpv-payment-method" value="cash" checked />
+                    <span class="tpv-receipt__pay-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M6 12h.01M18 12h.01"/></svg>
+                    </span>
                     <span>Efectivo</span>
                   </label>
                   <label class="tpv-receipt__pay-opt">
                     <input type="radio" name="tpv-payment-method" value="wallet" />
+                    <span class="tpv-receipt__pay-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7V5a2 2 0 0 1 2-2h11"/><path d="M16 13h2"/></svg>
+                    </span>
                     <span>Monedero</span>
                   </label>
                 </div>
