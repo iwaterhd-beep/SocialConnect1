@@ -3063,6 +3063,7 @@ body.club-dark.club-app .sc-finance-toolbar {
   min-height: 0;
   overflow: auto !important;
   align-content: start;
+  grid-auto-rows: max-content;
   margin-bottom: 0 !important;
 }
 
@@ -3076,7 +3077,9 @@ body.club-dark.club-app .sc-finance-toolbar {
 
 /* Inventory */
 .sc-inv-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)) !important;
+  grid-auto-rows: max-content;
   gap: 12px !important;
 }
 
@@ -3296,7 +3299,8 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   --stock-tint: transparent;
   padding: 0;
   border-radius: 14px;
-  min-height: auto;
+  min-height: 148px;
+  height: auto;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -3374,6 +3378,7 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   align-items: center;
   justify-content: center;
   min-height: 64px;
+  flex-shrink: 0;
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--cat-accent) 14%, #fff) 0%,
@@ -3399,6 +3404,7 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   gap: 4px;
   padding: 10px 10px 11px;
   min-width: 0;
+  flex: 1 0 auto;
 }
 
 .club-app .inv-card__top {
