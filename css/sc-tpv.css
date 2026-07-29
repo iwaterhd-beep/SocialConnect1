@@ -1119,9 +1119,14 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
 
 .club-app .tpv-pos .tpv-receipt__pay-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.club-app .tpv-pos .tpv-receipt__pay-opt.is-hidden,
+.club-app .tpv-pos .tpv-receipt__pay-opt[hidden] {
+  display: none !important;
 }
 
 .club-app .tpv-pos .tpv-receipt__pay-opt {

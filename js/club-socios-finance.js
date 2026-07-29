@@ -2329,7 +2329,10 @@
   window.scClubEnrichWalletLedgerRows = enrichWalletLedgerRows;
 
   function paymentMethodLabel(method) {
-    return String(method || 'cash').toLowerCase() === 'wallet' ? 'Monedero' : 'Efectivo';
+    const m = String(method || 'cash').toLowerCase();
+    if (m === 'wallet') return 'Monedero';
+    if (m === 'card') return 'Tarjeta';
+    return 'Efectivo';
   }
 
   async function getClubOpenShiftId() {
@@ -3313,7 +3316,7 @@
     return Number.isFinite(price) && Math.abs(price) < 0.0005 && notes.includes('membres');
   }
 
-  function setFinanceVentasStats({ count, total, cash, wallet, gifts }) {
+  function setFinanceVentasStats({ count, total, cash, card, wallet, gifts }) {
     const set = (id, text) => {
       const el = $(id);
       if (el) el.textContent = text;
@@ -3321,6 +3324,7 @@
     set('finance-ventas-stat-count', count == null ? '—' : String(count));
     set('finance-ventas-stat-total', total == null ? '—' : formatMoney(total));
     set('finance-ventas-stat-cash', cash == null ? '—' : formatMoney(cash));
+    set('finance-ventas-stat-card', card == null ? '—' : formatMoney(card));
     set('finance-ventas-stat-wallet', wallet == null ? '—' : formatMoney(wallet));
     set('finance-ventas-stat-gifts', gifts == null ? '—' : String(gifts));
   }
@@ -3823,7 +3827,7 @@
         if (title && msg) title.textContent = msg;
       }
       if (summaryEl) summaryEl.textContent = '';
-      setFinanceVentasStats({ count: 0, total: 0, cash: 0, wallet: 0, gifts: 0 });
+      setFinanceVentasStats({ count: 0, total: 0, cash: 0, card: 0, wallet: 0, gifts: 0 });
     };
 
     if (financeVentasRange === 'custom' && !financeVentasFrom && !financeVentasTo) {
@@ -4033,6 +4037,7 @@
 
     let total = 0;
     let totalCash = 0;
+    let totalCard = 0;
     let totalWallet = 0;
     let giftCount = 0;
     list.forEach((r) => {
@@ -4040,7 +4045,9 @@
       total += p;
       const isGift = isFinanceGiftDispense(r);
       if (isGift) giftCount += 1;
-      if (String(r.payment_method || 'cash').toLowerCase() === 'wallet') totalWallet += p;
+      const method = String(r.payment_method || 'cash').toLowerCase();
+      if (method === 'wallet') totalWallet += p;
+      else if (method === 'card') totalCard += p;
       else totalCash += p;
       const pr = prodMap[r.product_id] || {};
       const em = (pr.emoji || '').trim();
@@ -4073,6 +4080,7 @@
       count: list.length,
       total,
       cash: totalCash,
+      card: totalCard,
       wallet: totalWallet,
       gifts: giftCount,
     });

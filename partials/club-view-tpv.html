@@ -144,14 +144,21 @@
               <div class="tpv-receipt__block tpv-receipt__pay" aria-labelledby="tpv-lbl-pay-method">
                 <h3 class="tpv-receipt__section-label" id="tpv-lbl-pay-method">Pago</h3>
                 <div class="tpv-receipt__pay-row">
-                  <label class="tpv-receipt__pay-opt">
+                  <label class="tpv-receipt__pay-opt" data-tpv-pay="cash">
                     <input type="radio" name="tpv-payment-method" value="cash" checked />
                     <span class="tpv-receipt__pay-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M6 12h.01M18 12h.01"/></svg>
                     </span>
                     <span>Efectivo</span>
                   </label>
-                  <label class="tpv-receipt__pay-opt">
+                  <label class="tpv-receipt__pay-opt" data-tpv-pay="card">
+                    <input type="radio" name="tpv-payment-method" value="card" />
+                    <span class="tpv-receipt__pay-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+                    </span>
+                    <span>Tarjeta</span>
+                  </label>
+                  <label class="tpv-receipt__pay-opt" data-tpv-pay="wallet">
                     <input type="radio" name="tpv-payment-method" value="wallet" />
                     <span class="tpv-receipt__pay-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7V5a2 2 0 0 1 2-2h11"/><path d="M16 13h2"/></svg>
@@ -194,6 +201,7 @@
             <th>Producto</th>
             <th>Socio</th>
             <th>Cant. ticket / real</th>
+            <th>Pago</th>
             <th>Precio</th>
             <th>Nota</th>
             <th></th>

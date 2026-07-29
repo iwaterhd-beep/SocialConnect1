@@ -1539,10 +1539,11 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 .club-app .has-club-topnav .club-view-stage.sc-settings-grid {
   display: grid;
   grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.7fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   grid-template-areas:
     'legal legal'
     'currency team'
+    'pay team'
     'password team';
   gap: 10px;
   height: 100%;
@@ -1558,6 +1559,13 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-grid .sc-settings-currency {
   grid-area: currency;
+  align-self: start;
+  height: auto;
+  overflow: visible;
+}
+
+.sc-settings-grid .sc-settings-pay {
+  grid-area: pay;
   align-self: start;
   height: auto;
   overflow: visible;
@@ -1581,10 +1589,11 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-grid:not(:has(#club-team-section:not([hidden]))) {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   grid-template-areas:
     'legal legal'
-    'currency password';
+    'currency pay'
+    'password password';
   height: 100%;
   max-height: 100%;
 }
@@ -1624,6 +1633,10 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-currency .sc-settings-head::before {
   background: #0d9488;
+}
+
+.sc-settings-pay .sc-settings-head::before {
+  background: #16a34a;
 }
 
 .sc-settings-team .sc-settings-head::before {
@@ -1761,6 +1774,57 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   font-size: 0.7rem;
 }
 
+.sc-settings-pay__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.sc-settings-pay__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+
+.sc-settings-pay__item input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.sc-settings-pay__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sc-settings-pay__copy strong {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.sc-settings-pay__copy .hint {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+body.club-dark.club-app .sc-settings-pay__item {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+body.club-dark.club-app .sc-settings-pay__copy strong {
+  color: #f8fafc;
+}
+
 .sc-settings-team .sc-compact-grid {
   gap: 8px 12px !important;
   flex-shrink: 0;
@@ -1798,6 +1862,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
     grid-template-areas:
       'legal'
       'currency'
+      'pay'
       'password'
       'team';
   }
@@ -2941,7 +3006,7 @@ body.club-dark.club-app .sc-stock-chips .chip {
 
 @media (min-width: 720px) {
   .sc-finance-sales__stats {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .sc-finance-sales__stats--3 {
@@ -3141,6 +3206,143 @@ body.club-dark.club-app .sc-finance-layout .sc-finance-sales__filters .chip-row 
 
 body.club-dark.club-app .sc-finance-layout .sc-finance-sales__filters .chip.is-active {
   background: rgba(30, 41, 59, 0.95);
+}
+
+/* Finanzas — móvil */
+@media (max-width: 900px) {
+  .sc-finance-layout {
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden;
+    overflow-y: visible;
+    gap: 8px;
+    padding-bottom: 1.25rem;
+    min-width: 0;
+  }
+
+  .club-app .sc-finance-layout > .card-section {
+    padding: 12px 14px !important;
+    border-radius: 14px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .sc-finance-hero {
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.65rem;
+    padding-left: 0.75rem;
+  }
+
+  .sc-finance-hero__meta {
+    max-width: none;
+  }
+
+  .club-app .sc-finance-layout .finance-kpis {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 0.55rem;
+  }
+
+  .club-app .sc-finance-layout .finance-kpi {
+    padding: 12px 14px;
+  }
+
+  .club-app .sc-finance-layout .finance-kpi__value {
+    font-size: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+
+  .sc-finance-sales__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .sc-finance-sales__stats,
+  .sc-finance-sales__stats--3 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 0.65rem;
+  }
+
+  .sc-finance-sales__stat {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .sc-finance-sales__stat-value {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .sc-finance-sales__filters {
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .sc-finance-sales__filter-block {
+    min-width: 0;
+  }
+
+  .club-app .sc-finance-layout .sc-finance-sales__filters .chip-row {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .club-app .sc-finance-layout .sc-finance-sales__filters .chip {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+  }
+
+  .sc-finance-layout .table-wrap,
+  .sc-finance-layout .sc-table-compact {
+    max-height: none !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0;
+  }
+
+  .sc-finance-layout .table-wrap table {
+    min-width: 540px;
+  }
+
+  .sc-finance-layout .finance-ventas-custom,
+  .sc-finance-layout .sc-finance-toolbar__custom {
+    grid-template-columns: 1fr !important;
+    width: 100%;
+  }
+
+  .sc-finance-layout .finance-admin-inventory-cost {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .sc-finance-layout .finance-admin-inventory-cost__kpis {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 420px) and (max-width: 900px) {
+  .club-app .sc-finance-layout .finance-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 480px) and (max-width: 900px) {
+  .sc-finance-sales__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sc-finance-sales__stats--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .sc-finance-sales__empty-title {

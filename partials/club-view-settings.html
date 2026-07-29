@@ -80,6 +80,45 @@
 </section>
 
 <section
+  class="card-section sc-settings-pay"
+  id="club-pay-methods-section"
+  hidden
+  aria-labelledby="club-pay-methods-title"
+>
+  <div class="sc-settings-head">
+    <h2 id="club-pay-methods-title">Métodos de cobro</h2>
+    <p class="hint sc-settings-head__meta">Qué formas de pago aparecen en el POS.</p>
+  </div>
+  <div class="sc-settings-pay__list" role="group" aria-label="Métodos de cobro del POS">
+    <label class="sc-settings-pay__item">
+      <input type="checkbox" id="club-pay-cash" checked />
+      <span class="sc-settings-pay__copy">
+        <strong>Efectivo</strong>
+        <span class="hint">Entra en caja del turno</span>
+      </span>
+    </label>
+    <label class="sc-settings-pay__item">
+      <input type="checkbox" id="club-pay-card" checked />
+      <span class="sc-settings-pay__copy">
+        <strong>Tarjeta</strong>
+        <span class="hint">No suma al efectivo de caja</span>
+      </span>
+    </label>
+    <label class="sc-settings-pay__item">
+      <input type="checkbox" id="club-pay-wallet" checked />
+      <span class="sc-settings-pay__copy">
+        <strong>Monedero</strong>
+        <span class="hint">Descuenta saldo del socio</span>
+      </span>
+    </label>
+  </div>
+  <div class="row-actions sc-settings-actions">
+    <button type="button" class="btn btn--small" id="club-pay-methods-save">Guardar métodos</button>
+  </div>
+  <p id="club-pay-methods-msg" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section
   class="card-section sc-settings-team"
   id="club-team-section"
   hidden

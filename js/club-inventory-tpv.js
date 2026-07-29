@@ -1126,8 +1126,47 @@
 
   function getTpvPaymentMethod() {
     const el = document.querySelector('input[name="tpv-payment-method"]:checked');
-    return el && el.value === 'wallet' ? 'wallet' : 'cash';
+    const v = String(el?.value || 'cash').toLowerCase();
+    if (v === 'wallet' || v === 'card') return v;
+    return 'cash';
   }
+
+  function getClubPayMethods() {
+    const club = state.ctx?.club || {};
+    return {
+      cash: club.pay_cash_enabled !== false,
+      card: club.pay_card_enabled !== false,
+      wallet: club.pay_wallet_enabled !== false,
+    };
+  }
+
+  function applyTpvPayMethodVisibility() {
+    const methods = getClubPayMethods();
+    const map = {
+      cash: methods.cash,
+      card: methods.card,
+      wallet: methods.wallet,
+    };
+    let firstEnabled = null;
+    document.querySelectorAll('[data-tpv-pay]').forEach((label) => {
+      const key = label.getAttribute('data-tpv-pay');
+      const on = map[key] !== false;
+      label.hidden = !on;
+      label.classList.toggle('is-hidden', !on);
+      const input = label.querySelector('input[name="tpv-payment-method"]');
+      if (input) {
+        input.disabled = !on;
+        if (on && !firstEnabled) firstEnabled = input;
+      }
+    });
+    const checked = document.querySelector('input[name="tpv-payment-method"]:checked');
+    if ((!checked || checked.disabled) && firstEnabled) {
+      firstEnabled.checked = true;
+    }
+    updateTpvWalletUi();
+  }
+
+  window.scClubApplyTpvPayMethods = applyTpvPayMethodVisibility;
 
   function getTpvCartTotalEur() {
     const lines = state.tpvCart || [];
@@ -3412,11 +3451,13 @@
           error.message || '',
         ));
     if (maybeLegacyRpc) {
-      if (paymentMethod === 'wallet') {
+      if (paymentMethod === 'wallet' || paymentMethod === 'card') {
         return {
           error: {
             message:
-              'Monedero no disponible: ejecuta la migración 028_member_wallet.sql en Supabase.',
+              paymentMethod === 'card'
+                ? 'Tarjeta no disponible: ejecuta la migración 058_tpv_card_payment_methods.sql en Supabase.'
+                : 'Monedero no disponible: ejecuta la migración 028_member_wallet.sql en Supabase.',
           },
           rpcRes,
         };
@@ -3486,7 +3527,21 @@
       syncAutoTpvLine({ silent: true });
     }
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
-    if (getTpvPaymentMethod() === 'wallet' && !memberRaw) {
+    const payMethod = getTpvPaymentMethod();
+    const payFlags = getClubPayMethods();
+    if (payMethod === 'cash' && !payFlags.cash) {
+      setMsg('tpv-status', 'El cobro en efectivo está desactivado en Ajustes.', true);
+      return;
+    }
+    if (payMethod === 'card' && !payFlags.card) {
+      setMsg('tpv-status', 'El cobro con tarjeta está desactivado en Ajustes.', true);
+      return;
+    }
+    if (payMethod === 'wallet' && !payFlags.wallet) {
+      setMsg('tpv-status', 'El cobro con monedero está desactivado en Ajustes.', true);
+      return;
+    }
+    if (payMethod === 'wallet' && !memberRaw) {
       setMsg('tpv-status', 'Para cobrar con monedero debes seleccionar un socio.', true);
       return;
     }
@@ -3613,10 +3668,13 @@
   async function deleteRecentDispense(row) {
     if (!row || !row.id) return;
     const isWallet = String(row.payment_method || 'cash').toLowerCase() === 'wallet';
+    const isCard = String(row.payment_method || 'cash').toLowerCase() === 'card';
     const ok = confirm(
       isWallet
         ? '¿Seguro que quieres eliminar esta venta? Se devolverá el stock y el importe al monedero del socio.'
-        : '¿Seguro que quieres eliminar esta venta? Se devolverá el stock y se restará el importe del efectivo del turno.',
+        : isCard
+          ? '¿Seguro que quieres eliminar esta venta? Se devolverá el stock (tarjeta no afecta a la caja de efectivo).'
+          : '¿Seguro que quieres eliminar esta venta? Se devolverá el stock y se restará el importe del efectivo del turno.',
     );
     if (!ok) return;
 
@@ -3633,7 +3691,9 @@
       'tpv-status',
       isWallet
         ? `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g y devueltos ${formatMoney(row.price_charged_eur)} al monedero.`
-        : `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g y descontados ${formatMoney(row.price_charged_eur)} del efectivo del turno.`,
+        : isCard
+          ? `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g (tarjeta).`
+          : `Venta eliminada. Repuestos ${formatNum(row.grams_dispensed)} g y descontados ${formatMoney(row.price_charged_eur)} del efectivo del turno.`,
       false,
     );
     showToast('Venta eliminada');
@@ -3703,7 +3763,7 @@
     }
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9">${escapeHtml(error.message)}</td></tr>`;
       return [];
     }
     let rows = data || [];
@@ -3724,7 +3784,7 @@
       }
     }
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="8">Aún no hay ventas registradas.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9">Aún no hay ventas registradas.</td></tr>';
       return [];
     }
     const ids = [...new Set(rows.map((r) => r.product_id).filter(Boolean))];
@@ -3763,6 +3823,12 @@
           : dispenserId
             ? '—'
             : '—';
+      const pay =
+        String(row.payment_method || 'cash').toLowerCase() === 'wallet'
+          ? 'Monedero'
+          : String(row.payment_method || 'cash').toLowerCase() === 'card'
+            ? 'Tarjeta'
+            : 'Efectivo';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
@@ -3770,6 +3836,7 @@
         <td>${escapeHtml(label)}</td>
         <td>${escapeHtml(socio)}</td>
         <td>${escapeHtml(formatNum(row.grams_charged))} / ${escapeHtml(formatNum(row.grams_dispensed))}</td>
+        <td>${escapeHtml(pay)}</td>
         <td>${escapeHtml(formatMoney(row.price_charged_eur))}</td>
         <td>${escapeHtml((row.notes || '').slice(0, 40))}</td>
         <td>
@@ -3974,6 +4041,7 @@
       await loadMembersForTpv();
       await refreshTpvShiftState();
       await loadRecentDispenses();
+      applyTpvPayMethodVisibility();
       setMsg('inv-status', '', false);
       setMsg('tpv-status', '', false);
     } catch (e) {
@@ -4016,6 +4084,7 @@
       await loadStaffDirectory();
       await refreshTpvShiftState();
       await loadRecentDispenses();
+      applyTpvPayMethodVisibility();
     } catch (e) {
       /* ignore */
     }

@@ -30,23 +30,34 @@
     const clubId = gate.profile.club_id;
     let { data: club, error } = await sb()
       .from('clubs')
-      .select('id, name, cif, email, address, member_min_age, currency_symbol, is_active')
+      .select(
+        'id, name, cif, email, address, member_min_age, currency_symbol, is_active, pay_cash_enabled, pay_card_enabled, pay_wallet_enabled',
+      )
       .eq('id', clubId)
       .maybeSingle();
 
-    if (error && (error.code === '42703' || /currency_symbol|member_min_age/i.test(error.message || ''))) {
+    if (error && (error.code === '42703' || /currency_symbol|member_min_age|pay_(cash|card|wallet)_enabled/i.test(error.message || ''))) {
       const msg = String(error.message || '');
+      const missingPay = /pay_(cash|card|wallet)_enabled/i.test(msg);
       const missingCurrency = /currency_symbol/i.test(msg);
-      const missingAge = /member_min_age/i.test(msg) || (!missingCurrency && error.code === '42703');
+      const missingAge = /member_min_age/i.test(msg) || (!missingCurrency && !missingPay && error.code === '42703');
       let cols = 'id, name, cif, email, address, is_active';
-      if (!missingAge) cols = 'id, name, cif, email, address, member_min_age, is_active';
-      else if (!missingCurrency) cols = 'id, name, cif, email, address, currency_symbol, is_active';
+      if (!missingAge && !missingCurrency) {
+        cols = 'id, name, cif, email, address, member_min_age, currency_symbol, is_active';
+      } else if (!missingAge) {
+        cols = 'id, name, cif, email, address, member_min_age, is_active';
+      } else if (!missingCurrency) {
+        cols = 'id, name, cif, email, address, currency_symbol, is_active';
+      }
       ({ data: club, error } = await sb().from('clubs').select(cols).eq('id', clubId).maybeSingle());
       if (club) {
         if (club.member_min_age == null || Number.isNaN(Number(club.member_min_age))) {
           club.member_min_age = 18;
         }
         if (!club.currency_symbol) club.currency_symbol = '€';
+        if (club.pay_cash_enabled == null) club.pay_cash_enabled = true;
+        if (club.pay_card_enabled == null) club.pay_card_enabled = true;
+        if (club.pay_wallet_enabled == null) club.pay_wallet_enabled = true;
       }
     }
 
@@ -480,6 +491,69 @@
     document.querySelectorAll('[data-currency-preset]').forEach((btn) => {
       const active = btn.getAttribute('data-currency-preset') === sym;
       btn.classList.toggle('is-active', active);
+    });
+  }
+
+  function setClubPayMethodsMsg(text, isError) {
+    const el = $('club-pay-methods-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('msg--error', Boolean(isError));
+  }
+
+  function fillClubPayMethodsForm(club) {
+    if ($('club-pay-cash')) $('club-pay-cash').checked = club?.pay_cash_enabled !== false;
+    if ($('club-pay-card')) $('club-pay-card').checked = club?.pay_card_enabled !== false;
+    if ($('club-pay-wallet')) $('club-pay-wallet').checked = club?.pay_wallet_enabled !== false;
+  }
+
+  function initClubPayMethodsSection(ctx) {
+    const sec = $('club-pay-methods-section');
+    if (!sec || ctx.profile.role !== 'admin_club') return;
+    sec.hidden = false;
+    fillClubPayMethodsForm(ctx.club);
+
+    if (sec.dataset.bound === '1') return;
+    sec.dataset.bound = '1';
+
+    $('club-pay-methods-save')?.addEventListener('click', async () => {
+      const pay_cash_enabled = Boolean($('club-pay-cash')?.checked);
+      const pay_card_enabled = Boolean($('club-pay-card')?.checked);
+      const pay_wallet_enabled = Boolean($('club-pay-wallet')?.checked);
+      if (!pay_cash_enabled && !pay_card_enabled && !pay_wallet_enabled) {
+        setClubPayMethodsMsg('Activa al menos un método de cobro.', true);
+        return;
+      }
+
+      setClubPayMethodsMsg('Guardando…', false);
+      const { data, error } = await sb()
+        .from('clubs')
+        .update({ pay_cash_enabled, pay_card_enabled, pay_wallet_enabled })
+        .eq('id', ctx.club.id)
+        .select('id, pay_cash_enabled, pay_card_enabled, pay_wallet_enabled')
+        .single();
+
+      if (error) {
+        const msg =
+          error.code === '42501' || /policy/i.test(error.message || '')
+            ? 'Sin permiso para actualizar el club. Revisa las políticas RLS (migración 042).'
+            : error.code === '42703' || /pay_(cash|card|wallet)_enabled/i.test(error.message || '')
+              ? 'Ejecuta en Supabase la migración 058_tpv_card_payment_methods.sql.'
+              : error.message || 'No se pudieron guardar los métodos.';
+        setClubPayMethodsMsg(msg, true);
+        return;
+      }
+
+      Object.assign(ctx.club, {
+        pay_cash_enabled: data?.pay_cash_enabled !== false,
+        pay_card_enabled: data?.pay_card_enabled !== false,
+        pay_wallet_enabled: data?.pay_wallet_enabled !== false,
+      });
+      fillClubPayMethodsForm(ctx.club);
+      if (typeof window.scClubApplyTpvPayMethods === 'function') {
+        window.scClubApplyTpvPayMethods();
+      }
+      setClubPayMethodsMsg('Métodos de cobro guardados.', false);
     });
   }
 
@@ -989,22 +1063,28 @@
     return Object.keys(out).length ? out : null;
   }
 
-  function isDispenseWallet(d) {
-    return String(d?.payment_method || 'cash').toLowerCase() === 'wallet';
+  function dispensePaymentMethod(d) {
+    const m = String(d?.payment_method || 'cash').toLowerCase();
+    if (m === 'wallet' || m === 'card') return m;
+    return 'cash';
   }
 
   function summarizeShiftDispenseSales(dispenses) {
     let cashSales = 0;
+    let cardSales = 0;
     let walletSales = 0;
     (dispenses || []).forEach((d) => {
       const p = Number(d.price_charged_eur) || 0;
-      if (isDispenseWallet(d)) walletSales += p;
+      const method = dispensePaymentMethod(d);
+      if (method === 'wallet') walletSales += p;
+      else if (method === 'card') cardSales += p;
       else cashSales += p;
     });
     return {
       cashSales,
+      cardSales,
       walletSales,
-      salesTotal: cashSales + walletSales,
+      salesTotal: cashSales + cardSales + walletSales,
     };
   }
 
@@ -1127,10 +1207,11 @@
       shiftRes.data && shiftRes.data.opening_float_eur != null
         ? Number(shiftRes.data.opening_float_eur)
         : 0;
-    const { cashSales, walletSales } = summarizeShiftDispenseSales(dispRes.dispenses);
+    const { cashSales, cardSales, walletSales } = summarizeShiftDispenseSales(dispRes.dispenses);
     return {
       opening,
       cashSales,
+      cardSales,
       walletSales,
       walletCashNet,
       expectedCash: opening + cashSales + walletCashNet,
@@ -1209,7 +1290,7 @@
     const prodMap = Object.fromEntries(products.map((p) => [p.id, p]));
     const countByProduct = buildLatestCountByProduct(events);
 
-    const { cashSales, walletSales, salesTotal } = summarizeShiftDispenseSales(dispenses);
+    const { cashSales, cardSales, walletSales, salesTotal } = summarizeShiftDispenseSales(dispenses);
     const gramsByProduct = {};
     dispenses.forEach((d) => {
       const pid = d.product_id;
@@ -1304,6 +1385,11 @@
         <p style="margin:0">Cambio al abrir: <strong>${escapeHtml(formatMoneyEUR(opening))}</strong></p>
         <p style="margin:0.35rem 0 0">Ventas en efectivo (POS): <strong>${escapeHtml(formatMoneyEUR(cashSales))}</strong></p>
         ${
+          cardSales > 0.005
+            ? `<p style="margin:0.35rem 0 0">Ventas con tarjeta (no entran en caja): <strong>${escapeHtml(formatMoneyEUR(cardSales))}</strong></p>`
+            : ''
+        }
+        ${
           walletSales > 0.005
             ? `<p style="margin:0.35rem 0 0">Ventas con monedero (no entran en caja): <strong>${escapeHtml(formatMoneyEUR(walletSales))}</strong></p>`
             : ''
@@ -1320,7 +1406,7 @@
             ? `<p style="margin:0.35rem 0 0" class="shift-cash-diff ${cashDiffClass}">Diferencia (contado − esperado): <strong>${escapeHtml(cashDiff >= 0 ? `+${formatMoneyEUR(cashDiff)}` : formatMoneyEUR(cashDiff))}</strong></p>`
             : ''
         }
-        <p style="margin:0.35rem 0 0">Total ventas POS (efectivo + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
+        <p style="margin:0.35rem 0 0">Total ventas POS (efectivo + tarjeta + monedero): <strong>${escapeHtml(formatMoneyEUR(salesTotal))}</strong></p>
         <p style="margin:0.35rem 0 0">Cambio dejado para el siguiente turno: <strong>${floatFwd !== null ? escapeHtml(formatMoneyEUR(floatFwd)) : '—'}</strong></p>
         ${denHtml ? `<p class="hint" style="margin:0.5rem 0 0">Desglose anotado:</p>${denHtml}` : ''}
       </div>
@@ -1530,6 +1616,7 @@
     void (async () => {
       let expectedCash = 0;
       let cashSales = 0;
+      let cardSales = 0;
       let opening = 0;
       let walletSales = 0;
       let walletCashNet = 0;
@@ -1539,6 +1626,7 @@
           const info = await fetchShiftCashExpected(shiftId);
           opening = info.opening;
           cashSales = info.cashSales;
+          cardSales = info.cardSales || 0;
           expectedCash = info.expectedCash;
           walletSales = info.walletSales || 0;
           walletCashNet = info.walletCashNet || 0;
@@ -1556,6 +1644,8 @@
       }
       const hintEl = $('wiz-cash-expected');
       if (hintEl) {
+        const cardLine =
+          cardSales > 0.005 ? ` Ventas con tarjeta: ${formatMoneyEUR(cardSales)} (no en caja).` : '';
         const walletLine =
           walletSales > 0.005
             ? ` Ventas con monedero: ${formatMoneyEUR(walletSales)} (no en caja).`
@@ -1564,7 +1654,7 @@
           Math.abs(walletCashNet) > 0.005
             ? ` Monedero en efectivo (neto): ${walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(walletCashNet)}.`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} = cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}${walletLine}`;
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} = cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}${cardLine}${walletLine}`;
       }
       const onCashInput = () => updateWizardArqueoDiff(expectedCash);
       $('wiz-close-cash')?.addEventListener('input', onCashInput);
@@ -1700,6 +1790,10 @@
       const info = await fetchShiftCashExpected(shiftId);
       shiftWizard.closeExpectedCash = info.expectedCash;
       if (hintEl) {
+        const cardLine =
+          (info.cardSales || 0) > 0.005
+            ? ` Ventas con tarjeta: ${formatMoneyEUR(info.cardSales)} (no en caja).`
+            : '';
         const walletLine =
           (info.walletSales || 0) > 0.005
             ? ` Ventas con monedero: ${formatMoneyEUR(info.walletSales)} (no en caja).`
@@ -1708,7 +1802,7 @@
           Math.abs(info.walletCashNet || 0) > 0.005
             ? ` Monedero en efectivo (neto): ${info.walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(info.walletCashNet)}.`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(info.expectedCash)} = cambio ${formatMoneyEUR(info.opening)} + ventas efectivo ${formatMoneyEUR(info.cashSales)}${walletCashLine}${walletLine}`;
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(info.expectedCash)} = cambio ${formatMoneyEUR(info.opening)} + ventas efectivo ${formatMoneyEUR(info.cashSales)}${walletCashLine}${cardLine}${walletLine}`;
       }
       updateShiftCloseDiff(info.expectedCash);
     } catch (_) {
@@ -1969,6 +2063,7 @@
     if (ctx.profile.role === 'admin_club') {
       initClubLegalSection(ctx);
       initClubCurrencySection(ctx);
+      initClubPayMethodsSection(ctx);
       initClubTeamSection(ctx);
     }
 
