@@ -1364,7 +1364,9 @@
   let memberDniWarnResolver = null;
 
   function memberHasDni(member) {
-    return member && member.dni != null && String(member.dni).trim() !== '';
+    // Si el campo no viene en el objeto, no avisamos (evita falsos positivos).
+    if (!member || member.dni === undefined) return true;
+    return member.dni != null && String(member.dni).trim() !== '';
   }
 
   function memberDniWarnLabel(member) {

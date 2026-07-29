@@ -2571,7 +2571,7 @@
       sb()
       .from('club_members')
       .select(
-        'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
+        'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date, dni',
       )
       .eq('club_id', state.ctx.club.id)
       .eq('is_active', true)
@@ -2586,7 +2586,7 @@
         sb()
           .from('club_members')
           .select(
-            'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
+            'id, display_name, member_code, member_number, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date, dni',
           )
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
@@ -2603,7 +2603,7 @@
         sb()
           .from('club_members')
           .select(
-            'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
+            'id, display_name, member_code, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date, dni',
           )
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
@@ -2620,7 +2620,7 @@
       const r0 = await withArchiveFilter(
         sb()
           .from('club_members')
-          .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path, birth_date')
+          .select('id, display_name, member_code, member_type, member_type_valid_until, avatar_path, birth_date, dni')
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
           .order('display_name', { ascending: true }),
@@ -2635,7 +2635,7 @@
       const r2 = await withArchiveFilter(
         sb()
           .from('club_members')
-          .select('id, display_name, member_code, member_type, avatar_path, birth_date')
+          .select('id, display_name, member_code, member_type, avatar_path, birth_date, dni')
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
           .order('display_name', { ascending: true }),
@@ -2651,7 +2651,7 @@
         sb()
           .from('club_members')
           .select(
-            'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur',
+            'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, dni',
           )
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
@@ -2667,13 +2667,30 @@
       const r3 = await withArchiveFilter(
         sb()
           .from('club_members')
-          .select('id, display_name, member_code')
+          .select('id, display_name, member_code, dni')
           .eq('club_id', state.ctx.club.id)
           .eq('is_active', true)
           .order('display_name', { ascending: true }),
       );
       data = r3.data;
       error = r3.error;
+    }
+    if (
+      error &&
+      (error.code === '42703' || String(error.message || '').toLowerCase().includes('dni'))
+    ) {
+      const rDni = await withArchiveFilter(
+        sb()
+          .from('club_members')
+          .select(
+            'id, display_name, member_code, member_number, rfid_uid, member_type, member_type_valid_until, avatar_path, wallet_balance_eur, birth_date',
+          )
+          .eq('club_id', state.ctx.club.id)
+          .eq('is_active', true)
+          .order('member_number', { ascending: true }),
+      );
+      data = rDni.data;
+      error = rDni.error;
     }
     if (error) {
       state.tpvMembers = [];
@@ -2979,6 +2996,23 @@
 
   async function selectTpvMember(m) {
     if (!m || !m.id) return;
+    if (m.dni === undefined && sb() && state.ctx?.club?.id) {
+      try {
+        const { data: row } = await sb()
+          .from('club_members')
+          .select('dni')
+          .eq('id', m.id)
+          .eq('club_id', state.ctx.club.id)
+          .maybeSingle();
+        if (row && Object.prototype.hasOwnProperty.call(row, 'dni')) {
+          m.dni = row.dni;
+          const cached = (state.tpvMembers || []).find((x) => x.id === m.id);
+          if (cached) cached.dni = row.dni;
+        }
+      } catch (_) {
+        /* si no hay columna dni, no bloquear la selección */
+      }
+    }
     if (typeof window.scConfirmMemberMissingDni === 'function') {
       const ok = await window.scConfirmMemberMissingDni(m);
       if (!ok) return;

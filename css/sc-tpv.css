@@ -1,19 +1,21 @@
 /* TPV — POS premium (3 columnas: categorías | productos | ticket) */
 
 .club-app #club-view-tpv.tpv-pos-view {
-  min-height: calc(100dvh - var(--header-h) - 48px);
-}
-
-.club-app:has(#club-view-tpv:not(.is-hidden)) .app-main {
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  min-height: 0;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .club-app #club-view-tpv.tpv-pos-view .tpv-pos {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-height: calc(100dvh - var(--header-h) - 48px);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 /* ── Header compacto ── */
@@ -113,8 +115,8 @@
   gap: var(--space-3);
   flex: 1;
   min-height: 0;
-  height: calc(100dvh - var(--header-h) - 100px);
-  max-height: calc(100dvh - var(--header-h) - 100px);
+  height: auto;
+  max-height: none;
   align-items: stretch;
 }
 

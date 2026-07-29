@@ -73,6 +73,78 @@ body.club-app.has-club-topnav {
     linear-gradient(125deg, #dff3e8 0%, #e7eef8 46%, #f4efe4 100%);
 }
 
+/* Viewport shell — todas las vistas como Socios (sin alargar la página) */
+.club-app .app-body {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.club-app .app-main {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+}
+
+.club-app .club-view:not(.is-hidden) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.club-app .club-view:not(.is-hidden) > .club-view-stage {
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  align-content: start;
+}
+
+/* Vistas de lista/tarjeta: el scroll va dentro del contenido, no en la página */
+.club-app .club-view:not(.is-hidden) > .sc-members-layout,
+.club-app .club-view:not(.is-hidden) > .sc-stock-layout,
+.club-app .club-view:not(.is-hidden) > .sc-inv-layout,
+.club-app .club-view:not(.is-hidden) > .sc-settings-grid {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
+.club-app .club-view:not(.is-hidden) > .sc-settings-grid {
+  display: grid;
+}
+
+@media (max-width: 900px) {
+  .club-app .app-body {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .club-app .app-main {
+    overflow: auto;
+    display: block;
+  }
+
+  .club-app .club-view:not(.is-hidden) {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .club-app .club-view:not(.is-hidden) > .club-view-stage {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 .app-status {
   margin: 0 0 var(--space-3);
 }
@@ -704,7 +776,7 @@ body.club-app.has-club-topnav {
 }
 
 .club-app .has-club-topnav .club-view-stage {
-  gap: var(--space-4);
+  gap: 10px;
 }
 
 .club-app .card-section {
@@ -774,7 +846,11 @@ body.club-app.has-club-topnav {
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
   overflow: auto;
-  max-height: min(52vh, 480px);
+}
+
+.club-app .has-club-topnav .sc-members-table-wrap,
+.club-app .has-club-topnav .sc-stock-table-wrap {
+  max-height: none;
 }
 
 .club-app .has-club-topnav th {
@@ -815,6 +891,11 @@ body.club-app.has-club-topnav {
   position: relative;
   grid-template-columns: repeat(12, 1fr);
   gap: 1rem;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  scrollbar-width: thin;
 }
 
 .sc-home-grid .sc-home-shift {
@@ -1346,40 +1427,39 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 }
 
 /* Settings — viewport fit (sin scroll de página) */
-.club-app:has(#club-view-settings:not(.is-hidden):not([hidden])) .app-main {
-  overflow: hidden;
-  padding-bottom: var(--space-3);
-}
-
 .club-app .club-view-stage.sc-settings-grid,
 .club-app .has-club-topnav .club-view-stage.sc-settings-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.55fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.7fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
-    'legal legal legal'
-    'currency password team';
+    'legal legal'
+    'currency team'
+    'password team';
   gap: 10px;
-  height: calc(100dvh - var(--header-h) - 28px);
-  max-height: calc(100dvh - var(--header-h) - 28px);
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   align-content: stretch;
 }
 
 .sc-settings-grid .sc-settings-legal {
   grid-area: legal;
+  align-self: start;
 }
 
 .sc-settings-grid .sc-settings-currency {
   grid-area: currency;
-  min-height: 0;
-  overflow: auto;
+  align-self: start;
+  height: auto;
+  overflow: visible;
 }
 
 .sc-settings-grid .sc-settings-password {
   grid-area: password;
-  min-height: 0;
-  overflow: auto;
+  align-self: start;
+  height: auto;
+  overflow: visible;
 }
 
 .sc-settings-grid .sc-settings-team {
@@ -1388,21 +1468,28 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  align-self: stretch;
 }
 
 .sc-settings-grid:not(:has(#club-team-section:not([hidden]))) {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
   grid-template-areas:
     'legal legal'
     'currency password';
+  height: 100%;
+  max-height: 100%;
 }
 
 .club-app .sc-settings-grid > .card-section {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 14px;
+  min-height: 0;
+}
+
+.club-app .sc-settings-grid > .sc-settings-team.card-section {
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 .sc-settings-head {
@@ -1412,7 +1499,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   gap: 0.1rem;
   position: relative;
   padding-left: 0.75rem;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.4rem;
   flex-shrink: 0;
 }
 
@@ -1458,7 +1545,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-legal__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 8px 12px !important;
+  gap: 6px 12px !important;
   margin: 0 !important;
 }
 
@@ -1491,7 +1578,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-actions,
 .club-app .sc-settings-grid .row-actions {
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
   margin-bottom: 0;
   flex-shrink: 0;
 }
@@ -1510,8 +1597,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 .sc-settings-currency__body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
+  gap: 6px;
 }
 
 .sc-settings-currency__shortcuts-label {
@@ -1573,7 +1659,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 }
 
 .sc-settings-team__table {
-  margin-top: 0.55rem;
+  margin-top: 0.4rem;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -1581,16 +1667,16 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 }
 
 .sc-settings-password .sc-compact-grid {
-  gap: 8px 12px !important;
+  gap: 6px 12px !important;
 }
 
 .sc-settings-password .form__row + .form__row,
 .sc-settings-password form > .form__row {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .sc-settings-password .btn {
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
 }
 
 @media (max-width: 1100px) {
@@ -1609,7 +1695,7 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   }
 
   .club-app:has(#club-view-settings:not(.is-hidden):not([hidden])) .app-main {
-    overflow: auto;
+    overflow: hidden;
   }
 
   .sc-settings-legal__grid {
@@ -1708,7 +1794,7 @@ body.club-dark.club-app .sc-settings-currency__chips .chip.is-active {
 
 /* TPV in app shell */
 .club-app #club-view-tpv:not(.is-hidden) {
-  min-height: calc(100dvh - var(--header-h) - 80px);
+  min-height: 0;
 }
 
 .club-app .tpv-shell--stage {
@@ -2025,6 +2111,7 @@ body.club-dark.club-app .app-header__avatar {
 
 .club-app .club-view:not(.is-hidden) {
   animation: scFadeIn 0.22s var(--transition) both;
+  /* flex layout defined in viewport shell */
 }
 
 .club-app .card-section {
@@ -2126,8 +2213,10 @@ body.club-dark.club-app .app-header__avatar {
 .sc-members-layout,
 .sc-members-layout--full {
   grid-template-columns: 1fr;
-  align-items: start;
-  gap: var(--space-4);
+  align-items: stretch;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
 }
 
 .sc-members-list {
@@ -2135,11 +2224,20 @@ body.club-dark.club-app .app-header__avatar {
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  max-height: calc(100dvh - var(--header-h) - 40px);
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+  padding: 14px 16px !important;
 }
 
 .club-app .sc-members-table-wrap {
-  max-height: calc(100dvh - var(--header-h) - 220px);
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .member-modal__actions {
@@ -2272,165 +2370,159 @@ body.club-dark.club-app .app-header__avatar {
   background: var(--green-50);
 }
 
-/* Stock — contaje manual a ancho completo */
-.sc-stock-layout {
+/* Stock — contaje como Socios (viewport fit) */
+.club-app .club-view-stage.sc-stock-layout,
+.club-app .has-club-topnav .club-view-stage.sc-stock-layout {
   grid-template-columns: 1fr;
-  grid-template-areas: "main";
-  align-items: start;
-  gap: var(--space-4);
+  grid-template-areas: 'main';
+  align-items: stretch;
+  gap: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .sc-stock-main {
   grid-area: main;
   min-width: 0;
-}
-
-.club-app .sc-stock-main .sc-table-fill {
-  max-height: calc(100dvh - var(--header-h) - 160px);
-}
-
-.sc-stock-main__head {
-  margin-bottom: var(--space-3);
-}
-
-.sc-stock-main__head-row {
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  max-height: 100%;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 16px !important;
+}
+
+.sc-stock-head {
+  flex-shrink: 0;
+  margin-bottom: 0.55rem;
+}
+
+.sc-stock-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.sc-stock-main__title {
-  text-align: left;
+.sc-stock-head__shift {
   margin: 0;
 }
 
-.sc-stock-main__meta {
-  margin: 0.35rem 0 0;
-  max-width: 40rem;
-}
-
-.sc-stock-main__shift {
-  margin: 0;
-  flex-shrink: 0;
-  align-self: flex-start;
-}
-
-.sc-stock-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: var(--space-3);
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.sc-stock-toolbar__filters {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
+.sc-stock-head__sort {
+  min-width: 140px;
+  min-height: 34px;
+  width: auto;
 }
 
 .sc-stock-toolbar__cat-select[hidden] {
   display: none !important;
 }
 
-.sc-stock-filter-group {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-}
-
-.sc-stock-filter-group--cats {
-  align-items: start;
-}
-
-.sc-stock-filter-group__label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.sc-stock-filter-group .select {
-  max-width: 220px;
-  min-height: 38px;
-}
-
-.sc-stock-toolbar__chips {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  overflow-x: auto;
-  width: 100%;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
-}
-
-.club-app .sc-stock-toolbar .chip {
-  --cat-accent: #16a34a;
+.sc-stock-chips {
   flex-shrink: 0;
+  margin: 0 0 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.club-app .sc-stock-chips .chip {
+  --cat-accent: #16a34a;
   border-radius: 9px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: none;
   position: relative;
-  padding: 7px 12px 7px 14px;
+  padding: 6px 11px 6px 13px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.club-app .sc-stock-toolbar .chip::before {
+.club-app .sc-stock-chips .chip::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 6px;
-  bottom: 6px;
+  top: 5px;
+  bottom: 5px;
   width: 3px;
   border-radius: 2px;
   background: var(--cat-accent);
   opacity: 0.55;
 }
 
-.club-app .sc-stock-toolbar .chip.is-active {
+.club-app .sc-stock-chips .chip.is-active {
   background: color-mix(in srgb, var(--cat-accent) 12%, #fff);
   border-color: color-mix(in srgb, var(--cat-accent) 35%, transparent);
   color: var(--cat-accent);
   box-shadow: none;
 }
 
-.club-app .sc-stock-toolbar .chip.is-active::before {
+.club-app .sc-stock-chips .chip.is-active::before {
   opacity: 1;
 }
 
+.sc-stock-hint {
+  flex-shrink: 0;
+  margin: 0 0 0.45rem !important;
+}
+
+.club-app .sc-stock-table-wrap {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.club-app .sc-stock-main .msg:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+.club-app .sc-stock-main .msg:not(:empty) {
+  flex-shrink: 0;
+  margin: 0.35rem 0 0;
+}
+
 @media (max-width: 720px) {
-  .sc-stock-filter-group {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .club-app .club-view-stage.sc-stock-layout,
+  .club-app .has-club-topnav .club-view-stage.sc-stock-layout {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .sc-stock-main {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .club-app .sc-stock-table-wrap {
+    max-height: min(60vh, 480px) !important;
   }
 }
 
-body.club-dark.club-app .sc-stock-toolbar {
-  background: rgba(15, 23, 42, 0.45);
+body.club-dark.club-app .sc-stock-chips .chip {
+  background: rgba(30, 41, 59, 0.85);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Finance — una columna, secciones apiladas */
+/* Finance — una columna, secciones apiladas (scroll interno) */
 .sc-finance-layout {
   grid-template-columns: 1fr;
   align-items: start;
-  gap: var(--space-4);
+  align-content: start;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 
 .sc-finance-kpis-card {
@@ -2937,11 +3029,55 @@ body.club-dark.club-app .sc-finance-toolbar {
   background: rgba(0, 0, 0, 0.15);
 }
 
+/* Inventory / Catálogo — viewport fit como Socios */
+.sc-inv-layout {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.sc-inv-products {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 16px !important;
+}
+
+.sc-inv-products .member-csv-toolbar,
+.sc-inv-products .inv-summary,
+.sc-inv-products .inv-toolbar {
+  flex-shrink: 0;
+}
+
+.club-app .sc-inv-products .inv-toolbar {
+  margin-bottom: 0.55rem;
+}
+
+.club-app .sc-inv-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto !important;
+  align-content: start;
+  margin-bottom: 0 !important;
+}
+
+.sc-inv-products .sc-inv-table-fallback {
+  flex-shrink: 0;
+}
+
+.sc-inv-products .msg:empty {
+  display: none;
+}
+
 /* Inventory */
 .sc-inv-grid {
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)) !important;
   gap: 12px !important;
-  margin-bottom: var(--space-3) !important;
 }
 
 .club-app .has-club-topnav .inv-toolbar,

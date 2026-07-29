@@ -1,41 +1,33 @@
 <div class="club-view-stage sc-stock-layout">
 <section class="card-section sc-stock-main" aria-labelledby="stock-manual-title">
-  <div class="sc-stock-main__head">
-    <div class="sc-stock-main__head-row">
-      <div>
-        <h2 id="stock-manual-title" class="sc-stock-main__title">Contaje manual</h2>
-        <p class="hint sc-stock-main__meta">
-          Con <strong>bote</strong>: peso total en báscula (se resta tara). Sin bote: stock neto directo.
-        </p>
-      </div>
-      <p id="stock-shift-banner" class="hint stock-shift-banner status-pill sc-stock-main__shift" role="status">
+  <div class="member-csv-toolbar sc-toolbar-compact sc-stock-head">
+    <h2 id="stock-manual-title">Contaje</h2>
+    <div class="member-csv-toolbar__actions sc-stock-head__actions">
+      <p id="stock-shift-banner" class="hint stock-shift-banner status-pill sc-stock-head__shift" role="status">
         Comprobando turno…
       </p>
-    </div>
-  </div>
-  <div class="sc-stock-toolbar">
-    <div class="sc-stock-toolbar__filters">
-      <div class="sc-stock-filter-group">
-        <span class="sc-stock-filter-group__label">Orden</span>
-        <select class="select" id="stk-sort-by" aria-label="Orden">
-          <option value="name_asc">Nombre (A-Z)</option>
-          <option value="name_desc">Nombre (Z-A)</option>
-          <option value="stock_asc">Stock ↑</option>
-          <option value="stock_desc">Stock ↓</option>
-          <option value="category">Categoría</option>
-        </select>
-      </div>
-      <select class="select sc-stock-toolbar__cat-select" id="stk-filter-category" aria-label="Categoría" hidden>
-        <option value="">Todas</option>
+      <label class="visually-hidden" for="stk-sort-by">Orden</label>
+      <select class="select sc-stock-head__sort" id="stk-sort-by" aria-label="Orden">
+        <option value="name_asc">Nombre (A-Z)</option>
+        <option value="name_desc">Nombre (Z-A)</option>
+        <option value="stock_asc">Stock ↑</option>
+        <option value="stock_desc">Stock ↓</option>
+        <option value="category">Categoría</option>
       </select>
-      <div class="sc-stock-filter-group sc-stock-filter-group--cats">
-        <span class="sc-stock-filter-group__label">Categoría</span>
-        <div id="stk-cat-chips" class="chip-row sc-chip-row-compact sc-stock-toolbar__chips" role="group" aria-label="Categorías"></div>
-      </div>
     </div>
   </div>
-  <div class="table-wrap sc-table-fill">
-    <table class="table-compact">
+
+  <select class="select sc-stock-toolbar__cat-select" id="stk-filter-category" aria-label="Categoría" hidden>
+    <option value="">Todas</option>
+  </select>
+  <div id="stk-cat-chips" class="chip-row sc-chip-row-compact sc-stock-chips" role="group" aria-label="Categorías"></div>
+
+  <p class="hint sc-hint-collapsed sc-stock-hint">
+    Con <strong>bote</strong>: peso total en báscula (se resta tara). Sin bote: stock neto directo.
+  </p>
+
+  <div class="table-wrap sc-table-fill sc-stock-table-wrap">
+    <table class="table-compact" id="stock-manual-table">
       <thead>
         <tr>
           <th>Producto</th>
