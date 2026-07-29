@@ -12,8 +12,9 @@
   border: 0 !important;
 }
 
-.club-view.is-hidden {
-  display: none;
+.club-view.is-hidden,
+.club-view[hidden] {
+  display: none !important;
 }
 /* ---------- Shift wizard / summary ---------- */
 .shift-modal {

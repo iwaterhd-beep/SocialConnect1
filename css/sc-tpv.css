@@ -1,6 +1,12 @@
 /* TPV — POS premium (3 columnas: categorías | productos | ticket) */
 
-.club-app #club-view-tpv.tpv-pos-view {
+/* No forzar display cuando la vista está oculta (si no, se ve encima de Contaje/etc.) */
+.club-app #club-view-tpv.tpv-pos-view.is-hidden,
+.club-app #club-view-tpv.tpv-pos-view[hidden] {
+  display: none !important;
+}
+
+.club-app #club-view-tpv.tpv-pos-view:not(.is-hidden):not([hidden]) {
   min-height: 0;
   height: 100%;
   flex: 1;
