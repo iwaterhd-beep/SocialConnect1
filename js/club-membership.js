@@ -484,7 +484,7 @@
       if (key === 'standard') {
         autoBlock = `
           <p class="sc-membership-tier__note">
-            Nivel base · sin auto-upgrade. Renómbralo si quieres (ej. “Socio”).
+            Nivel base · sin auto-upgrade. Puedes renombrarlo (ej. “Socio”).
           </p>
         `;
       } else if (key === 'vip') {
@@ -546,6 +546,9 @@
         giftCount > 0
           ? `<span class="sc-membership-tier__gift-count">${giftCount} regalo${giftCount === 1 ? '' : 's'}</span>`
           : '';
+      const statusBadge = enabled
+        ? '<span class="sc-membership-tier__status is-on" data-tier-status>Activo</span>'
+        : '<span class="sc-membership-tier__status is-off" data-tier-status>Pausado</span>';
 
       const deleteBtn = !isBuiltinTier(key)
         ? `<div class="sc-membership-tier__actions">
@@ -557,83 +560,93 @@
 
       card.innerHTML = `
         <button type="button" class="sc-membership-tier__summary" data-tier-toggle aria-expanded="false">
-          <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
+          <span class="sc-membership-tier__summary-main">
+            <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
+            <span class="sc-membership-tier__lede" data-tier-lede>${escapeHtml((t.description || '').trim() || 'Sin descripción')}</span>
+          </span>
           <span class="sc-membership-tier__summary-meta">
             ${giftBadge}
-            <span class="sc-membership-tier__key">${escapeHtml(key)}</span>
+            ${statusBadge}
             <span class="sc-membership-tier__chevron" aria-hidden="true"></span>
           </span>
         </button>
         <div class="sc-membership-tier__body" hidden>
-          <div class="sc-membership-tier__name-row">
-            <div class="form__row">
-              <label for="tier-name-${escapeHtml(key)}">Nombre visible</label>
-              <input
-                class="input"
-                id="tier-name-${escapeHtml(key)}"
-                data-field="display_name"
-                type="text"
-                maxlength="40"
-                autocomplete="off"
-                value="${escapeHtml(name)}"
-                placeholder="Ej. Oro, Platino…"
-              />
+          <div class="sc-membership-tier__section">
+            <p class="sc-membership-tier__section-label">Datos del nivel</p>
+            <div class="sc-membership-tier__name-row">
+              <div class="form__row">
+                <label for="tier-name-${escapeHtml(key)}">Nombre visible</label>
+                <input
+                  class="input"
+                  id="tier-name-${escapeHtml(key)}"
+                  data-field="display_name"
+                  type="text"
+                  maxlength="40"
+                  autocomplete="off"
+                  value="${escapeHtml(name)}"
+                  placeholder="Ej. Oro, Platino…"
+                />
+              </div>
+              <div class="form__row sc-membership-tier__color-row">
+                <label for="tier-color-${escapeHtml(key)}">Color</label>
+                <input
+                  class="input sc-membership-tier__color"
+                  id="tier-color-${escapeHtml(key)}"
+                  data-field="color_hex"
+                  type="color"
+                  value="${escapeHtml(color)}"
+                  title="Color del nivel"
+                />
+              </div>
             </div>
-            <div class="form__row">
-              <label for="tier-color-${escapeHtml(key)}">Color</label>
-              <input
-                class="input sc-membership-tier__color"
-                id="tier-color-${escapeHtml(key)}"
-                data-field="color_hex"
-                type="color"
-                value="${escapeHtml(color)}"
-                title="Color del nivel"
-              />
-            </div>
-          </div>
-          <div class="sc-membership-tier__grid">
-            <div class="form__row form__row--full">
-              <label>Descripción corta</label>
-              <input class="input" data-field="description" type="text" value="${escapeHtml(t.description || '')}" placeholder="Qué es este nivel" />
-            </div>
-            <div class="form__row form__row--full">
-              <label>Beneficios</label>
-              <textarea class="input" data-field="benefits_text" rows="3" placeholder="Qué ofrece este nivel al socio">${escapeHtml(t.benefits_text || '')}</textarea>
-            </div>
-            <div class="form__row">
-              <label>Vigencia por defecto (días)</label>
-              <input class="input" data-field="default_valid_days" type="number" min="1" step="1"
-                placeholder="Vacío = sin caducidad"
-                value="${t.default_valid_days != null ? escapeHtml(String(t.default_valid_days)) : ''}" />
-            </div>
-            <div class="form__row">
-              <label class="sc-membership-tier__toggle" style="margin-top:1.35rem">
-                <input type="checkbox" data-field="is_enabled" ${enabled ? 'checked' : ''} />
-                Nivel activo
-              </label>
+            <div class="sc-membership-tier__grid">
+              <div class="form__row form__row--full">
+                <label>Descripción corta</label>
+                <input class="input" data-field="description" type="text" value="${escapeHtml(t.description || '')}" placeholder="Qué es este nivel" />
+              </div>
+              <div class="form__row form__row--full">
+                <label>Beneficios</label>
+                <textarea class="input" data-field="benefits_text" rows="2" placeholder="Qué ofrece este nivel al socio">${escapeHtml(t.benefits_text || '')}</textarea>
+              </div>
+              <div class="form__row">
+                <label>Vigencia por defecto (días)</label>
+                <input class="input" data-field="default_valid_days" type="number" min="1" step="1"
+                  placeholder="Vacío = sin caducidad"
+                  value="${t.default_valid_days != null ? escapeHtml(String(t.default_valid_days)) : ''}" />
+              </div>
+              <div class="form__row sc-membership-tier__active-row">
+                <span class="sc-membership-tier__field-label">Visibilidad</span>
+                <label class="sc-membership-tier__toggle sc-membership-tier__toggle--chip">
+                  <input type="checkbox" data-field="is_enabled" ${enabled ? 'checked' : ''} />
+                  Nivel activo en Socios y POS
+                </label>
+              </div>
             </div>
           </div>
           ${autoBlock}
           <section class="sc-membership-tier-gifts" data-tier-gifts="${escapeHtml(key)}" aria-label="Regalos de ${escapeHtml(name)}">
             <div class="sc-membership-tier-gifts__head">
-              <h4>Regalos de este nivel</h4>
-              <p class="hint">Producto del POS · se entrega <strong>gratis</strong> según la regla</p>
+              <div>
+                <p class="sc-membership-tier__section-label">Regalos</p>
+                <h4>Entrega en POS</h4>
+                <p class="hint">Gratis · una vez · según la regla</p>
+              </div>
             </div>
             <div class="sc-membership-tier-gifts__list" data-tier-gifts-list></div>
             <div class="sc-membership-tier-gifts__form" data-tier-gifts-form>
               <div class="sc-membership-reward-form__grid">
-                <div class="form__row">
+                <div class="form__row sc-membership-reward-form__product">
                   <label>Producto del POS</label>
                   <select class="input" data-reward-product>
                     <option value="">— Elige un producto —</option>
                   </select>
                 </div>
-                <div class="form__row">
+                <div class="form__row sc-membership-reward-form__qty">
                   <label>Cantidad <span class="hint" data-reward-qty-unit>(ud)</span></label>
                   <input class="input" data-reward-qty type="number" min="0.001" step="any" value="1" />
                 </div>
-                <div class="form__row">
-                  <label>Cuándo se aplica</label>
+                <div class="form__row sc-membership-reward-form__trigger">
+                  <label>Cuándo</label>
                   <select class="input" data-reward-trigger>
                     <option value="on_upgrade">Al subir a este nivel</option>
                     <option value="spend_threshold">Por gasto acumulado</option>
@@ -645,13 +658,13 @@
                   <label data-currency-label="Gasto objetivo ({s})">Gasto objetivo (€)</label>
                   <input class="input" data-reward-spend type="number" min="0" step="0.01" placeholder="Ej. 200" />
                 </div>
-                <div class="form__row form__row--full">
-                  <label>Instrucciones para el equipo</label>
-                  <input class="input" data-reward-desc type="text" placeholder="Qué entregar y cómo anotarlo" autocomplete="off" />
+                <div class="form__row sc-membership-reward-form__desc">
+                  <label>Nota para el equipo</label>
+                  <input class="input" data-reward-desc type="text" placeholder="Opcional · qué entregar" autocomplete="off" />
                 </div>
-              </div>
-              <div class="row-actions" style="margin-top:0.55rem">
-                <button type="button" class="btn btn--small" data-reward-add>Añadir regalo</button>
+                <div class="form__row sc-membership-reward-form__action">
+                  <button type="button" class="btn btn--small" data-reward-add>Añadir</button>
+                </div>
               </div>
             </div>
           </section>
@@ -673,7 +686,10 @@
 
       const nameInput = card.querySelector('[data-field="display_name"]');
       const colorInput = card.querySelector('[data-field="color_hex"]');
+      const descInput = card.querySelector('[data-field="description"]');
       const preview = card.querySelector('[data-tier-preview]');
+      const lede = card.querySelector('[data-tier-lede]');
+      const statusEl = card.querySelector('[data-tier-status]');
       const enabledInput = card.querySelector('[data-field="is_enabled"]');
       const toggleBtn = card.querySelector('[data-tier-toggle]');
       const body = card.querySelector('.sc-membership-tier__body');
@@ -683,6 +699,10 @@
         const c = normalizeHex(colorInput?.value, t.color_hex);
         card.style.setProperty('--tier-color', c);
         if (preview) preview.textContent = n;
+        if (lede) {
+          const d = (descInput?.value || '').trim();
+          lede.textContent = d || 'Sin descripción';
+        }
       };
 
       const setOpen = (open) => {
@@ -708,8 +728,14 @@
 
       nameInput?.addEventListener('input', syncPreview);
       colorInput?.addEventListener('input', syncPreview);
+      descInput?.addEventListener('input', syncPreview);
       enabledInput?.addEventListener('change', () => {
         card.classList.toggle('is-disabled', !enabledInput.checked);
+        if (statusEl) {
+          statusEl.textContent = enabledInput.checked ? 'Activo' : 'Pausado';
+          statusEl.classList.toggle('is-on', enabledInput.checked);
+          statusEl.classList.toggle('is-off', !enabledInput.checked);
+        }
       });
       card.querySelector('[data-tier-delete]')?.addEventListener('click', () => {
         void removeCustomTier(key);
@@ -1210,7 +1236,7 @@
     list.innerHTML = '';
     if (!rows.length) {
       list.innerHTML =
-        '<p class="sc-membership-tier-gifts__empty">Sin regalos en este nivel. Añade uno abajo.</p>';
+        '<p class="sc-membership-tier-gifts__empty">Todavía no hay regalos. Elige un producto abajo.</p>';
       updateTierGiftBadge(card, tierKey);
       return;
     }
