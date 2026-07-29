@@ -1,13 +1,17 @@
 <div class="club-view-stage sc-membership">
   <section class="card-section sc-membership-panel" aria-labelledby="membership-title">
-    <div class="sc-membership-hero__row">
-      <div class="sc-section-head" style="margin: 0">
-        <h2 id="membership-title">Membresía</h2>
-        <p class="hint sc-section-head__meta">
-          Configura niveles y regalos. Los cambios se ven en Socios y POS.
-        </p>
+    <div class="sc-membership-hero">
+      <div class="sc-membership-hero__glow" aria-hidden="true"></div>
+      <div class="sc-membership-hero__row">
+        <div class="sc-section-head" style="margin: 0">
+          <p class="sc-membership-hero__eyebrow">Club · niveles</p>
+          <h2 id="membership-title">Membresía</h2>
+          <p class="hint sc-section-head__meta">
+            Configura niveles y regalos. Los cambios se ven en Socios y POS.
+          </p>
+        </div>
+        <button type="button" class="btn" id="membership-tiers-save">Guardar cambios</button>
       </div>
-      <button type="button" class="btn" id="membership-tiers-save">Guardar cambios</button>
     </div>
     <p id="membership-status" class="msg" role="status" aria-live="polite"></p>
     <p id="membership-gate" class="hint is-hidden" hidden>
@@ -32,8 +36,8 @@
               <h3 id="membership-tiers-title">Niveles del club</h3>
               <p class="hint">Abre un nivel para editarlo o añade uno nuevo.</p>
             </div>
-            <button type="button" class="btn btn--ghost btn--small" id="membership-tier-add">
-              Añadir nivel
+            <button type="button" class="btn btn--ghost btn--small sc-membership-tier-add" id="membership-tier-add">
+              + Añadir nivel
             </button>
           </div>
         </div>

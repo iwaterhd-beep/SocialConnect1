@@ -469,11 +469,12 @@
       grid.appendChild(note);
     }
 
-    tiersCache.forEach((t) => {
+    tiersCache.forEach((t, index) => {
       const card = document.createElement('article');
       const enabled = t.is_enabled !== false;
       card.className = 'sc-membership-tier' + (enabled ? '' : ' is-disabled');
       card.style.setProperty('--tier-color', normalizeHex(t.color_hex));
+      card.style.setProperty('--i', String(index));
       card.setAttribute('data-tier-key', t.tier_key);
 
       const color = normalizeHex(t.color_hex);
