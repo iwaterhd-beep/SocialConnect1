@@ -3562,18 +3562,6 @@
       );
       showToast(`Venta guardada · ${lines.length} línea(s) · ${formatMoney(totalPrice)}`);
 
-      const overlay = $('tpv-success-overlay');
-      const detail = $('tpv-overlay-detail');
-      if (overlay && detail) {
-        detail.textContent = `${lines.length} línea(s) · ${formatMoney(totalPrice)}`;
-        overlay.classList.remove('is-hidden');
-        overlay.setAttribute('aria-hidden', 'false');
-        setTimeout(() => {
-          overlay.classList.add('is-hidden');
-          overlay.setAttribute('aria-hidden', 'true');
-        }, 1400);
-      }
-
       state.tpvCart = [];
       state.tpvPendingCartRowId = null;
       renderTpvCart();

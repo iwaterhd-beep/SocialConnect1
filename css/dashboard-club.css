@@ -232,23 +232,6 @@
   filter: grayscale(0.2);
 }
 
-.tpv-overlay__icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-
-.tpv-overlay__title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #15803d;
-  margin: 0 0 0.35rem;
-}
-
-.tpv-overlay__sub {
-  font-size: 0.95rem;
-  color: var(--ink-muted);
-  margin: 0;
-}
 
 /* ---------- Chips ---------- */
 .chip-row {
@@ -1968,6 +1951,12 @@ body.club-dark .tpv-wallet-funds {
 .member-wallet-cell--neg {
   color: #b45309;
   font-weight: 700;
+}
+
+.member-dispensed-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-secondary, #475569);
 }
 
 .member-wallet-cell--btn {

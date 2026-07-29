@@ -13,6 +13,8 @@
   let memberTermsUiBound = false;
   let memberSaving = false;
   let membersCache = [];
+  /** Totales de POS por socio: member_id -> sum(price_charged_eur) */
+  let memberDispensedById = Object.create(null);
   let membersSearch = '';
   let membersTypeFilter = '';
   let hasArchivedMemberColumn = false;
@@ -1652,6 +1654,7 @@
 
     const rows = allRows || [];
     const totalSpent = rows.reduce((acc, r) => acc + (Number(r.price_charged_eur) || 0), 0);
+    if (memberId) memberDispensedById[String(memberId)] = totalSpent;
     const ids = [...new Set(rows.map((r) => r.product_id).filter(Boolean))];
     let prodMap = {};
     if (ids.length) {
@@ -2074,12 +2077,18 @@
           : '—';
       const walletNeg =
         m.wallet_balance_eur != null && Number(m.wallet_balance_eur) < 0 ? ' member-wallet-cell--neg' : '';
+      const dispensedRaw = memberDispensedById[String(m.id)];
+      const dispensed =
+        dispensedRaw != null && !Number.isNaN(Number(dispensedRaw))
+          ? formatMoney(Number(dispensedRaw))
+          : formatMoney(0);
       tr.innerHTML = `
         <td class="member-code-cell">${escapeHtml(formatMemberCode(m))}</td>
         <td>${escapeHtml(formatMemberDisplayName(m))}</td>
         <td>${escapeHtml(dni)}</td>
         <td>${memberTypePillHtml(m)}</td>
         <td class="member-wallet-cell member-wallet-cell--btn${walletNeg}" data-profile-member="${m.id}" title="Abrir perfil y monedero">${escapeHtml(wallet)}</td>
+        <td class="member-dispensed-cell" title="Total cobrado en POS">${escapeHtml(dispensed)}</td>
         <td>${escapeHtml(m.phone || '—')}</td>
         <td>${isMemberArchived(m) ? '<span class="badge-stock badge-stock--out">Archivado</span>' : m.is_active ? '<span class="badge-stock badge-stock--ok">Activo</span>' : '<span class="badge-stock badge-stock--out">Inactivo</span>'}</td>
         <td class="actions">
@@ -2099,6 +2108,43 @@
       });
       tbody.appendChild(tr);
     });
+  }
+
+  async function loadMemberDispensedTotals() {
+    memberDispensedById = Object.create(null);
+    if (!ctx?.club?.id || !sb()) return;
+    const pageSize = 1000;
+    let from = 0;
+    for (;;) {
+      let { data, error } = await sb()
+        .from('tpv_dispenses')
+        .select('member_id, price_charged_eur')
+        .eq('club_id', ctx.club.id)
+        .not('member_id', 'is', null)
+        .range(from, from + pageSize - 1);
+      if (
+        error &&
+        (error.code === '42703' ||
+          String(error.message || '').toLowerCase().includes('member_id') ||
+          String(error.message || '').toLowerCase().includes('price_charged'))
+      ) {
+        memberDispensedById = Object.create(null);
+        return;
+      }
+      if (error) {
+        console.warn('loadMemberDispensedTotals', error);
+        return;
+      }
+      const rows = data || [];
+      for (const r of rows) {
+        if (!r.member_id) continue;
+        const key = String(r.member_id);
+        memberDispensedById[key] =
+          (memberDispensedById[key] || 0) + (Number(r.price_charged_eur) || 0);
+      }
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
   }
 
   async function loadMembersTable() {
@@ -2143,6 +2189,7 @@
 
     if (error) throw error;
     membersCache = data || [];
+    await loadMemberDispensedTotals();
     fillAvalistaSelectOptions(avalistaSelection?.id || pendingSaveAvalista?.memberId || null);
     renderMembersTable();
 

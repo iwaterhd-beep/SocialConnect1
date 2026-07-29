@@ -1350,12 +1350,6 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__input:read-only {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ── Overlay éxito ── */
-.club-app .tpv-pos .tpv-overlay {
-  border-radius: 20px;
-  backdrop-filter: blur(8px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .club-app .tpv-pos .tpv-card,
   .club-app .tpv-pos .tpv-card:hover,

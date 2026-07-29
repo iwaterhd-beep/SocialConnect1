@@ -890,11 +890,15 @@ body.club-app.has-club-topnav {
 .sc-home-grid {
   position: relative;
   grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: max-content;
   gap: 1rem;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   align-content: start;
+  padding-bottom: 1.5rem;
   scrollbar-width: thin;
 }
 
@@ -1271,12 +1275,13 @@ body.club-app.has-club-topnav {
 
 .sc-home-shift {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(255, 255, 255, 0.7) !important;
   background: rgba(255, 255, 255, 0.72) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+  min-height: max-content;
 }
 
 .sc-home-shift__hero {
@@ -1291,6 +1296,17 @@ body.club-app.has-club-topnav {
 
 .sc-home-shift__state {
   max-width: min(100%, 28rem);
+}
+
+.sc-home-shift__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.15rem 0 0.35rem;
+  position: relative;
+  z-index: 1;
 }
 
 .sc-home-shift__actions .sc-home-shift__open-btn {
