@@ -1750,6 +1750,23 @@
     return t ? t.charAt(0).toUpperCase() : '?';
   }
 
+  /** Accent color for POS cards / category rail (no purple blobs — solid brand tints). */
+  function categoryAccentColor(name) {
+    const n = String(name || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (/weed|flor|flower|cogollo/.test(n)) return '#16a34a';
+    if (/hash|resina|polen/.test(n)) return '#d97706';
+    if (/extract|aceite|oil|concentrado/.test(n)) return '#0d9488';
+    if (/bebida|drink|agua|refresco/.test(n)) return '#2563eb';
+    if (/comida|food|snack/.test(n)) return '#ea580c';
+    if (/paraf|accesor/.test(n)) return '#475569';
+    if (/pre.?roll|preroll|porro/.test(n)) return '#65a30d';
+    if (/edible|comest/.test(n)) return '#c2410c';
+    return '#16a34a';
+  }
+
   function pulseTpvCard(productId) {
     if (!productId) return;
     const grid = $('tpv-product-grid');
@@ -1798,6 +1815,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'tpv-cat-nav__btn' + (state.tpvCatFilter === val ? ' is-active' : '');
+      b.style.setProperty('--cat-accent', val ? categoryAccentColor(label) : '#16a34a');
       b.innerHTML = `<span class="tpv-cat-nav__icon" aria-hidden="true">${escapeHtml(icon)}</span><span class="tpv-cat-nav__label">${escapeHtml(label)}</span>`;
       b.addEventListener('click', () => {
         state.tpvCatFilter = val;
@@ -1894,6 +1912,7 @@
             : `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</span>`
           : '';
       const catLabel = categoryName(p.category_id);
+      card.style.setProperty('--cat-accent', categoryAccentColor(catLabel));
       card.innerHTML = `
         <span class="tpv-card__visual">
           <span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span>
