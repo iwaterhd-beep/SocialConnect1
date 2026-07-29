@@ -231,7 +231,7 @@
             />
             <p class="hint hint--small" style="margin-top: 0.35rem">
               Mismo precio en <strong>POS</strong>, <strong>menú tablet</strong> y valoración de stock.
-              <strong>Unidad</strong>: €/ud · <strong>Gramos</strong>: €/g
+              <strong>Unidad</strong>: <span class="sc-currency-sym">€</span>/ud · <strong>Gramos</strong>: <span class="sc-currency-sym">€</span>/g
             </p>
           </div>
         </div>
@@ -243,6 +243,7 @@
               id="inv-product-purchase-cost"
               inputmode="decimal"
               placeholder="€/g o €/ud — solo administrador del club"
+              data-currency-placeholder="{s}/g o {s}/ud — solo administrador del club"
             />
             <p class="hint hint--small" style="margin-top: 0.35rem">
               Tu <strong>coste</strong> por gramo o por unidad. En <strong>Finanzas</strong> (admin): valor del stock al coste.

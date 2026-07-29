@@ -509,6 +509,7 @@
   }
 
   function formatMoney(n) {
+    if (typeof window.scFormatMoney === 'function') return window.scFormatMoney(n);
     const x = Number(n);
     if (Number.isNaN(x)) return '—';
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
@@ -768,17 +769,21 @@
 
   function applyInventoryUnitLabels(unit) {
     const isUnit = unit === 'unit';
+    const sym =
+      typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€';
     if ($('inv-label-bottle'))
       $('inv-label-bottle').textContent = isUnit ? 'Peso del bote (solo gramos)' : 'Peso del bote (g)';
     if ($('inv-label-stock')) $('inv-label-stock').textContent = isUnit ? 'Stock (ud)' : 'Stock neto (g)';
     if ($('inv-label-alert')) $('inv-label-alert').textContent = isUnit ? 'Alerta stock mín. (ud)' : 'Alerta stock mín. (g)';
     if ($('inv-label-sale-price')) {
-      $('inv-label-sale-price').textContent = isUnit ? 'Precio de venta (€/ud)' : 'Precio de venta (€/g)';
+      $('inv-label-sale-price').textContent = isUnit
+        ? `Precio de venta (${sym}/ud)`
+        : `Precio de venta (${sym}/g)`;
     }
     if ($('inv-label-purchase-cost'))
       $('inv-label-purchase-cost').textContent = isUnit
-        ? 'Coste de compra (€/ud)'
-        : 'Coste de compra (€/g)';
+        ? `Coste de compra (${sym}/ud)`
+        : `Coste de compra (${sym}/g)`;
     const bottle = $('inv-product-bottle');
     if (bottle) bottle.disabled = isUnit;
     const rowBottle = $('inv-row-bottle');

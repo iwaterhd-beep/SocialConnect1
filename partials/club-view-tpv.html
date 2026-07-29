@@ -57,7 +57,7 @@
               <div id="tpv-cart-list" class="tpv-receipt__lines"></div>
               <div class="tpv-receipt__total">
                 <span class="tpv-receipt__total-label">Total</span>
-                <strong id="tpv-cart-total" class="tpv-receipt__total-value">0,00 €</strong>
+                <strong id="tpv-cart-total" class="tpv-receipt__total-value">0,00 <span class="sc-currency-sym">€</span></strong>
               </div>
             </section>
 
@@ -98,7 +98,7 @@
                       Afecta caja del turno
                     </label>
                     <div class="tpv-wallet-funds__row">
-                      <input class="tpv-receipt__input" id="tpv-wallet-funds-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="€" />
+                      <input class="tpv-receipt__input" id="tpv-wallet-funds-amount" type="number" inputmode="decimal" step="0.01" min="0.01" data-currency-placeholder="{s}" placeholder="€" />
                       <input class="tpv-receipt__input" id="tpv-wallet-funds-notes" type="text" placeholder="Motivo" autocomplete="off" />
                       <button type="button" class="btn btn--small" id="tpv-wallet-funds-add">+</button>
                       <button type="button" class="btn btn--ghost btn--small" id="tpv-wallet-funds-sub">−</button>
@@ -120,7 +120,7 @@
                     <input class="tpv-receipt__input tpv-receipt__input--num" id="tpv-grams-dispensed" inputmode="decimal" placeholder="0,52" />
                   </label>
                   <label class="tpv-receipt__field tpv-receipt__field--price">
-                    <span>Precio €</span>
+                    <span data-currency-label="Precio {s}">Precio €</span>
                     <input class="tpv-receipt__input tpv-receipt__input--price" id="tpv-price" inputmode="decimal" placeholder="0,00" />
                   </label>
                 </div>
@@ -160,7 +160,7 @@
           <footer class="tpv-receipt__footer">
             <button type="button" class="tpv-receipt__cobrar" id="tpv-submit">
               <span class="tpv-receipt__cobrar-label">Cobrar</span>
-              <span class="tpv-receipt__cobrar-amount" id="tpv-cobrar-amount">0,00 €</span>
+              <span class="tpv-receipt__cobrar-amount" id="tpv-cobrar-amount">0,00 <span class="sc-currency-sym">€</span></span>
             </button>
             <p id="tpv-status" class="tpv-receipt__status msg" role="status" aria-live="polite"></p>
           </footer>

@@ -505,6 +505,7 @@
   }
 
   function formatMoney(n) {
+    if (typeof window.scFormatMoney === 'function') return window.scFormatMoney(n);
     const x = Number(n);
     if (Number.isNaN(x)) return '—';
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });

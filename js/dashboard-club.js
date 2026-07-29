@@ -30,20 +30,24 @@
     const clubId = gate.profile.club_id;
     let { data: club, error } = await sb()
       .from('clubs')
-      .select('id, name, cif, email, address, member_min_age, is_active')
+      .select('id, name, cif, email, address, member_min_age, currency_symbol, is_active')
       .eq('id', clubId)
       .maybeSingle();
 
-    if (
-      error &&
-      (error.code === '42703' || String(error.message || '').includes('member_min_age'))
-    ) {
-      ({ data: club, error } = await sb()
-        .from('clubs')
-        .select('id, name, cif, email, address, is_active')
-        .eq('id', clubId)
-        .maybeSingle());
-      if (club) club.member_min_age = 18;
+    if (error && (error.code === '42703' || /currency_symbol|member_min_age/i.test(error.message || ''))) {
+      const msg = String(error.message || '');
+      const missingCurrency = /currency_symbol/i.test(msg);
+      const missingAge = /member_min_age/i.test(msg) || (!missingCurrency && error.code === '42703');
+      let cols = 'id, name, cif, email, address, is_active';
+      if (!missingAge) cols = 'id, name, cif, email, address, member_min_age, is_active';
+      else if (!missingCurrency) cols = 'id, name, cif, email, address, currency_symbol, is_active';
+      ({ data: club, error } = await sb().from('clubs').select(cols).eq('id', clubId).maybeSingle());
+      if (club) {
+        if (club.member_min_age == null || Number.isNaN(Number(club.member_min_age))) {
+          club.member_min_age = 18;
+        }
+        if (!club.currency_symbol) club.currency_symbol = '€';
+      }
     }
 
     if (error) throw error;
@@ -79,6 +83,10 @@
 
     if (club.member_min_age == null || Number.isNaN(Number(club.member_min_age))) {
       club.member_min_age = 18;
+    }
+    if (!club.currency_symbol) club.currency_symbol = '€';
+    if (typeof window.scSetCurrencySymbol === 'function') {
+      window.scSetCurrencySymbol(club.currency_symbol);
     }
 
     $('club-name-display').textContent = club.name;
@@ -395,7 +403,7 @@
     }
     const v = data.closing_float_forward_eur;
     if (v != null && v !== '') {
-      hint.textContent = `Último cierre dejó ${Number(v).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} de cambio para el siguiente turno. Puedes usar ese importe como referencia.`;
+      hint.textContent = `Último cierre dejó ${formatMoneyEUR(v)} de cambio para el siguiente turno. Puedes usar ese importe como referencia.`;
       if (!input.value.trim()) {
         input.placeholder = String(v).replace('.', ',');
       }
@@ -432,6 +440,13 @@
     el.classList.toggle('msg--error', Boolean(isError));
   }
 
+  function setClubCurrencyMsg(text, isError) {
+    const el = $('club-currency-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('msg--error', Boolean(isError));
+  }
+
   function fillClubLegalForm(club) {
     if ($('club-legal-name')) $('club-legal-name').value = club?.name || '';
     if ($('club-legal-cif')) $('club-legal-cif').value = club?.cif || '';
@@ -441,6 +456,23 @@
       const age = club?.member_min_age != null ? Number(club.member_min_age) : 18;
       $('club-legal-min-age').value = Number.isFinite(age) && age >= 1 ? String(Math.trunc(age)) : '18';
     }
+  }
+
+  function updateClubCurrencyPreview(raw) {
+    const prev = $('club-currency-preview');
+    if (!prev) return;
+    const sym = String(raw == null ? '' : raw).trim() || '€';
+    prev.textContent = `1,00\u00a0${sym.slice(0, 8)}`;
+  }
+
+  function fillClubCurrencyForm(club) {
+    const sym = club?.currency_symbol || (typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€');
+    if ($('club-currency-symbol')) $('club-currency-symbol').value = sym;
+    updateClubCurrencyPreview(sym);
+    document.querySelectorAll('[data-currency-preset]').forEach((btn) => {
+      const active = btn.getAttribute('data-currency-preset') === sym;
+      btn.classList.toggle('is-active', active);
+    });
   }
 
   function initClubLegalSection(ctx) {
@@ -500,6 +532,83 @@
     });
   }
 
+  function initClubCurrencySection(ctx) {
+    const sec = $('club-currency-section');
+    if (!sec || ctx.profile.role !== 'admin_club') return;
+    sec.hidden = false;
+    fillClubCurrencyForm(ctx.club);
+
+    if (sec.dataset.bound === '1') return;
+    sec.dataset.bound = '1';
+
+    const input = $('club-currency-symbol');
+    input?.addEventListener('input', () => {
+      updateClubCurrencyPreview(input.value);
+      const cur = String(input.value || '').trim();
+      document.querySelectorAll('[data-currency-preset]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-currency-preset') === cur);
+      });
+    });
+
+    sec.querySelectorAll('[data-currency-preset]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = btn.getAttribute('data-currency-preset') || '€';
+        if (input) input.value = v;
+        updateClubCurrencyPreview(v);
+        sec.querySelectorAll('[data-currency-preset]').forEach((b) => {
+          b.classList.toggle('is-active', b === btn);
+        });
+      });
+    });
+
+    $('club-currency-save')?.addEventListener('click', async () => {
+      const raw = ($('club-currency-symbol')?.value || '').trim();
+      const currency_symbol = raw.slice(0, 8) || '€';
+      if (!currency_symbol) {
+        setClubCurrencyMsg('Indica un símbolo o etiqueta.', true);
+        return;
+      }
+
+      setClubCurrencyMsg('Guardando…', false);
+      const { data, error } = await sb()
+        .from('clubs')
+        .update({ currency_symbol })
+        .eq('id', ctx.club.id)
+        .select('id, currency_symbol')
+        .single();
+
+      if (error) {
+        const msg =
+          error.code === '42501' || /policy/i.test(error.message || '')
+            ? 'Sin permiso para actualizar el club. Revisa las políticas RLS (migración 042).'
+            : error.code === '42703' || /currency_symbol/i.test(error.message || '')
+              ? 'Ejecuta en Supabase la migración 055_club_currency_symbol.sql.'
+              : error.message || 'No se pudo guardar la moneda.';
+        setClubCurrencyMsg(msg, true);
+        return;
+      }
+
+      ctx.club.currency_symbol = data.currency_symbol || currency_symbol;
+      if (typeof window.scSetCurrencySymbol === 'function') {
+        window.scSetCurrencySymbol(ctx.club.currency_symbol);
+      }
+      fillClubCurrencyForm(ctx.club);
+      if (typeof window.scClubRefreshInventoryUi === 'function') {
+        void window.scClubRefreshInventoryUi();
+      }
+      if (typeof window.scClubRefreshTpvUi === 'function') {
+        void window.scClubRefreshTpvUi();
+      }
+      if (typeof window.scClubRefreshFinance === 'function') {
+        void window.scClubRefreshFinance();
+      }
+      if (typeof window.scClubRefreshMembership === 'function') {
+        void window.scClubRefreshMembership();
+      }
+      setClubCurrencyMsg('Moneda guardada. Se aplica en precios y finanzas.', false);
+    });
+  }
+
   window.scClubGetLegalInfo = function () {
     const minAge = ctxRef?.club?.member_min_age != null ? Number(ctxRef.club.member_min_age) : 18;
     return {
@@ -508,6 +617,9 @@
       email: ctxRef?.club?.email || '',
       address: ctxRef?.club?.address || '',
       member_min_age: Number.isFinite(minAge) && minAge >= 1 ? Math.trunc(minAge) : 18,
+      currency_symbol:
+        ctxRef?.club?.currency_symbol ||
+        (typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€'),
     };
   };
 
@@ -701,6 +813,7 @@
   };
 
   function formatMoneyEUR(n) {
+    if (typeof window.scFormatMoney === 'function') return window.scFormatMoney(n);
     const x = Number(n);
     if (Number.isNaN(x)) return '—';
     return x.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
@@ -1540,6 +1653,7 @@
     }
     if (viewName === 'settings' && ctxRef?.profile?.role === 'admin_club') {
       fillClubLegalForm(ctxRef.club);
+      fillClubCurrencyForm(ctxRef.club);
       void refreshClubTeamTable(ctxRef.club.id, ctxRef.profile.id);
     }
   }
@@ -1692,6 +1806,7 @@
 
     if (ctx.profile.role === 'admin_club') {
       initClubLegalSection(ctx);
+      initClubCurrencySection(ctx);
       initClubTeamSection(ctx);
     }
 

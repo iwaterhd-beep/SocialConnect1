@@ -418,7 +418,7 @@
             </label>
             <div class="sc-membership-tier__auto-grid">
               <div class="form__row">
-                <label>Umbral (€)</label>
+                <label data-currency-label="Umbral ({s})">Umbral (€)</label>
                 <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
                   value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
               </div>
@@ -444,7 +444,7 @@
             </label>
             <div class="sc-membership-tier__auto-grid">
               <div class="form__row">
-                <label>Umbral (€)</label>
+                <label data-currency-label="Umbral ({s})">Umbral (€)</label>
                 <input class="input" data-field="spend_threshold_eur" type="number" min="0" step="0.01"
                   value="${escapeHtml(String(t.spend_threshold_eur ?? 0))}" />
               </div>
@@ -590,6 +590,9 @@
     });
 
     syncRewardTierOptions();
+    if (typeof window.scRefreshCurrencyDom === 'function') {
+      window.scRefreshCurrencyDom();
+    }
   }
 
   function setCreateTierMsg(text, isError) {
@@ -847,7 +850,10 @@
         return;
       }
       if (r.spend_threshold_eur < 0 || r.spend_window_days < 1) {
-        setMsg('Revisa umbral (€) y ventana (días).', true);
+        setMsg(
+          `Revisa umbral (${typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€'}) y ventana (días).`,
+          true,
+        );
         return;
       }
     }
@@ -975,7 +981,7 @@
         : 'Cualquiera';
       const triggerExtra =
         r.trigger_type === 'spend_threshold' && r.trigger_spend_eur != null
-          ? ` (≥ ${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €)`
+          ? ` (≥ ${typeof window.scFormatMoney === 'function' ? window.scFormatMoney(r.trigger_spend_eur) : `${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €`})`
           : '';
       const product = rewardProductsCache.find((p) => String(p.id) === String(r.product_id || ''));
       const unitLabel = product?.sale_unit === 'unit' ? 'ud' : product ? 'g' : '';

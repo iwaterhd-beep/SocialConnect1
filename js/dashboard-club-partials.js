@@ -83,5 +83,8 @@
     ]);
     hoistViewModals();
     watchClubModals();
+    if (typeof window.scRefreshCurrencyDom === 'function') {
+      window.scRefreshCurrencyDom();
+    }
   };
 })();

@@ -39,6 +39,50 @@
 </section>
 
 <section
+  class="card-section sc-settings-currency"
+  id="club-currency-section"
+  hidden
+  aria-labelledby="club-currency-title"
+>
+  <div class="sc-section-head">
+    <h2 id="club-currency-title">Moneda</h2>
+    <p class="hint sc-section-head__meta">
+      Símbolo o etiqueta que se muestra en precios, monedero y finanzas (p. ej. € o Crd).
+    </p>
+  </div>
+  <div class="grid grid--2 sc-compact-grid">
+    <div class="form__row">
+      <label for="club-currency-symbol">Símbolo / etiqueta</label>
+      <input
+        class="input"
+        id="club-currency-symbol"
+        type="text"
+        maxlength="8"
+        autocomplete="off"
+        placeholder="€"
+        spellcheck="false"
+      />
+      <p class="hint hint--small">Máx. 8 caracteres. Ejemplos: € · Crd · $ · pts</p>
+    </div>
+    <div class="form__row">
+      <span class="hint" style="display:block;margin-bottom:0.35rem">Atajos</span>
+      <div class="chip-row sc-chip-row-compact" role="group" aria-label="Atajos de moneda">
+        <button type="button" class="chip" data-currency-preset="€">€</button>
+        <button type="button" class="chip" data-currency-preset="Crd">Crd</button>
+        <button type="button" class="chip" data-currency-preset="$">$</button>
+      </div>
+      <p class="hint hint--small">
+        Vista previa: <strong id="club-currency-preview">1,00&nbsp;€</strong>
+      </p>
+    </div>
+  </div>
+  <div class="row-actions">
+    <button type="button" class="btn btn--small" id="club-currency-save">Guardar moneda</button>
+  </div>
+  <p id="club-currency-msg" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section
   class="card-section sc-settings-team"
   id="club-team-section"
   hidden

@@ -55,7 +55,7 @@
           <th>Nombre</th>
           <th>DNI</th>
           <th>Tipo</th>
-          <th>€</th>
+          <th><span class="sc-currency-sym">€</span></th>
           <th>Tel.</th>
           <th>Est.</th>
           <th></th>
@@ -138,11 +138,11 @@
           </article>
           <article class="member-profile-kpi">
             <span class="member-profile-kpi__label">Total gastado</span>
-            <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 €</strong>
+            <strong id="member-profile-kpi-total" class="member-profile-kpi__value">0,00 <span class="sc-currency-sym">€</span></strong>
           </article>
           <article class="member-profile-kpi member-profile-kpi--wallet">
             <span class="member-profile-kpi__label">Monedero</span>
-            <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 €</strong>
+            <strong id="member-profile-kpi-wallet" class="member-profile-kpi__value">0,00 <span class="sc-currency-sym">€</span></strong>
           </article>
         </div>
 
@@ -153,7 +153,7 @@
             Movimiento en efectivo (afecta caja del turno)
           </label>
           <div class="member-wallet-adjust__row">
-            <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe €" />
+            <input class="input" id="member-wallet-adjust-amount" type="number" inputmode="decimal" step="0.01" min="0.01" data-currency-placeholder="Importe {s}" placeholder="Importe €" />
             <input class="input" id="member-wallet-adjust-notes" type="text" placeholder="Motivo" />
             <button type="button" class="btn btn--small" id="member-wallet-adjust-add">+ Ingresar</button>
             <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
@@ -320,11 +320,11 @@
             </p>
           </div>
           <div class="form__row">
-            <label for="member-enrollment-fee">Cuota inscripción (€)</label>
+            <label for="member-enrollment-fee" data-currency-label="Cuota inscripción ({s})">Cuota inscripción (€)</label>
             <input class="input" id="member-enrollment-fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
           </div>
           <div class="form__row">
-            <label for="member-wallet-balance">Saldo monedero (€)</label>
+            <label for="member-wallet-balance" data-currency-label="Saldo monedero ({s})">Saldo monedero (€)</label>
             <input class="input" id="member-wallet-balance" type="number" inputmode="decimal" step="0.01" placeholder="0" />
           </div>
         </div>
