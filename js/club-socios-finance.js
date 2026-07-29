@@ -3600,47 +3600,18 @@
     let sumToday = 0;
     let sum7 = 0;
     let sum30 = 0;
-    let cashToday = 0;
-    let walletToday = 0;
 
     list.forEach((r) => {
       const t = new Date(r.created_at).getTime();
       const p = Number(r.price_charged_eur) || 0;
-      const isWallet = String(r.payment_method || 'cash').toLowerCase() === 'wallet';
-      if (t >= d0.getTime()) {
-        sumToday += p;
-        if (isWallet) walletToday += p;
-        else cashToday += p;
-      }
+      if (t >= d0.getTime()) sumToday += p;
       if (t >= d7.getTime()) sum7 += p;
       sum30 += p;
     });
 
-    $('finance-kpi-today').textContent = formatMoney(sumToday);
-    $('finance-kpi-7d').textContent = formatMoney(sum7);
-    $('finance-kpi-30d').textContent = formatMoney(sum30);
-
-    let walletCashToday = 0;
-    const { data: ledgerRows } = await sb()
-      .from('club_member_wallet_ledger')
-      .select('cash_eur, created_at')
-      .eq('club_id', clubId)
-      .eq('kind', 'adjustment')
-      .gte('created_at', d0.toISOString());
-    if (ledgerRows) {
-      ledgerRows.forEach((r) => {
-        walletCashToday += Number(r.cash_eur) || 0;
-      });
-    }
-    const detailEl = $('finance-kpi-detail');
-    if (detailEl) {
-      const cashLine = `Hoy en POS: ${formatMoney(cashToday)} efectivo · ${formatMoney(walletToday)} monedero.`;
-      const recLine =
-        Math.abs(walletCashToday) > 0.005
-          ? ` Recargas/retiradas en caja hoy: ${walletCashToday >= 0 ? '+' : ''}${formatMoney(walletCashToday)}.`
-          : '';
-      detailEl.textContent = cashLine + recLine;
-    }
+    if ($('finance-kpi-today')) $('finance-kpi-today').textContent = formatMoney(sumToday);
+    if ($('finance-kpi-7d')) $('finance-kpi-7d').textContent = formatMoney(sum7);
+    if ($('finance-kpi-30d')) $('finance-kpi-30d').textContent = formatMoney(sum30);
     return true;
   }
 
