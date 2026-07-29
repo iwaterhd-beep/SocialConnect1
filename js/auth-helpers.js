@@ -31,6 +31,7 @@
    * Si el trigger handle_new_user no creó la fila en public.users, pero Auth tiene
    * role + club_id en metadata (alta desde admin club / superadmin), el usuario puede
    * insertar su propia fila (RLS users_insert_own_signup / club_access_insert_own_signup).
+   * Nunca usa superadmin desde metadata (editable por el usuario).
    */
   async function syncMissingClubProfileFromAuth(authUser) {
     if (!authUser?.id) return null;
@@ -38,15 +39,14 @@
     let profile = await fetchProfileUser(authUser.id);
     if (profile) return profile;
 
-    const meta = {
-      ...(authUser.user_metadata || {}),
-      ...(authUser.app_metadata || {}),
-    };
-    let role = meta.role;
+    // Preferir app_metadata (solo service role); user_metadata es editable por el usuario
+    const appMeta = authUser.app_metadata || {};
+    const userMeta = authUser.user_metadata || {};
+    let role = appMeta.role || userMeta.role;
     if (role !== 'admin_club' && role !== 'empleado') {
       return null;
     }
-    const clubRaw = meta.club_id;
+    const clubRaw = appMeta.club_id || userMeta.club_id;
     if (!clubRaw) return null;
     const clubId = String(clubRaw).trim();
     if (!clubId) return null;
@@ -139,7 +139,7 @@
       return {
         ok: false,
         error: new Error(
-          'No existe perfil en la base de datos para este usuario. Comprueba en Supabase → Authentication → Users que este usuario tenga en user_metadata: role (empleado o admin_club) y club_id (UUID del club).',
+          'No existe perfil en la base de datos para este usuario. Comprueba en Supabase → Authentication → Users que tenga app_metadata (preferible) o user_metadata con role (empleado o admin_club) y club_id (UUID del club). Superadmin no se asigna por metadata.',
         ),
       };
     }

@@ -47,6 +47,10 @@
     tpvCart: [],
     tpvCartSeq: 0,
     tpvPendingCartRowId: null,
+    /** Evita doble clic en Cobrar. */
+    tpvSubmitting: false,
+    /** Evita doble clic en recarga/retirada de monedero. */
+    tpvWalletFundsInFlight: false,
     uiBound: false,
     hasProductExtras: true,
     /** Turno abierto actual (TPV); null si no hay. */
@@ -941,7 +945,16 @@
     ];
     ids.forEach((id) => {
       const el = $(id);
-      if (el) el.disabled = !on;
+      if (!el) return;
+      if (id === 'tpv-submit') {
+        el.disabled = !on || state.tpvSubmitting;
+        return;
+      }
+      if (id === 'tpv-clear-cart') {
+        el.disabled = !on || !(state.tpvCart || []).length;
+        return;
+      }
+      el.disabled = !on;
     });
     document.querySelectorAll('[data-tpv-step]').forEach((b) => {
       b.disabled = !on;
@@ -963,7 +976,12 @@
     ['tpv-wallet-funds-amount', 'tpv-wallet-funds-notes', 'tpv-wallet-funds-add', 'tpv-wallet-funds-sub', 'tpv-wallet-funds-cash'].forEach(
       (id) => {
         const el = $(id);
-        if (el) el.disabled = !on;
+        if (!el) return;
+        if (id === 'tpv-wallet-funds-add' || id === 'tpv-wallet-funds-sub') {
+          el.disabled = !on || state.tpvWalletFundsInFlight;
+          return;
+        }
+        el.disabled = !on;
       },
     );
     syncTpvFieldAccess();
@@ -1046,6 +1064,7 @@
   }
 
   async function applyTpvWalletFunds(sign) {
+    if (state.tpvWalletFundsInFlight) return;
     const memberId = ($('tpv-selected-member')?.value || '').trim();
     if (!memberId) {
       setTpvWalletFundsStatus('Selecciona un socio primero.', true);
@@ -1066,31 +1085,42 @@
     const delta = sign < 0 ? -amt : amt;
     const notesRaw = ($('tpv-wallet-funds-notes')?.value || '').trim();
     const defaultNote = sign < 0 ? 'Retirada desde POS' : 'Recarga desde POS';
+    const addBtn = $('tpv-wallet-funds-add');
+    const subBtn = $('tpv-wallet-funds-sub');
+    state.tpvWalletFundsInFlight = true;
+    if (addBtn) addBtn.disabled = true;
+    if (subBtn) subBtn.disabled = true;
     setTpvWalletFundsStatus('Aplicando…', false);
-    const { data, error } = await rpcMemberWalletAdjust(
-      memberId,
-      delta,
-      notesRaw || defaultNote,
-      shiftId,
-      affectsCash,
-    );
-    if (error) {
-      setTpvWalletFundsStatus(error.message || 'No se pudo actualizar el monedero.', true);
-      return;
-    }
-    const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
-    if ($('tpv-wallet-funds-amount')) $('tpv-wallet-funds-amount').value = '';
-    if ($('tpv-wallet-funds-notes')) $('tpv-wallet-funds-notes').value = '';
-    const verb = sign < 0 ? 'Retirados' : 'Ingresados';
-    setTpvWalletFundsStatus(
-      `${verb} ${formatMoney(amt)}${affectsCash ? ' (en caja del turno)' : ''}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
-      false,
-    );
-    await loadMembersForTpv();
-    updateTpvWalletFundsUi();
-    updateTpvWalletUi();
-    if (typeof window.scClubRefreshFinance === 'function') {
-      await window.scClubRefreshFinance();
+    try {
+      const { data, error } = await rpcMemberWalletAdjust(
+        memberId,
+        delta,
+        notesRaw || defaultNote,
+        shiftId,
+        affectsCash,
+      );
+      if (error) {
+        setTpvWalletFundsStatus(error.message || 'No se pudo actualizar el monedero.', true);
+        return;
+      }
+      const newBal = data != null && !Number.isNaN(Number(data)) ? Number(data) : null;
+      if ($('tpv-wallet-funds-amount')) $('tpv-wallet-funds-amount').value = '';
+      if ($('tpv-wallet-funds-notes')) $('tpv-wallet-funds-notes').value = '';
+      const verb = sign < 0 ? 'Retirados' : 'Ingresados';
+      setTpvWalletFundsStatus(
+        `${verb} ${formatMoney(amt)}${affectsCash ? ' (en caja del turno)' : ''}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
+        false,
+      );
+      await loadMembersForTpv();
+      updateTpvWalletFundsUi();
+      updateTpvWalletUi();
+      if (typeof window.scClubRefreshFinance === 'function') {
+        await window.scClubRefreshFinance();
+      }
+    } finally {
+      state.tpvWalletFundsInFlight = false;
+      if (addBtn) addBtn.disabled = false;
+      if (subBtn) subBtn.disabled = false;
     }
   }
 
@@ -3016,16 +3046,14 @@
       if (shiftId) {
         const out = await registerTpvDispenseLine(line, shiftId, m.id);
         if (!out.error) {
-          const ensured = await ensureDispensePersisted(line, shiftId, m.id, out.rpcRes);
-          if (!ensured.error) {
-            await fulfillMembershipGiftGrants([line]);
-            registered += 1;
-            registeredLines.push(line);
-            continue;
-          }
-        } else {
-          console.warn('membership gift register', out.error);
+          // RPC ok = venta ya creada. Nunca reencolar (evitar doble cobro).
+          await resolveTpvDispenseId(line, shiftId, out.rpcRes);
+          await fulfillMembershipGiftGrants([line]);
+          registered += 1;
+          registeredLines.push(line);
+          continue;
         }
+        console.warn('membership gift register', out.error);
       }
 
       // Sin turno o fallo RPC → dejar en ticket para cobrar después
@@ -3339,7 +3367,11 @@
     return { error, rpcRes };
   }
 
-  async function ensureDispensePersisted(line, shiftId, memberId, rpcRes) {
+  /**
+   * Resuelve el id de la dispensación tras un RPC exitoso.
+   * Nunca hace INSERT desde el cliente (evita ventas duplicadas si el SELECT falla por RLS).
+   */
+  async function resolveTpvDispenseId(line, shiftId, rpcRes) {
     const directId = rpcRes?.data || null;
     if (directId) {
       const { data: exists, error: existsErr } = await sb()
@@ -3348,6 +3380,8 @@
         .eq('id', directId)
         .maybeSingle();
       if (!existsErr && exists?.id) return { id: exists.id, error: null };
+      // El RPC ya creó la fila; confiar en el id aunque el SELECT no la vea.
+      return { id: directId, error: null, unread: true };
     }
 
     const { data: matchRows, error: matchErr } = await sb()
@@ -3365,39 +3399,19 @@
       return { id: matchRows[0].id, error: null };
     }
 
-    const { data: au } = await sb().auth.getUser();
-    const userId = au?.user?.id || null;
-    if (!userId) {
-      return { id: null, error: { message: 'No se pudo identificar el usuario actual para registrar la dispensación.' } };
-    }
+    // RPC sin error pero sin id legible: no insertar de nuevo.
+    return { id: null, error: null, unread: true };
+  }
 
-    const baseInsert = {
-      club_id: state.ctx.club.id,
-      product_id: line.product_id,
-      shift_id: shiftId,
-      grams_charged: line.grams_charged,
-      grams_dispensed: line.grams_dispensed,
-      price_charged_eur: line.price_charged_eur,
-      notes: buildTpvDispenseNote(line),
-      created_by: userId,
-      member_id: memberId || null,
-    };
-
-    let ins = await sb().from('tpv_dispenses').insert([baseInsert]).select('id').single();
-    if (
-      ins.error &&
-      (ins.error.code === '42703' ||
-        (ins.error.message && ins.error.message.toLowerCase().includes('member_id')))
-    ) {
-      const noMember = { ...baseInsert };
-      delete noMember.member_id;
-      ins = await sb().from('tpv_dispenses').insert([noMember]).select('id').single();
-    }
-    if (ins.error) return { id: null, error: ins.error };
-    return { id: ins.data?.id || null, error: null };
+  function setTpvSubmitBusy(busy) {
+    state.tpvSubmitting = busy;
+    const btn = $('tpv-submit');
+    if (btn) btn.disabled = busy;
   }
 
   async function submitTpv() {
+    if (state.tpvSubmitting) return;
+
     // Si ya hay líneas en el ticket (p. ej. regalos), no mezclar la línea del formulario
     if (!(state.tpvCart || []).length) {
       syncAutoTpvLine({ silent: true });
@@ -3428,95 +3442,114 @@
       return;
     }
 
+    setTpvSubmitBusy(true);
     const registeredIds = [];
+    const soldCartRowIds = [];
     let lastRpcRes = null;
-    for (let i = 0; i < lines.length; i += 1) {
-      const line = lines[i];
-      setMsg('tpv-status', `Registrando ticket… línea ${i + 1}/${lines.length}`, false);
-      const out = await registerTpvDispenseLine(line, shiftId, memberRaw || null);
-      lastRpcRes = out.rpcRes;
-      if (out.error) {
-        const partial = registeredIds.length
-          ? ` Se guardaron ${registeredIds.length} línea(s) antes del error.`
-          : '';
-        setMsg('tpv-status', `${line.product_name}: ${out.error.message || 'No se pudo registrar.'}.${partial}`, true);
-        return;
-      }
-      const ensured = await ensureDispensePersisted(line, shiftId, memberRaw || null, out.rpcRes);
-      if (ensured.error) {
-        setMsg(
-          'tpv-status',
-          `Stock actualizado pero no se pudo guardar la dispensación (${line.product_name}): ${ensured.error.message || 'error desconocido'}.`,
-          true,
-        );
-        return;
-      }
-      if (ensured.id) registeredIds.push(ensured.id);
-    }
+    let failedAt = -1;
+    let failMessage = '';
 
-    await fulfillMembershipGiftGrants(lines);
+    try {
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        setMsg('tpv-status', `Registrando ticket… línea ${i + 1}/${lines.length}`, false);
+        const out = await registerTpvDispenseLine(line, shiftId, memberRaw || null);
+        lastRpcRes = out.rpcRes;
+        if (out.error) {
+          failedAt = i;
+          failMessage = `${line.product_name}: ${out.error.message || 'No se pudo registrar.'}`;
+          break;
+        }
+        const resolved = await resolveTpvDispenseId(line, shiftId, out.rpcRes);
+        if (resolved.id) registeredIds.push(resolved.id);
+        if (line.cart_row_id) soldCartRowIds.push(line.cart_row_id);
 
-    const totalPrice = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
-    setMsg(
-      'tpv-status',
-      `Listo: ${lines.length} línea(s) cobradas · total ${formatMoney(totalPrice)}.`,
-      false,
-    );
-    showToast(`Venta guardada · ${lines.length} línea(s) · ${formatMoney(totalPrice)}`);
-
-    const overlay = $('tpv-success-overlay');
-    const detail = $('tpv-overlay-detail');
-    if (overlay && detail) {
-      detail.textContent = `${lines.length} línea(s) · ${formatMoney(totalPrice)}`;
-      overlay.classList.remove('is-hidden');
-      overlay.setAttribute('aria-hidden', 'false');
-      setTimeout(() => {
-        overlay.classList.add('is-hidden');
-        overlay.setAttribute('aria-hidden', 'true');
-      }, 1400);
-    }
-
-    state.tpvCart = [];
-    state.tpvPendingCartRowId = null;
-    renderTpvCart();
-    $('tpv-notes').value = '';
-    updateTpvMarginHint();
-    await loadProducts();
-    await refreshStockUi();
-    await loadMembersForTpv();
-    updateTpvWalletUi();
-
-    if (memberRaw && typeof window.scMembershipGrantOnTierUpgrade === 'function') {
-      const memberAfter = (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, memberRaw));
-      const typeAfter = memberAfter?.member_type || typeBefore;
-      if (typeAfter !== typeBefore) {
-        try {
-          await window.scMembershipGrantOnTierUpgrade(memberRaw, typeBefore, typeAfter);
-        } catch (_) {
-          /* opcional */
+        // Quitar del carrito al instante para que un reintento no vuelva a cobrarla
+        if (line.cart_row_id) {
+          state.tpvCart = (state.tpvCart || []).filter((x) => x.cart_row_id !== line.cart_row_id);
+          if (state.tpvPendingCartRowId === line.cart_row_id) state.tpvPendingCartRowId = null;
+          renderTpvCart();
         }
       }
-    }
 
-    const visibleRows = await loadRecentDispenses(
-      registeredIds.length ? registeredIds : lastRpcRes?.data || null,
-    );
-    if (registeredIds.length) {
-      const visibleIds = new Set((visibleRows || []).map((r) => r.id));
-      const missing = registeredIds.filter((id) => !visibleIds.has(id));
-      if (missing.length) {
-        setMsg(
-          'tpv-status',
-          `Venta guardada, pero ${missing.length} dispensación(es) no se pueden leer en el listado (revisa RLS en tpv_dispenses).`,
-          true,
-        );
+      if (failedAt >= 0) {
+        const sold = soldCartRowIds.length;
+        const pending = lines.length - failedAt;
+        const partial = sold
+          ? ` Se cobraron ${sold} línea(s); quedan ${pending} pendientes en el ticket.`
+          : '';
+        setMsg('tpv-status', `${failMessage}${partial}`, true);
+        renderTpvCart();
+        return;
       }
-    }
-    if (typeof window.scClubRefreshFinance === 'function') {
-      await window.scClubRefreshFinance();
-    }
-    if (memberRaw && typeof window.scClubInventoryReloadMembers === 'function') {
-      await window.scClubInventoryReloadMembers();
+
+      await fulfillMembershipGiftGrants(lines);
+
+      const totalPrice = lines.reduce((acc, x) => acc + (Number(x.price_charged_eur) || 0), 0);
+      setMsg(
+        'tpv-status',
+        `Listo: ${lines.length} línea(s) cobradas · total ${formatMoney(totalPrice)}.`,
+        false,
+      );
+      showToast(`Venta guardada · ${lines.length} línea(s) · ${formatMoney(totalPrice)}`);
+
+      const overlay = $('tpv-success-overlay');
+      const detail = $('tpv-overlay-detail');
+      if (overlay && detail) {
+        detail.textContent = `${lines.length} línea(s) · ${formatMoney(totalPrice)}`;
+        overlay.classList.remove('is-hidden');
+        overlay.setAttribute('aria-hidden', 'false');
+        setTimeout(() => {
+          overlay.classList.add('is-hidden');
+          overlay.setAttribute('aria-hidden', 'true');
+        }, 1400);
+      }
+
+      state.tpvCart = [];
+      state.tpvPendingCartRowId = null;
+      renderTpvCart();
+      if ($('tpv-notes')) $('tpv-notes').value = '';
+      updateTpvMarginHint();
+      await loadProducts();
+      await refreshStockUi();
+      await loadMembersForTpv();
+      updateTpvWalletUi();
+
+      if (memberRaw && typeof window.scMembershipGrantOnTierUpgrade === 'function') {
+        const memberAfter = (state.tpvMembers || []).find((x) => tpvIdsEqual(x.id, memberRaw));
+        const typeAfter = memberAfter?.member_type || typeBefore;
+        if (typeAfter !== typeBefore) {
+          try {
+            await window.scMembershipGrantOnTierUpgrade(memberRaw, typeBefore, typeAfter);
+          } catch (_) {
+            /* opcional */
+          }
+        }
+      }
+
+      const visibleRows = await loadRecentDispenses(
+        registeredIds.length ? registeredIds : lastRpcRes?.data || null,
+      );
+      if (registeredIds.length) {
+        const visibleIds = new Set((visibleRows || []).map((r) => r.id));
+        const missing = registeredIds.filter((id) => !visibleIds.has(id));
+        if (missing.length) {
+          setMsg(
+            'tpv-status',
+            `Venta guardada, pero ${missing.length} dispensación(es) no se pueden leer en el listado (revisa RLS en tpv_dispenses).`,
+            true,
+          );
+        }
+      }
+      if (typeof window.scClubRefreshFinance === 'function') {
+        await window.scClubRefreshFinance();
+      }
+      if (memberRaw && typeof window.scClubInventoryReloadMembers === 'function') {
+        await window.scClubInventoryReloadMembers();
+      }
+    } finally {
+      setTpvSubmitBusy(false);
+      toggleTpvShiftControls(Boolean(state.tpvOpenShiftId));
     }
   }
 

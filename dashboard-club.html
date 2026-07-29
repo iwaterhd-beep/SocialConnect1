@@ -9,12 +9,23 @@
     <link rel="icon" href="assets/img/favicon.png?v=8" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=35" />
-    <link rel="stylesheet" href="css/dashboard-club.css?v=47" />
+    <link rel="stylesheet" href="css/dashboard-club.css?v=49" />
     <link rel="stylesheet" href="css/sc-dashboard.css?v=37" />
-    <link rel="stylesheet" href="css/sc-tpv.css?v=10" />
+    <link rel="stylesheet" href="css/sc-tpv.css?v=11" />
     <link rel="stylesheet" href="css/sc-membership.css?v=7" />
   </head>
   <body class="club-app has-club-topnav">
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('sc-club-dark') === '1') {
+            document.body.classList.add('club-dark');
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
     <div class="app-shell">
       <aside class="app-sidebar" id="app-sidebar" aria-label="Navegación principal">
         <div class="app-sidebar__head">
@@ -60,13 +71,13 @@
               <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
               <path d="M3.3 7.7L12 12.5l8.7-4.8M12 22V12.5" />
             </svg>
-            <span class="app-nav-item__label">Inventario</span>
+            <span class="app-nav-item__label">Catálogo</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="stock" role="tab" aria-selected="false">
             <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 20V10M12 20V4M6 20v-6" />
             </svg>
-            <span class="app-nav-item__label">Stock</span>
+            <span class="app-nav-item__label">Contaje</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="members" role="tab" aria-selected="false">
             <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -365,15 +376,15 @@
     <div id="club-toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="js/config.js?v=26"></script>
+    <script src="js/config.js?v=27"></script>
     <script src="js/supabase-client.js"></script>
-    <script src="js/auth-helpers.js?v=3"></script>
-    <script src="js/dashboard-club-partials.js?v=5"></script>
-    <script src="js/club-inventory-tpv.js?v=55"></script>
+    <script src="js/auth-helpers.js?v=4"></script>
+    <script src="js/dashboard-club-partials.js?v=6"></script>
+    <script src="js/club-inventory-tpv.js?v=56"></script>
     <script src="js/club-stock.js?v=24"></script>
-    <script src="js/club-socios-finance.js?v=70"></script>
-    <script src="js/club-membership.js?v=10"></script>
-    <script src="js/dashboard-club.js?v=44"></script>
+    <script src="js/club-socios-finance.js?v=73"></script>
+    <script src="js/club-membership.js?v=11"></script>
+    <script src="js/dashboard-club.js?v=47"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

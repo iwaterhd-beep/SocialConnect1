@@ -7,7 +7,7 @@
     <title>SocialConnect — Software de gestión para clubes</title>
     <meta
       name="description"
-      content="SocialConnect: POS con báscula, inventario, socios, cuotas, aforo, proveedores, límites de consumo, finanzas y cierres de turno. Desde 50 €/mes."
+      content="SocialConnect: POS, inventario, stock por turno, socios, monedero, membresía, finanzas, menú tablet y cierres de turno. Desde 50 €/mes."
     />
     <meta name="application-name" content="SocialConnect" />
     <link rel="canonical" href="https://www.socialconnectcs.com/" />
@@ -20,14 +20,14 @@
     <meta property="og:title" content="SocialConnect — Gestión integral de tu club" />
     <meta
       property="og:description"
-      content="POS, báscula, socios, cuotas, aforo, proveedores, inventario y finanzas en un solo panel. Plan Club desde 50 €/mes."
+      content="POS, inventario, socios, monedero, membresía, finanzas y turnos en un solo panel. Plan Club desde 50 €/mes."
     />
     <meta property="og:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SocialConnect — Gestión integral de tu club" />
     <meta
       name="twitter:description"
-      content="POS, báscula, socios, cuotas, aforo, proveedores e inventario en un solo panel."
+      content="POS, inventario, socios, monedero, membresía y finanzas en un solo panel."
     />
     <meta name="twitter:image" content="https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8" />
     <script type="application/ld+json">
@@ -38,7 +38,7 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
         "url": "https://www.socialconnectcs.com/",
-        "description": "Software de gestión para clubes: POS con báscula, inventario, socios, cuotas, aforo, proveedores, límites de consumo, finanzas y cierres de turno.",
+        "description": "Software de gestión para clubes: POS, inventario, stock por turno, socios, monedero, membresía, finanzas, menú tablet y cierres de turno.",
         "image": "https://www.socialconnectcs.com/assets/img/logo-socialconnect-square.png?v=8",
         "sameAs": [
           "https://www.instagram.com/socialconnectcs",
@@ -146,9 +146,9 @@
                 Todo lo que tu club necesita, en <span>un solo panel</span>
               </h1>
               <p class="landing-hero__lead">
-                SocialConnect centraliza POS con báscula, inventario, socios, cuotas, aforo, proveedores, límites de
-                consumo, monedero, finanzas y cierres de turno. Pensado para equipos que quieren orden, trazabilidad y
-                control real del día a día.
+                SocialConnect centraliza POS, inventario, stock por turno, socios, monedero, membresía, finanzas, menú
+                tablet y cierres de turno. Pensado para equipos que quieren orden, trazabilidad y control real del día a
+                día.
               </p>
               <div class="landing-hero__cta">
                 <a class="landing-btn landing-btn--primary" href="#precios">Ver planes</a>
@@ -183,8 +183,8 @@
                     <strong>1.248 €</strong>
                   </div>
                   <div class="landing-mock__kpi">
-                    <small>Dentro ahora</small>
-                    <strong>42 / 80</strong>
+                    <small>Stock bajo</small>
+                    <strong>3 prod.</strong>
                   </div>
                   <div class="landing-mock__kpi">
                     <small>Cuotas</small>
@@ -196,7 +196,7 @@
                   </div>
                 </div>
                 <div class="landing-mock__list">
-                  <div class="landing-mock__row"><span>POS · báscula 2,48 g</span><span>En vivo</span></div>
+                  <div class="landing-mock__row"><span>POS · ticket 2,50 g · real 2,48 g</span><span>En vivo</span></div>
                   <div class="landing-mock__row"><span>Monedero socio #00042</span><span>+25,00 €</span></div>
                   <div class="landing-mock__row"><span>Cuota renovada · VIP</span><span>+1 año</span></div>
                   <div class="landing-mock__row"><span>Cierre turno tarde</span><span>Cuadra</span></div>
@@ -253,8 +253,8 @@
                   </svg>
                 </div>
                 <div>
-                  <strong>POS con báscula</strong>
-                  <span>Peso real, mermas, efectivo y monedero integrados.</span>
+                  <strong>POS integrado</strong>
+                  <span>Ticket, cantidad real, efectivo y monedero.</span>
                 </div>
               </div>
             </div>
@@ -267,8 +267,8 @@
               <p class="landing-eyebrow">Funciones</p>
               <h2 class="landing-title" id="features-title">Una plataforma completa para gestionar tu club</h2>
               <p class="landing-lead">
-                POS con báscula, cuotas, aforo, proveedores, límites de consumo, inventario y finanzas: cada módulo
-                encaja en el flujo real del club, con la misma interfaz en todo el panel.
+                POS, inventario, socios, monedero, membresía, finanzas, menú tablet y turnos: cada módulo encaja en el
+                flujo real del club, con la misma interfaz en todo el panel.
               </p>
             </header>
 
@@ -291,10 +291,10 @@
                     <path d="M12 3v18M8 7h7a3 3 0 010 6H9a3 3 0 000 6h7" />
                   </svg>
                 </div>
-                <h3>Báscula y mermas</h3>
+                <h3>Ticket y cantidad real</h3>
                 <p>
-                  Captura el peso real desde báscula (Web Serial o cuña), compara con el ticket y avisa si la merma supera
-                  el umbral configurado.
+                  Separa lo cobrado en ticket de lo dispensado en reales, con sincronización opcional y ajuste rápido
+                  por pasos desde el POS.
                 </p>
               </article>
               <article class="landing-feature-card" data-reveal>
@@ -305,7 +305,8 @@
                 </div>
                 <h3>Inventario y stock</h3>
                 <p>
-                  Categorías, precios €/g o €/ud, alertas, ajustes +/- , contaje por turno y pesaje de bote con tara.
+                  Catálogo por categorías, precios por gramo o unidad, alertas de stock bajo, ajustes +/- y contaje por
+                  turno.
                 </p>
               </article>
               <article class="landing-feature-card" data-reveal>
@@ -328,44 +329,8 @@
                 </div>
                 <h3>Membresía y cuotas</h3>
                 <p>
-                  Planes Estándar, Premium y VIP con importe y periodo, cobro con renovación automática y alertas de
-                  caducidad en el panel.
-                </p>
-              </article>
-              <article class="landing-feature-card" data-reveal>
-                <div class="landing-feature-card__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <h3>Límites y abstinencia</h3>
-                <p>
-                  Topes de retirada por día y mes que bloquean el POS al superarlos, y listado de socios sin consumo en
-                  X días.
-                </p>
-              </article>
-              <article class="landing-feature-card" data-reveal>
-                <div class="landing-feature-card__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><path d="M9 22V12h6v10" />
-                  </svg>
-                </div>
-                <h3>Acceso y aforo</h3>
-                <p>
-                  Check-in / check-out de socios, aforo máximo configurable y presencia en tiempo real en el panel de
-                  Acceso.
-                </p>
-              </article>
-              <article class="landing-feature-card" data-reveal>
-                <div class="landing-feature-card__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
-                  </svg>
-                </div>
-                <h3>Proveedores</h3>
-                <p>
-                  Ficha de proveedores, compras, pagos y ledger para llevar la trazabilidad de compras y saldos a
-                  proveedor.
+                  Planes Estándar, Premium y VIP con importe y periodo, cobro con renovación y alertas de caducidad en el
+                  panel.
                 </p>
               </article>
               <article class="landing-feature-card" data-reveal>
@@ -376,7 +341,7 @@
                 </div>
                 <h3>Finanzas e informes</h3>
                 <p>
-                  KPIs del día, ventas POS, monedero, stock y exportación a PDF de finanzas, stock y socios según filtros
+                  KPIs del día, ventas del POS, movimientos de monedero, stock y exportación CSV de socios según filtros
                   activos.
                 </p>
               </article>
@@ -413,7 +378,7 @@
                 </div>
                 <h3>Ajustes y roles</h3>
                 <p>
-                  Datos legales del club, permisos de inventario y membresía para trabajadores, límites, aforo y modo
+                  Datos del club, símbolo de moneda, permisos de inventario y membresía para trabajadores, y modo
                   oscuro.
                 </p>
               </article>
@@ -435,32 +400,32 @@
             <div class="landing-detail__list">
               <article class="landing-detail__item" data-reveal>
                 <div class="landing-detail__copy">
-                  <h3>Vende rápido, con báscula y control</h3>
+                  <h3>Vende rápido, con control de cantidad</h3>
                   <p>
-                    El POS está pensado para mostrador: categorías, ticket multi-línea y cobro en un clic. Conecta la
-                    báscula (Web Serial o cuña), rellena el peso real y recibe aviso si la merma supera el umbral. Los
-                    límites de retirada del club bloquean la venta al superar el tope diario o mensual.
+                    El POS está pensado para mostrador: categorías, ticket multi-línea y cobro en un clic. Indica la
+                    cantidad de ticket y la real dispensada, sincronízalas si quieres, y cobra en efectivo o monedero
+                    del socio con RFID o búsqueda.
                   </p>
                 </div>
                 <div class="landing-detail__panel">
                   <h3>Incluye</h3>
                   <ul class="landing-detail__bullets">
                     <li>Ticket multi-producto en gramos o unidades</li>
-                    <li>Báscula integrada y aviso de merma configurable</li>
+                    <li>Cantidad ticket vs real con ajuste rápido</li>
                     <li>Pago en efectivo o monedero del socio</li>
-                    <li>Bloqueo por límites de consumo del club o del socio</li>
                     <li>RFID, recargas y sincronización con stock</li>
+                    <li>Últimas ventas del turno visibles en el POS</li>
                   </ul>
                 </div>
               </article>
 
               <article class="landing-detail__item landing-detail__item--reverse" data-reveal>
                 <div class="landing-detail__copy">
-                  <h3>Socios, membresía y aforo</h3>
+                  <h3>Socios, membresía y monedero</h3>
                   <p>
                     Fichas completas con avalista, edad mínima, documentos y monedero. Planes de membresía con cuota y
-                    periodo, cobro con renovación y alertas de caducidad. Check-in de acceso para controlar quién está
-                    dentro y el aforo máximo del local.
+                    periodo, cobro con renovación y alertas de caducidad. Cada venta puede vincularse al socio para
+                    historial y finanzas.
                   </p>
                 </div>
                 <div class="landing-detail__panel">
@@ -469,27 +434,27 @@
                     <li>Socios ilimitados, avalista y edad mínima</li>
                     <li>Planes Estándar, Premium y VIP con cuotas</li>
                     <li>Alertas de cuotas caducadas o próximas a vencer</li>
-                    <li>Acceso: check-in / check-out y aforo en vivo</li>
-                    <li>Filtro de abstinencia y historial de consumo</li>
+                    <li>Monedero con recargas y cobros desde el POS</li>
+                    <li>Historial de consumo vinculado a ventas</li>
                   </ul>
                 </div>
               </article>
 
               <article class="landing-detail__item" data-reveal>
                 <div class="landing-detail__copy">
-                  <h3>Stock, proveedores y finanzas</h3>
+                  <h3>Stock, turnos y finanzas</h3>
                   <p>
-                    Inventario con alertas, contaje por turno y pesaje de bote con tara. Proveedores con compras, pagos
-                    y ledger. Finanzas con KPIs, ventas, monedero y exportación a PDF de finanzas, stock y socios.
+                    Inventario con alertas y contaje por turno. Cierres con arqueo de efectivo y monedero. Finanzas con
+                    KPIs del día y exportación CSV de socios según los filtros activos.
                   </p>
                 </div>
                 <div class="landing-detail__panel">
                   <h3>Incluye</h3>
                   <ul class="landing-detail__bullets">
-                    <li>Stock, contaje de turno y pesaje de bote</li>
-                    <li>Proveedores: compras, pagos y saldos</li>
+                    <li>Catálogo, alertas y contaje de turno</li>
                     <li>Cierres de turno con arqueo efectivo / monedero</li>
-                    <li>Exportación PDF de finanzas, stock y socios</li>
+                    <li>KPIs de ventas, monedero y stock</li>
+                    <li>Exportación CSV de socios</li>
                     <li>Roles: inventario, membresía y permisos de equipo</li>
                   </ul>
                 </div>
@@ -522,8 +487,8 @@
                 <span class="landing-step__num" aria-hidden="true">2</span>
                 <h3>Vende y gestiona</h3>
                 <p>
-                  Usa el POS con báscula, controla aforo y cuotas, actualiza stock y proveedores, y consulta KPIs en
-                  tiempo real desde cualquier navegador.
+                  Usa el POS, gestiona socios y cuotas, actualiza inventario y stock, y consulta KPIs en tiempo real
+                  desde cualquier navegador.
                 </p>
               </article>
               <article class="landing-step" data-reveal>
@@ -562,12 +527,12 @@
                 </div>
                 <p class="landing-price-card__note">IVA incluido · facturación mensual</p>
                 <ul class="landing-price-card__list">
-                  <li>POS con báscula, mermas, efectivo y monedero</li>
+                  <li>POS con ticket, cantidad real, efectivo y monedero</li>
                   <li>Inventario, stock por turno y menú tablet</li>
                   <li>Socios ilimitados, membresía y cuotas</li>
-                  <li>Límites de consumo y filtro de abstinencia</li>
-                  <li>Acceso, aforo y check-in en tiempo real</li>
-                  <li>Proveedores, finanzas y exportación PDF</li>
+                  <li>RFID, recargas de monedero y historial de ventas</li>
+                  <li>Finanzas con KPIs y exportación CSV de socios</li>
+                  <li>Cierres de turno con arqueo de caja</li>
                   <li>Roles, soporte y actualizaciones incluidas</li>
                 </ul>
                 <a class="landing-btn landing-btn--primary landing-btn--block" href="#acceso">Empezar con Plan Club</a>
@@ -735,7 +700,7 @@
     <script src="js/config.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js"></script>
-    <script src="js/auth-splash.js?v=3"></script>
+    <script src="js/auth-splash.js?v=4"></script>
     <script src="js/landing-animations.js?v=4"></script>
     <script src="js/login.js?v=2"></script>
   </body>

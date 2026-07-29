@@ -37,6 +37,10 @@
   function splitPriceLabel(label) {
     const t = (label || '').trim();
     if (!t || t === '—') return { main: '—', sub: '' };
+    const perG = t.match(/^(.+?)\s+(\S+)\/g\s*$/i);
+    if (perG) return { main: perG[1].trim(), sub: `${perG[2]}/g` };
+    const plain = t.match(/^([\d.,\s]+)\s+(\S+)\s*$/);
+    if (plain) return { main: plain[1].trim(), sub: plain[2] };
     if (/€\/g\s*$/i.test(t)) {
       return { main: t.replace(/\s*€\/g\s*$/i, '').trim(), sub: '€/g' };
     }
@@ -98,6 +102,9 @@
     }
 
     if (title) title.textContent = data.club_name || 'Menú';
+    if (data.currency_symbol && typeof window.scSetCurrencySymbol === 'function') {
+      window.scSetCurrencySymbol(data.currency_symbol);
+    }
     const categories = data.categories || [];
     const withProducts = categories.filter((c) => (c.products || []).length > 0);
 

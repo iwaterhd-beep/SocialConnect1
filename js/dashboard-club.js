@@ -593,6 +593,9 @@
         window.scSetCurrencySymbol(ctx.club.currency_symbol);
       }
       fillClubCurrencyForm(ctx.club);
+      if (typeof window.scRefreshCurrencyDom === 'function') {
+        window.scRefreshCurrencyDom();
+      }
       if (typeof window.scClubRefreshInventoryUi === 'function') {
         void window.scClubRefreshInventoryUi();
       }
@@ -604,6 +607,9 @@
       }
       if (typeof window.scClubRefreshMembership === 'function') {
         void window.scClubRefreshMembership();
+      }
+      if (typeof window.scClubRefreshHome === 'function') {
+        void window.scClubRefreshHome();
       }
       setClubCurrencyMsg('Moneda guardada. Se aplica en precios y finanzas.', false);
     });
@@ -924,17 +930,19 @@
   }
 
   function denomFieldsHtml() {
+    const sym =
+      typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€';
     const rows = [
-      ['50', '50 €'],
-      ['20', '20 €'],
-      ['10', '10 €'],
-      ['5', '5 €'],
-      ['2', '2 €'],
-      ['1', '1 €'],
-      ['0.5', '0,50 €'],
-      ['0.2', '0,20 €'],
-      ['0.1', '0,10 €'],
-      ['0.05', '0,05 €'],
+      ['50', `50 ${sym}`],
+      ['20', `20 ${sym}`],
+      ['10', `10 ${sym}`],
+      ['5', `5 ${sym}`],
+      ['2', `2 ${sym}`],
+      ['1', `1 ${sym}`],
+      ['0.5', `0,50 ${sym}`],
+      ['0.2', `0,20 ${sym}`],
+      ['0.1', `0,10 ${sym}`],
+      ['0.05', `0,05 ${sym}`],
     ];
     return rows
       .map(
@@ -1255,7 +1263,7 @@
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
     const stockSnapshotHint =
-      '<p class="hint" style="margin:0 0 0.5rem">Descuadre: diferencia al guardar desde <strong>Stock por turno</strong> (contado − stock previo). <strong>0</strong> si coincidía; <strong>—</strong> si no hubo contaje en este turno.</p>';
+      '<p class="hint" style="margin:0 0 0.5rem">Descuadre: diferencia al guardar desde <strong>Contaje</strong> (contado − stock previo). <strong>0</strong> si coincidía; <strong>—</strong> si no hubo contaje en este turno.</p>';
 
     const stockSnapshot = snapshotProducts
       .map((p) => {
@@ -1329,7 +1337,7 @@
             ? `<p class="msg msg--error" style="margin:0">No se pudo cargar el historial de stock: ${escapeHtml(eventsFetchError)}</p>`
             : events.length
               ? `<div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Origen</th><th>Stock antes</th><th>Stock contado</th><th>Descuadre (g / ud)</th></tr></thead><tbody>${stockRows}</tbody></table></div>`
-              : `<p class="hint" style="margin:0">Sin registros de stock en este turno. El descuadre aparece cuando guardas desde <strong>Inventario → Stock por turno</strong> (&quot;Guardar&quot;) con migraciones 013–031 aplicadas en Supabase. Si solo editas la cantidad desde la ficha de producto, no queda vínculo con el turno.</p>`
+              : `<p class="hint" style="margin:0">Sin registros de stock en este turno. El descuadre aparece cuando guardas desde <strong>Contaje</strong> (&quot;Guardar&quot;) con migraciones 013–031 aplicadas en Supabase. Si solo editas la cantidad desde la ficha de producto en Catálogo, no queda vínculo con el turno.</p>`
         }
       </div>
       <div class="shift-summary-section">
@@ -1338,7 +1346,7 @@
         <div class="table-wrap"><table class="table-compact"><thead><tr><th>Producto</th><th>Stock (g)</th><th>Descuadre (del contaje)</th></tr></thead><tbody>${stockSnapshot || '<tr><td colspan="3" class="hint">—</td></tr>'}</tbody></table></div>
         ${
           eventsFetchError
-            ? '<p class="hint" style="margin:0.5rem 0 0">No hay datos de historial de contaje (error al cargarlos). Cuando se cargue bien, esta columna mostrará el descuadre solo si hubo guardado desde Stock por turno.</p>'
+            ? '<p class="hint" style="margin:0.5rem 0 0">No hay datos de historial de contaje (error al cargarlos). Cuando se cargue bien, esta columna mostrará el descuadre solo si hubo guardado desde Contaje.</p>'
             : ''
         }
       </div>
@@ -1471,17 +1479,19 @@
 
   function renderWizardArqueo() {
     setShiftWizardPanelWide(true);
+    const sym =
+      typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€';
     $('shift-wizard-title').textContent = 'Arqueo y cambio';
     $('shift-wizard-body').innerHTML = `
       <p class="hint" style="margin-top:0">Indica el efectivo contado y el cambio que dejas para el siguiente turno. Las ventas con <strong>monedero</strong> no suman al efectivo esperado. Opcionalmente desglosa billetes y monedas.</p>
       <p id="wiz-cash-expected" class="hint shift-arqueo-hint">Calculando efectivo esperado…</p>
       <div class="shift-arqueo-main">
         <div class="form__row">
-          <label for="wiz-close-cash">Total efectivo contado en caja (€)</label>
+          <label for="wiz-close-cash">Total efectivo contado en caja (${escapeHtml(sym)})</label>
           <input class="input" id="wiz-close-cash" inputmode="decimal" placeholder="Ej. 240,50" autocomplete="off" />
         </div>
         <div class="form__row">
-          <label for="wiz-close-float">Cambio para el siguiente turno (€)</label>
+          <label for="wiz-close-float">Cambio para el siguiente turno (${escapeHtml(sym)})</label>
           <input class="input" id="wiz-close-float" inputmode="decimal" placeholder="Ej. 80" autocomplete="off" />
         </div>
       </div>
@@ -1661,8 +1671,8 @@
   const PAGE_TITLES = {
     home: 'Inicio',
     tpv: 'POS',
-    inventory: 'Inventario',
-    stock: 'Stock por turno',
+    inventory: 'Catálogo',
+    stock: 'Contaje',
     members: 'Socios',
     finance: 'Finanzas',
     membership: 'Membresía',
@@ -1722,6 +1732,14 @@
     const views = document.querySelectorAll('.club-view');
     function show(viewName) {
       if (!VIEW_IDS.includes(viewName)) viewName = 'home';
+      if (
+        viewName === 'membership' &&
+        ctxRef?.profile?.role &&
+        ctxRef.profile.role !== 'admin_club' &&
+        !ctxRef.asSuperadmin
+      ) {
+        viewName = 'home';
+      }
       views.forEach((v) => {
         const match = v.dataset.view === viewName;
         v.classList.toggle('is-hidden', !match);

@@ -1,7 +1,7 @@
 <div class="club-view-stage sc-inv-layout">
 <section class="card-section sc-inv-products" aria-labelledby="inv-list-title">
   <div class="member-csv-toolbar">
-    <h2 id="inv-list-title">Productos</h2>
+    <h2 id="inv-list-title">Catálogo de productos</h2>
     <div class="member-csv-toolbar__actions">
       <button type="button" class="btn btn--ghost btn--small" id="inv-open-menu-modal">Menú tablet</button>
       <button type="button" class="btn btn--ghost btn--small" id="inv-open-cat-modal">Crear categoría</button>
@@ -222,7 +222,7 @@
             <input class="input" id="inv-product-alert" inputmode="decimal" value="0" />
           </div>
           <div class="form__row">
-            <label for="inv-product-sale-price" id="inv-label-sale-price">Precio de venta (€)</label>
+            <label for="inv-product-sale-price" id="inv-label-sale-price" data-currency-label="Precio de venta ({s})">Precio de venta (€)</label>
             <input
               class="input"
               id="inv-product-sale-price"
@@ -237,7 +237,7 @@
         </div>
         <div class="grid grid--2">
           <div class="form__row" id="inv-row-purchase-cost" hidden>
-            <label for="inv-product-purchase-cost" id="inv-label-purchase-cost">Coste de compra (€)</label>
+            <label for="inv-product-purchase-cost" id="inv-label-purchase-cost" data-currency-label="Coste de compra ({s})">Coste de compra (€)</label>
             <input
               class="input"
               id="inv-product-purchase-cost"

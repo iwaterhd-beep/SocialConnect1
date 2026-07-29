@@ -1366,6 +1366,27 @@ body.club-dark.club-app .tpv-pos .tpv-receipt__stepper {
   .club-app .tpv-pos #tpv-ticket-paper {
     max-height: 70vh;
     height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .club-app .tpv-pos .tpv-receipt__shell {
+    min-height: 0;
+  }
+
+  .club-app .tpv-pos .tpv-receipt__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .club-app .tpv-pos .tpv-receipt__footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin-top: auto;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
   }
 
   .club-app .tpv-pos .tpv-prod-grid {

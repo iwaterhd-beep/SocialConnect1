@@ -992,8 +992,8 @@
           : '1';
       const productHint =
         r.product_id
-          ? `<div class="hint">TPV · entrega automática gratis</div>`
-          : `<div class="hint">Sin producto TPV (solo nota)</div>`;
+          ? `<div class="hint">POS · entrega automática gratis</div>`
+          : `<div class="hint">Sin producto POS (solo nota)</div>`;
       tr.innerHTML = `
         <td>
           <strong>${escapeHtml(r.title)}</strong>
@@ -1034,7 +1034,7 @@
     }
     const productId = ($('reward-product')?.value || '').trim();
     if (!productId) {
-      setMsg('Elige un producto del TPV para el regalo.', true);
+      setMsg('Elige un producto del POS para el regalo.', true);
       $('reward-product')?.focus?.();
       return;
     }
@@ -1123,7 +1123,7 @@
       ({ error } = await sb().from('club_membership_rewards').insert([withoutProduct]));
       if (!error) {
         setMsg(
-          'Regalo guardado sin enlace al TPV. Ejecuta 052_membership_reward_products.sql en Supabase para la entrega automática.',
+          'Regalo guardado sin enlace al POS. Ejecuta 052_membership_reward_products.sql en Supabase para la entrega automática.',
           true,
         );
         if ($('reward-product')) $('reward-product').value = '';
@@ -1153,7 +1153,7 @@
     syncRewardQtyUnitLabel();
     await loadRewards();
     renderRewards();
-    setMsg('Regalo añadido. En el TPV se entregará gratis a socios de ese nivel (una vez).', false);
+    setMsg('Regalo añadido. En el POS se entregará gratis a socios de ese nivel (una vez).', false);
   }
 
   /**
@@ -1398,7 +1398,7 @@
         );
       } else if (!hasRewardProductColumn) {
         setMsg(
-          'Para enlazar regalos al TPV ejecuta 052_membership_reward_products.sql en Supabase.',
+          'Para enlazar regalos al POS ejecuta 052_membership_reward_products.sql en Supabase.',
           true,
         );
       }

@@ -47,8 +47,13 @@
   <p class="hint sc-hint-collapsed member-csv-hint">
     CSV con <strong>;</strong> o <strong>,</strong>. Columnas: nombre, email, teléfono, tipo, uuid…
   </p>
+  <div id="members-empty" class="sc-finance-sales__empty is-hidden" hidden>
+    <p class="sc-finance-sales__empty-title" id="members-empty-title">Sin socios</p>
+    <p class="hint" id="members-empty-hint">Crea el primero con «Nuevo socio».</p>
+    <button type="button" class="btn btn--small" id="members-empty-new">Nuevo socio</button>
+  </div>
   <div class="table-wrap sc-table-fill sc-members-table-wrap">
-    <table class="table-compact">
+    <table class="table-compact" id="members-table">
       <thead>
         <tr>
           <th>Nº</th>
@@ -278,7 +283,7 @@
 
         <div class="member-form-sc__grid">
           <div class="form__row form__row--birth">
-            <span class="form__label" id="member-birth-label">Fecha nacimiento</span>
+            <span class="form__label" id="member-birth-label">Fecha nacimiento <span class="hint">(obligatoria)</span></span>
             <div class="member-birth-picks" role="group" aria-labelledby="member-birth-label">
               <select class="input" id="member-birth-day" aria-label="Día">
                 <option value="">Día</option>

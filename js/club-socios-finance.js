@@ -2017,15 +2017,50 @@
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    membersCache
+    const filtered = membersCache
       .slice()
       .sort((a, b) => {
         const diff = memberNumberSortKey(a) - memberNumberSortKey(b);
         if (diff !== 0) return diff;
         return String(a.display_name || '').localeCompare(String(b.display_name || ''), 'es');
       })
-      .filter((m) => memberMatchesSearch(m, membersSearch) && memberMatchesType(m))
-      .forEach((m) => {
+      .filter((m) => memberMatchesSearch(m, membersSearch) && memberMatchesType(m));
+
+    const emptyEl = $('members-empty');
+    const tableWrap = tbody.closest('.table-wrap');
+    if (!filtered.length) {
+      if (emptyEl) {
+        const title = $('members-empty-title');
+        const hint = $('members-empty-hint');
+        const hasFilters =
+          Boolean((membersSearch || '').trim()) ||
+          Boolean(membersTypeFilter && membersTypeFilter !== '');
+        if (title) {
+          title.textContent = hasFilters
+            ? 'Ningún resultado'
+            : membersCache.length
+              ? 'Ningún resultado'
+              : 'Sin socios';
+        }
+        if (hint) {
+          hint.textContent = hasFilters
+            ? 'Prueba otra búsqueda o quita el filtro de tipo.'
+            : 'Crea el primero con «Nuevo socio».';
+        }
+        emptyEl.hidden = false;
+        emptyEl.classList.remove('is-hidden');
+      }
+      if (tableWrap) tableWrap.hidden = true;
+      return;
+    }
+
+    if (emptyEl) {
+      emptyEl.hidden = true;
+      emptyEl.classList.add('is-hidden');
+    }
+    if (tableWrap) tableWrap.hidden = false;
+
+    filtered.forEach((m) => {
       const tr = document.createElement('tr');
       if (isActiveVipMember(m)) tr.classList.add('member-row--vip');
       if (selectedMemberId === m.id) tr.classList.add('is-selected');
@@ -2521,18 +2556,16 @@
     const daySel = ($('member-birth-day')?.value || '').trim();
     const monthSel = ($('member-birth-month')?.value || '').trim();
     const yearSel = ($('member-birth-year')?.value || '').trim();
-    if ((daySel || monthSel || yearSel) && !(daySel && monthSel && yearSel)) {
-      return { ok: false, message: 'Completa día, mes y año de nacimiento, o déjalos vacíos.' };
+    if (!daySel || !monthSel || !yearSel || !f.birthRaw) {
+      return { ok: false, message: 'La fecha de nacimiento es obligatoria.' };
     }
-    if (f.birthRaw) {
-      const age = memberAgeFromBirthIso(f.birthRaw);
-      const minAge = getClubMinAge();
-      if (age == null) {
-        return { ok: false, message: 'Fecha de nacimiento no válida.' };
-      }
-      if (age < minAge) {
-        return { ok: false, message: `El socio debe tener al menos ${minAge} años cumplidos.` };
-      }
+    const age = memberAgeFromBirthIso(f.birthRaw);
+    const minAge = getClubMinAge();
+    if (age == null) {
+      return { ok: false, message: 'Fecha de nacimiento no válida.' };
+    }
+    if (age < minAge) {
+      return { ok: false, message: `El socio debe tener al menos ${minAge} años cumplidos.` };
     }
     const avalistaInfo = getAvalistaForSave();
     if (countActiveMembersForAvalista() > 0 && !avalistaInfo.memberId) {
@@ -4852,8 +4885,8 @@
         csvEscapeField(''),
         csvEscapeField(
           Number(m.enrollment_fee_eur) > 0
-            ? `€${Number(m.enrollment_fee_eur).toFixed(2)}/mes`
-            : '€0.00/mes',
+            ? `${typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€'}${Number(m.enrollment_fee_eur).toFixed(2)}/mes`
+            : `${typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€'}0.00/mes`,
         ),
         csvEscapeField(m.id),
       ];
@@ -5212,6 +5245,9 @@
       setMemberMsg('', false);
       setMemberUiMode('edit');
       renderMembersTable();
+    });
+    $('members-empty-new')?.addEventListener('click', () => {
+      $('members-new')?.click();
     });
     $('member-profile-edit-btn')?.addEventListener('click', () => {
       if (selectedMemberId) void editMemberFromRow(selectedMemberId);
