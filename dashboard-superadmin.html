@@ -8,8 +8,8 @@
     <title>Panel superadmin — SocialConnect</title>
     <link rel="icon" href="assets/img/favicon.png?v=8" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
-    <link rel="stylesheet" href="css/theme.css?v=33" />
-    <link rel="stylesheet" href="css/sc-admin.css?v=2" />
+    <link rel="stylesheet" href="css/theme.css?v=35" />
+    <link rel="stylesheet" href="css/sc-admin.css?v=3" />
   </head>
   <body class="sc-admin-app">
     <div class="sc-admin-shell">
@@ -23,12 +23,15 @@
             height="44"
             decoding="async"
           />
-          <div>
+          <div class="sc-admin-header__titles">
+            <p class="sc-admin-header__eyebrow">Social Connect</p>
             <h1>Panel superadmin</h1>
             <p class="sc-admin-header__meta">Sesión: <strong id="superadmin-email">—</strong></p>
           </div>
         </div>
-        <button type="button" class="btn btn--ghost" id="logout-btn">Cerrar sesión</button>
+        <div class="sc-admin-header__actions">
+          <button type="button" class="btn btn--ghost" id="logout-btn">Cerrar sesión</button>
+        </div>
       </header>
 
       <div class="shell shell--app">
@@ -37,62 +40,72 @@
 
           <div class="sc-admin-grid sc-admin-grid--top">
             <section class="card-section" aria-labelledby="create-club-title">
-              <h2 id="create-club-title">Crear club</h2>
+              <div class="sc-admin-section-head">
+                <h2 id="create-club-title">Crear club</h2>
+                <p class="hint">Alta de un club nuevo en la plataforma.</p>
+              </div>
               <form id="club-form">
                 <div class="form__row">
                   <label for="club-name">Nombre</label>
-                  <input class="input" id="club-name" required />
+                  <input class="input" id="club-name" required placeholder="Nombre del club" />
                 </div>
                 <div class="form__row">
                   <label for="club-cif">CIF</label>
-                  <input class="input" id="club-cif" />
+                  <input class="input" id="club-cif" placeholder="G12345678" />
                 </div>
                 <div class="form__row">
                   <label for="club-address">Dirección</label>
-                  <input class="input" id="club-address" />
+                  <input class="input" id="club-address" placeholder="Calle, número, ciudad…" />
                 </div>
                 <div class="form__row">
                   <label for="club-phone">Teléfono</label>
-                  <input class="input" id="club-phone" type="tel" />
+                  <input class="input" id="club-phone" type="tel" placeholder="+34 …" />
                 </div>
                 <div class="form__row">
                   <label for="club-email">Email del club</label>
-                  <input class="input" id="club-email" type="email" />
+                  <input class="input" id="club-email" type="email" placeholder="info@club.es" />
                 </div>
                 <button type="submit" class="btn btn--block">Guardar club</button>
               </form>
             </section>
 
             <section class="card-section" aria-labelledby="cred-title">
-              <h2 id="cred-title">Credenciales de acceso</h2>
-              <p class="hint" style="margin-top: 0">
-                Crea un usuario Auth con rol de club. Se cerrará tu sesión de superadmin.
-              </p>
-              <div class="form__row">
-                <label for="cred-club">Club</label>
-                <select class="select" id="cred-club"></select>
+              <div class="sc-admin-section-head">
+                <h2 id="cred-title">Credenciales de acceso</h2>
+                <p class="hint">
+                  Crea un usuario Auth con rol de club. Se cerrará tu sesión de superadmin.
+                </p>
               </div>
-              <div class="form__row">
-                <label for="cred-email">Email del usuario</label>
-                <input class="input" id="cred-email" type="email" placeholder="encargado@mi-club.com" />
+              <div class="sc-admin-cred-body">
+                <div class="form__row">
+                  <label for="cred-club">Club</label>
+                  <select class="select" id="cred-club"></select>
+                </div>
+                <div class="form__row">
+                  <label for="cred-email">Email del usuario</label>
+                  <input class="input" id="cred-email" type="email" placeholder="encargado@mi-club.com" />
+                </div>
+                <div class="form__row">
+                  <label for="cred-role">Rol</label>
+                  <select class="select" id="cred-role">
+                    <option value="admin_club">Admin del club</option>
+                    <option value="empleado">Empleado</option>
+                  </select>
+                </div>
+                <div class="form__row">
+                  <label for="cred-password">Contraseña generada</label>
+                  <input class="input" id="cred-password" readonly placeholder="Pulsa generar" />
+                </div>
+                <button type="button" class="btn btn--block" id="cred-generate">Generar credenciales</button>
               </div>
-              <div class="form__row">
-                <label for="cred-role">Rol</label>
-                <select class="select" id="cred-role">
-                  <option value="admin_club">admin_club</option>
-                  <option value="empleado">empleado</option>
-                </select>
-              </div>
-              <div class="form__row">
-                <label for="cred-password">Contraseña generada</label>
-                <input class="input" id="cred-password" readonly placeholder="Pulsa generar" />
-              </div>
-              <button type="button" class="btn btn--block" id="cred-generate">Generar credenciales</button>
             </section>
           </div>
 
           <section class="card-section" aria-labelledby="list-title">
-            <h2 id="list-title">Clubes</h2>
+            <div class="sc-admin-section-head">
+              <h2 id="list-title">Clubes</h2>
+              <p class="hint">Entra a un club o actívalo / desactívalo.</p>
+            </div>
             <div class="table-wrap">
               <table class="table-compact">
                 <thead>
@@ -110,10 +123,13 @@
           </section>
 
           <section class="card-section" aria-labelledby="access-title">
-            <div class="member-csv-toolbar sc-toolbar-compact" style="margin-bottom: 0.75rem">
-              <h2 id="access-title" style="margin: 0">Accesos por club</h2>
+            <div class="sc-admin-toolbar">
+              <div class="sc-admin-section-head">
+                <h2 id="access-title">Accesos por club</h2>
+                <p class="hint">Usuarios Auth vinculados a cada club.</p>
+              </div>
               <div class="row-actions" style="margin: 0">
-                <select class="select" id="filter-club" style="min-width: 12rem">
+                <select class="select" id="filter-club" aria-label="Filtrar por club">
                   <option value="">Todos los clubes</option>
                 </select>
               </div>
@@ -133,7 +149,10 @@
           </section>
 
           <section class="card-section" aria-labelledby="password-settings-title">
-            <h2 id="password-settings-title">Contraseña</h2>
+            <div class="sc-admin-section-head">
+              <h2 id="password-settings-title">Contraseña</h2>
+              <p class="hint">Cambia la contraseña de tu cuenta superadmin.</p>
+            </div>
             <form id="password-settings-form" novalidate>
               <div class="grid grid--2 sc-compact-grid">
                 <div class="form__row">
@@ -162,10 +181,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="js/config.js"></script>
+    <script src="js/config.js?v=26"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth-helpers.js?v=3"></script>
-    <script src="js/dashboard-superadmin.js?v=2"></script>
+    <script src="js/dashboard-superadmin.js?v=3"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>
