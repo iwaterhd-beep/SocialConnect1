@@ -9,7 +9,7 @@
     <link rel="icon" href="assets/img/favicon.png?v=8" type="image/png" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=35" />
-    <link rel="stylesheet" href="css/sc-admin.css?v=3" />
+    <link rel="stylesheet" href="css/sc-admin.css?v=5" />
   </head>
   <body class="sc-admin-app">
     <div class="sc-admin-shell">
@@ -19,8 +19,8 @@
             class="sc-logo sc-logo--admin"
             src="assets/img/logo-socialconnect-square.png?v=8"
             alt="SocialConnect"
-            width="44"
-            height="44"
+            width="40"
+            height="40"
             decoding="async"
           />
           <div class="sc-admin-header__titles">
@@ -34,149 +34,133 @@
         </div>
       </header>
 
-      <div class="shell shell--app">
-        <div class="panel panel--wide">
-          <p id="dash-status" class="msg" role="status" aria-live="polite"></p>
+      <p id="dash-status" class="msg" role="status" aria-live="polite"></p>
 
-          <div class="sc-admin-grid sc-admin-grid--top">
-            <section class="card-section" aria-labelledby="create-club-title">
-              <div class="sc-admin-section-head">
-                <h2 id="create-club-title">Crear club</h2>
-                <p class="hint">Alta de un club nuevo en la plataforma.</p>
-              </div>
-              <form id="club-form">
-                <div class="form__row">
-                  <label for="club-name">Nombre</label>
-                  <input class="input" id="club-name" required placeholder="Nombre del club" />
-                </div>
-                <div class="form__row">
-                  <label for="club-cif">CIF</label>
-                  <input class="input" id="club-cif" placeholder="G12345678" />
-                </div>
-                <div class="form__row">
-                  <label for="club-address">Dirección</label>
-                  <input class="input" id="club-address" placeholder="Calle, número, ciudad…" />
-                </div>
-                <div class="form__row">
-                  <label for="club-phone">Teléfono</label>
-                  <input class="input" id="club-phone" type="tel" placeholder="+34 …" />
-                </div>
-                <div class="form__row">
-                  <label for="club-email">Email del club</label>
-                  <input class="input" id="club-email" type="email" placeholder="info@club.es" />
-                </div>
-                <button type="submit" class="btn btn--block">Guardar club</button>
-              </form>
-            </section>
-
-            <section class="card-section" aria-labelledby="cred-title">
-              <div class="sc-admin-section-head">
-                <h2 id="cred-title">Credenciales de acceso</h2>
-                <p class="hint">
-                  Crea un usuario Auth con rol de club. Se cerrará tu sesión de superadmin.
-                </p>
-              </div>
-              <div class="sc-admin-cred-body">
-                <div class="form__row">
-                  <label for="cred-club">Club</label>
-                  <select class="select" id="cred-club"></select>
-                </div>
-                <div class="form__row">
-                  <label for="cred-email">Email del usuario</label>
-                  <input class="input" id="cred-email" type="email" placeholder="encargado@mi-club.com" />
-                </div>
-                <div class="form__row">
-                  <label for="cred-role">Rol</label>
-                  <select class="select" id="cred-role">
-                    <option value="admin_club">Admin del club</option>
-                    <option value="empleado">Empleado</option>
-                  </select>
-                </div>
-                <div class="form__row">
-                  <label for="cred-password">Contraseña generada</label>
-                  <input class="input" id="cred-password" readonly placeholder="Pulsa generar" />
-                </div>
-                <button type="button" class="btn btn--block" id="cred-generate">Generar credenciales</button>
-              </div>
-            </section>
+      <div class="sc-admin-board">
+        <section class="card-section sc-admin-card--create" aria-labelledby="create-club-title">
+          <div class="sc-admin-section-head">
+            <h2 id="create-club-title">Crear club</h2>
           </div>
+          <form id="club-form" class="sc-admin-fields">
+            <div class="form__row">
+              <label for="club-name">Nombre</label>
+              <input class="input" id="club-name" required placeholder="Nombre del club" />
+            </div>
+            <div class="form__row">
+              <label for="club-cif">CIF</label>
+              <input class="input" id="club-cif" placeholder="G12345678" />
+            </div>
+            <div class="form__row form__row--full">
+              <label for="club-address">Dirección</label>
+              <input class="input" id="club-address" placeholder="Calle, número, ciudad…" />
+            </div>
+            <div class="form__row">
+              <label for="club-phone">Teléfono</label>
+              <input class="input" id="club-phone" type="tel" placeholder="+34 …" />
+            </div>
+            <div class="form__row">
+              <label for="club-email">Email del club</label>
+              <input class="input" id="club-email" type="email" placeholder="info@club.es" />
+            </div>
+            <button type="submit" class="btn btn--block">Guardar club</button>
+          </form>
+        </section>
 
-          <section class="card-section" aria-labelledby="list-title">
+        <section class="card-section sc-admin-card--cred" aria-labelledby="cred-title">
+          <div class="sc-admin-section-head">
+            <h2 id="cred-title">Credenciales</h2>
+            <p class="hint">Cierra la sesión de superadmin al crear el usuario.</p>
+          </div>
+          <div class="sc-admin-cred-body sc-admin-fields">
+            <div class="form__row">
+              <label for="cred-club">Club</label>
+              <select class="select" id="cred-club"></select>
+            </div>
+            <div class="form__row">
+              <label for="cred-email">Email del usuario</label>
+              <input class="input" id="cred-email" type="email" placeholder="encargado@mi-club.com" />
+            </div>
+            <div class="form__row">
+              <label for="cred-role">Rol</label>
+              <select class="select" id="cred-role">
+                <option value="admin_club">Admin del club</option>
+                <option value="empleado">Empleado</option>
+              </select>
+            </div>
+            <div class="form__row">
+              <label for="cred-password">Contraseña generada</label>
+              <input class="input" id="cred-password" readonly placeholder="Pulsa generar" />
+            </div>
+            <button type="button" class="btn btn--block" id="cred-generate">Generar credenciales</button>
+          </div>
+        </section>
+
+        <section class="card-section sc-admin-card--clubs" aria-labelledby="list-title">
+          <div class="sc-admin-section-head">
+            <h2 id="list-title">Clubes</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>CIF</th>
+                  <th>Email</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="clubs-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section sc-admin-card--access" aria-labelledby="access-title">
+          <div class="sc-admin-toolbar">
             <div class="sc-admin-section-head">
-              <h2 id="list-title">Clubes</h2>
-              <p class="hint">Entra a un club o actívalo / desactívalo.</p>
+              <h2 id="access-title">Accesos</h2>
             </div>
-            <div class="table-wrap">
-              <table class="table-compact">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>CIF</th>
-                    <th>Email</th>
-                    <th>Estado</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="clubs-tbody"></tbody>
-              </table>
+            <div class="row-actions">
+              <select class="select" id="filter-club" aria-label="Filtrar por club">
+                <option value="">Todos los clubes</option>
+              </select>
             </div>
-          </section>
+          </div>
+          <div class="table-wrap">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Auth user id</th>
+                </tr>
+              </thead>
+              <tbody id="access-tbody"></tbody>
+            </table>
+          </div>
+        </section>
 
-          <section class="card-section" aria-labelledby="access-title">
-            <div class="sc-admin-toolbar">
-              <div class="sc-admin-section-head">
-                <h2 id="access-title">Accesos por club</h2>
-                <p class="hint">Usuarios Auth vinculados a cada club.</p>
-              </div>
-              <div class="row-actions" style="margin: 0">
-                <select class="select" id="filter-club" aria-label="Filtrar por club">
-                  <option value="">Todos los clubes</option>
-                </select>
-              </div>
+        <section class="card-section sc-admin-card--password" aria-labelledby="password-settings-title">
+          <div class="sc-admin-section-head">
+            <h2 id="password-settings-title">Contraseña</h2>
+          </div>
+          <form id="password-settings-form" class="sc-admin-password-form" novalidate>
+            <div class="form__row">
+              <label for="password-current">Actual</label>
+              <input class="input" id="password-current" type="password" autocomplete="current-password" required />
             </div>
-            <div class="table-wrap">
-              <table class="table-compact">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Auth user id</th>
-                  </tr>
-                </thead>
-                <tbody id="access-tbody"></tbody>
-              </table>
+            <div class="form__row">
+              <label for="password-new">Nueva</label>
+              <input class="input" id="password-new" type="password" autocomplete="new-password" required minlength="6" />
             </div>
-          </section>
-
-          <section class="card-section" aria-labelledby="password-settings-title">
-            <div class="sc-admin-section-head">
-              <h2 id="password-settings-title">Contraseña</h2>
-              <p class="hint">Cambia la contraseña de tu cuenta superadmin.</p>
+            <div class="form__row">
+              <label for="password-confirm">Repetir</label>
+              <input class="input" id="password-confirm" type="password" autocomplete="new-password" required minlength="6" />
             </div>
-            <form id="password-settings-form" novalidate>
-              <div class="grid grid--2 sc-compact-grid">
-                <div class="form__row">
-                  <label for="password-current">Contraseña actual</label>
-                  <input class="input" id="password-current" type="password" autocomplete="current-password" required />
-                </div>
-                <div class="form__row">
-                  <label for="password-new">Nueva contraseña</label>
-                  <input class="input" id="password-new" type="password" autocomplete="new-password" required minlength="6" />
-                </div>
-              </div>
-              <div class="form__row">
-                <label for="password-confirm">Repetir nueva contraseña</label>
-                <input class="input" id="password-confirm" type="password" autocomplete="new-password" required minlength="6" />
-              </div>
-              <button type="submit" class="btn btn--small">Guardar</button>
-              <p id="password-settings-msg" class="msg" role="status" aria-live="polite"></p>
-            </form>
-          </section>
-
-          <p class="footer-note">
-            En Supabase, desactiva “Confirm email” en desarrollo para que los nuevos usuarios puedan entrar al instante.
-          </p>
-        </div>
+            <button type="submit" class="btn btn--small">Guardar</button>
+            <p id="password-settings-msg" class="msg" role="status" aria-live="polite"></p>
+          </form>
+        </section>
       </div>
     </div>
 
