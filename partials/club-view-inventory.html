@@ -8,17 +8,27 @@
       <button type="button" class="btn btn--small" id="inv-open-product-modal">Crear producto</button>
     </div>
   </div>
-  <p id="inv-products-summary" class="hint" style="margin-top: 0"></p>
+  <p id="inv-products-summary" class="hint inv-summary" style="margin-top: 0"></p>
   <div class="inv-toolbar">
-    <input type="search" id="inv-search" class="input" placeholder="Buscar por nombre…" autocomplete="off" />
-    <div class="form__row" style="margin-bottom: 0">
-      <label for="inv-filter-category">Categoría</label>
-      <select class="select" id="inv-filter-category">
-        <option value="">Todas las categorías</option>
-      </select>
+    <div class="inv-toolbar__search">
+      <span class="inv-toolbar__search-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </span>
+      <input type="search" id="inv-search" class="input inv-toolbar__search-input" placeholder="Buscar por nombre…" autocomplete="off" />
     </div>
-    <div id="inv-cat-chips" class="chip-row" aria-label="Atajo de categorías"></div>
-    <div id="inv-stock-chips" class="chip-row sc-chip-row-compact inv-stock-chips" role="group" aria-label="Estado de stock"></div>
+    <select class="select inv-toolbar__cat-select" id="inv-filter-category" aria-label="Categoría" hidden>
+      <option value="">Todas las categorías</option>
+    </select>
+    <div class="inv-toolbar__filters">
+      <div class="inv-filter-group">
+        <span class="inv-filter-group__label">Categoría</span>
+        <div id="inv-cat-chips" class="chip-row inv-cat-chips" role="group" aria-label="Categorías"></div>
+      </div>
+      <div class="inv-filter-group inv-filter-group--stock">
+        <span class="inv-filter-group__label">Stock</span>
+        <div id="inv-stock-chips" class="chip-row sc-chip-row-compact inv-stock-chips" role="group" aria-label="Estado de stock"></div>
+      </div>
+    </div>
   </div>
 
   <div id="inv-product-cards" class="inv-prod-grid sc-inv-grid" aria-live="polite"></div>

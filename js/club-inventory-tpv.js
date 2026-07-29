@@ -1868,7 +1868,15 @@
     opts.forEach(([label, val]) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip' + (state.filterStockLevel === val ? ' is-active' : '');
+      b.className =
+        'chip inv-stock-chip' +
+        (val ? ` inv-stock-chip--${val}` : ' inv-stock-chip--all') +
+        (state.filterStockLevel === val ? ' is-active' : '');
+      if (val === 'ok') b.style.setProperty('--cat-accent', '#16a34a');
+      else if (val === 'low') b.style.setProperty('--cat-accent', '#d97706');
+      else if (val === 'out') b.style.setProperty('--cat-accent', '#dc2626');
+      else b.style.setProperty('--cat-accent', '#64748b');
+      b.dataset.stock = val || 'all';
       b.textContent = label;
       b.addEventListener('click', () => {
         state.filterStockLevel = val;
