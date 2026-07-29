@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=35" />
     <link rel="stylesheet" href="css/dashboard-club.css?v=47" />
-    <link rel="stylesheet" href="css/sc-dashboard.css?v=36" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=37" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=9" />
     <link rel="stylesheet" href="css/sc-membership.css?v=7" />
   </head>
@@ -40,35 +40,36 @@
         </div>
 
         <nav class="app-sidebar__nav club-tabs" role="tablist" aria-label="Secciones del panel">
+          <p class="app-sidebar__nav-label">Panel</p>
           <button type="button" class="club-tab app-nav-item is-active" data-view="home" role="tab" aria-selected="true">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" />
               <path d="M9 21V12h6v9" />
             </svg>
             <span class="app-nav-item__label">Inicio</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="tpv" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="2" y="5" width="20" height="14" rx="2" />
               <path d="M2 10h20" />
             </svg>
             <span class="app-nav-item__label">POS</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="inventory" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
               <path d="M3.3 7.7L12 12.5l8.7-4.8M12 22V12.5" />
             </svg>
             <span class="app-nav-item__label">Inventario</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="stock" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 20V10M12 20V4M6 20v-6" />
             </svg>
             <span class="app-nav-item__label">Stock</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="members" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
@@ -76,19 +77,20 @@
             <span class="app-nav-item__label">Socios</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="finance" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
             <span class="app-nav-item__label">Finanzas</span>
           </button>
           <button type="button" class="club-tab app-nav-item" data-view="membership" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4 5.6 21.2 8 14 2 9.2h7.6L12 2z" />
             </svg>
             <span class="app-nav-item__label">Membresía</span>
           </button>
+          <div class="app-sidebar__nav-divider" role="presentation"></div>
           <button type="button" class="club-tab app-nav-item" data-view="settings" role="tab" aria-selected="false">
-            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="app-nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
             </svg>
@@ -98,11 +100,14 @@
 
         <div class="app-sidebar__foot">
           <label class="app-sidebar__theme club-dark-toggle">
+            <span class="app-sidebar__theme-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+              </svg>
+            </span>
+            <span class="app-sidebar__theme-text">Modo oscuro</span>
             <input type="checkbox" id="club-dark-toggle" />
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-            </svg>
-            <span>Modo oscuro</span>
+            <span class="app-sidebar__theme-switch" aria-hidden="true"></span>
           </label>
         </div>
       </aside>
