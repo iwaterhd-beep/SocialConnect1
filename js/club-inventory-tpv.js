@@ -1839,6 +1839,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'chip' + (active ? ' is-active' : '');
+      b.style.setProperty('--cat-accent', val ? categoryAccentColor(label) : '#16a34a');
       b.textContent = label;
       b.addEventListener('click', () => {
         state.filterCategoryId = val;
@@ -2154,7 +2155,9 @@
       const card = document.createElement('article');
       card.className =
         'inv-card' +
-        (lvl === 'out' ? ' inv-card--crit' : lvl === 'low' ? ' inv-card--warn' : '');
+        (lvl === 'out' ? ' inv-card--crit' : lvl === 'low' ? ' inv-card--warn' : ' inv-card--ok');
+      const catLabel = categoryName(p.category_id);
+      card.style.setProperty('--cat-accent', categoryAccentColor(catLabel));
       const em = (p.emoji || '').trim();
       const badge =
         lvl === 'out'
@@ -2167,15 +2170,20 @@
         ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>`
         : '';
       card.innerHTML = `
-        <div class="inv-card__top">
+        <div class="inv-card__visual">
           <span class="inv-card__emoji">${escapeHtml(em || '📦')}</span>
-          ${badge}
         </div>
-        <div class="inv-card__name">${escapeHtml(p.name)}</div>
-        <div class="inv-card__stock">${escapeHtml(categoryName(p.category_id))} · ${escapeHtml(formatNum(p.stock_grams))} ${escapeHtml(unitShort(p))}</div>
-        <div class="inv-card__actions">
-          ${editBtn}
-          <button type="button" class="btn btn--ghost btn--small btn--adjust" data-adjust="${p.id}" title="Añadir o retirar stock">+/-</button>
+        <div class="inv-card__body">
+          <div class="inv-card__top">
+            <span class="inv-card__cat">${escapeHtml(catLabel)}</span>
+            ${badge}
+          </div>
+          <div class="inv-card__name">${escapeHtml(p.name)}</div>
+          <div class="inv-card__stock">${escapeHtml(formatNum(p.stock_grams))} ${escapeHtml(unitShort(p))}</div>
+          <div class="inv-card__actions">
+            ${editBtn}
+            <button type="button" class="btn btn--ghost btn--small btn--adjust" data-adjust="${p.id}" title="Añadir o retirar stock">+/-</button>
+          </div>
         </div>
       `;
       if (canEdit) {

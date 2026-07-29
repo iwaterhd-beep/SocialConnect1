@@ -801,10 +801,13 @@ body.club-app.has-club-topnav {
 .club-app .has-club-topnav .finance-ventas-toolbar {
   gap: var(--space-3);
   margin-bottom: var(--space-3);
-  padding: var(--space-3);
-  border-radius: 8px;
-  background: var(--bg-app);
-  border: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 /* Home — estilo limpio, colorido y animado (sin blobs) */
@@ -2351,28 +2354,252 @@ body.club-dark.club-app .sc-finance-toolbar {
 
 /* Inventory */
 .sc-inv-grid {
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)) !important;
-  gap: var(--space-2) !important;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)) !important;
+  gap: 12px !important;
   margin-bottom: var(--space-3) !important;
 }
 
+.club-app .has-club-topnav .inv-toolbar,
+.club-app .sc-inv-products .inv-toolbar {
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.club-app .sc-inv-products .chip-row .chip {
+  --cat-accent: #16a34a;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: none;
+  position: relative;
+  padding-left: 12px;
+}
+
+.club-app .sc-inv-products .chip-row .chip::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--cat-accent);
+  opacity: 0.55;
+}
+
+.club-app .sc-inv-products .chip-row .chip.is-active {
+  background: color-mix(in srgb, var(--cat-accent) 12%, #fff);
+  border-color: color-mix(in srgb, var(--cat-accent) 35%, transparent);
+  color: var(--cat-accent);
+  box-shadow: none;
+}
+
+.club-app .sc-inv-products .chip-row .chip.is-active::before {
+  opacity: 1;
+}
+
+.club-app .sc-inv-products .inv-stock-chips .chip {
+  --cat-accent: #16a34a;
+}
+
+.club-app .sc-inv-products .inv-stock-chips .chip[data-stock='ok'],
+.club-app .sc-inv-products .inv-stock-chips .chip:nth-child(2) {
+  --cat-accent: #16a34a;
+}
+
+.club-app .sc-inv-products .inv-stock-chips .chip:nth-child(3) {
+  --cat-accent: #d97706;
+}
+
+.club-app .sc-inv-products .inv-stock-chips .chip:nth-child(4) {
+  --cat-accent: #dc2626;
+}
+
 .club-app .inv-card {
-  padding: var(--space-3);
-  border-radius: 10px;
+  --cat-accent: #16a34a;
+  --stock-tint: transparent;
+  padding: 0;
+  border-radius: 14px;
   min-height: auto;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  animation: invCardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s ease,
+    border-color 0.15s ease;
+}
+
+.club-app .inv-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cat-accent);
+  z-index: 1;
+}
+
+.club-app .sc-inv-grid > .inv-card:nth-child(1) { animation-delay: 0.02s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(2) { animation-delay: 0.04s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(3) { animation-delay: 0.06s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(4) { animation-delay: 0.08s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(5) { animation-delay: 0.1s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(6) { animation-delay: 0.12s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(7) { animation-delay: 0.14s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(8) { animation-delay: 0.16s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(9) { animation-delay: 0.18s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(10) { animation-delay: 0.2s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(11) { animation-delay: 0.22s; }
+.club-app .sc-inv-grid > .inv-card:nth-child(12) { animation-delay: 0.24s; }
+
+@keyframes invCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.club-app .inv-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--cat-accent) 40%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+
+.club-app .inv-card--ok {
+  --stock-tint: color-mix(in srgb, #16a34a 6%, transparent);
+}
+
+.club-app .inv-card--warn {
+  border-color: rgba(217, 119, 6, 0.35);
+  --stock-tint: color-mix(in srgb, #d97706 10%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #d97706 8%, #fff) 0%, rgba(255, 255, 255, 0.92) 100%);
+}
+
+.club-app .inv-card--crit {
+  border-color: rgba(220, 38, 38, 0.35);
+  --stock-tint: color-mix(in srgb, #dc2626 10%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #dc2626 8%, #fff) 0%, rgba(255, 255, 255, 0.92) 100%);
+}
+
+.club-app .inv-card__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--cat-accent) 14%, #fff) 0%,
+    color-mix(in srgb, var(--cat-accent) 4%, #f8fafc) 100%
+  );
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.club-app .inv-card__emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.08));
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.club-app .inv-card:hover .inv-card__emoji {
+  transform: scale(1.06);
+}
+
+.club-app .inv-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 11px;
+  min-width: 0;
+}
+
+.club-app .inv-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.club-app .inv-card__cat {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cat-accent);
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .club-app .inv-card__name {
   font-size: 0.8125rem;
   font-weight: 600;
-}
-
-.club-app .inv-card__emoji {
-  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .club-app .inv-card__stock {
   font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.club-app .inv-card__actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.club-app .inv-card__actions .btn {
+  flex: 1;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 0.6875rem;
+}
+
+.club-app .inv-card__actions .btn--adjust {
+  margin-left: 0;
+  flex: 0 0 auto;
+  min-width: 40px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .club-app .inv-card,
+  .club-app .inv-card:hover,
+  .club-app .inv-card:hover .inv-card__emoji {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 @media (min-width: 768px) {
@@ -2385,6 +2612,38 @@ body.club-dark.club-app .sc-finance-toolbar {
   .club-app .sc-inv-grid {
     display: none !important;
   }
+}
+
+body.club-dark.club-app .sc-inv-products .inv-toolbar {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.club-dark.club-app .inv-card {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.club-dark.club-app .inv-card--warn {
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.16) 0%, rgba(30, 41, 59, 0.85) 100%);
+}
+
+body.club-dark.club-app .inv-card--crit {
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.16) 0%, rgba(30, 41, 59, 0.85) 100%);
+}
+
+body.club-dark.club-app .inv-card__visual {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--cat-accent) 22%, #0f172a) 0%,
+    color-mix(in srgb, var(--cat-accent) 8%, #1e293b) 100%
+  );
+}
+
+body.club-dark.club-app .inv-card,
+body.club-dark.club-app .tpv-card {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* TPV compact */
