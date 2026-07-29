@@ -307,19 +307,27 @@
     const btnClose = $('btn-close-shift');
     if (open) {
       const whoOpen = staffEmailLabel(staffMap, open.opened_by);
-      bar.textContent = `Turno abierto desde ${formatTs(open.opened_at)} · Abierto por ${whoOpen}`;
-      bar.classList.remove('hint');
-      bar.classList.add('shift-state--open');
-      btnOpen.disabled = true;
-      btnClose.disabled = false;
-      btnClose.dataset.shiftId = open.id;
+      if (bar) {
+        bar.textContent = `Turno abierto desde ${formatTs(open.opened_at)} · Abierto por ${whoOpen}`;
+        bar.classList.remove('hint');
+        bar.classList.add('shift-state--open');
+      }
+      if (btnOpen) btnOpen.disabled = true;
+      if (btnClose) {
+        btnClose.disabled = false;
+        btnClose.dataset.shiftId = open.id;
+      }
     } else {
-      bar.textContent = 'No hay turno abierto.';
-      bar.classList.add('hint');
-      bar.classList.remove('shift-state--open');
-      btnOpen.disabled = false;
-      btnClose.disabled = true;
-      delete btnClose.dataset.shiftId;
+      if (bar) {
+        bar.textContent = 'No hay turno abierto.';
+        bar.classList.add('hint');
+        bar.classList.remove('shift-state--open');
+      }
+      if (btnOpen) btnOpen.disabled = false;
+      if (btnClose) {
+        btnClose.disabled = true;
+        delete btnClose.dataset.shiftId;
+      }
     }
 
     updateShellShiftIndicators(!!open);
@@ -816,6 +824,10 @@
     ctx: null,
     logoutAfter: false,
     pendingLogout: false,
+    closeCash: null,
+    closeFloat: null,
+    noteClose: '',
+    closeExpectedCash: null,
   };
 
   function formatMoneyEUR(n) {
@@ -1456,6 +1468,10 @@
     $('wiz-back')?.addEventListener('click', () => renderWizardStockQuestion());
     $('wiz-go-arqueo')?.addEventListener('click', () => {
       shiftWizard.logoutAfter = $('wiz-logout-after')?.checked === true;
+      if (shiftWizard.closeCash != null || shiftWizard.closeFloat != null) {
+        void finalizeShiftClose();
+        return;
+      }
       renderWizardArqueo();
     });
   }
@@ -1560,9 +1576,18 @@
     const id = shiftWizard.shiftId;
     const ctx = shiftWizard.ctx;
     if (!id || !ctx) return;
-    const note = ($('note-close')?.value || '').trim();
-    const cash = parseDecimalLoose($('wiz-close-cash')?.value);
-    const fl = parseDecimalLoose($('wiz-close-float')?.value);
+    const note =
+      shiftWizard.noteClose != null && shiftWizard.noteClose !== undefined
+        ? String(shiftWizard.noteClose).trim()
+        : ($('note-close')?.value || '').trim();
+    const cash =
+      shiftWizard.closeCash != null && !Number.isNaN(Number(shiftWizard.closeCash))
+        ? Number(shiftWizard.closeCash)
+        : parseDecimalLoose($('wiz-close-cash')?.value);
+    const fl =
+      shiftWizard.closeFloat != null && !Number.isNaN(Number(shiftWizard.closeFloat))
+        ? Number(shiftWizard.closeFloat)
+        : parseDecimalLoose($('wiz-close-float')?.value);
     const denoms = collectDenomJson();
 
     try {
@@ -1584,7 +1609,14 @@
       const { error } = await sb().from('shifts').update(patch).eq('id', id).is('closed_at', null);
 
       if (error) throw error;
-      $('note-close').value = '';
+      if ($('note-close')) $('note-close').value = '';
+      if ($('close-cash-eur')) $('close-cash-eur').value = '';
+      if ($('close-float-eur')) $('close-float-eur').value = '';
+      shiftWizard.closeCash = null;
+      shiftWizard.closeFloat = null;
+      shiftWizard.noteClose = '';
+      shiftWizard.closeExpectedCash = null;
+      closeShiftCloseModal();
       closeShiftWizardModal();
 
       let summaryInner = '';
@@ -1603,12 +1635,122 @@
     }
   }
 
-  function startCloseShiftFlow(shiftId, ctx) {
+  function closeShiftOpenModal() {
+    const modal = $('shift-open-modal');
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function openShiftOpenModal() {
+    window.scOpenShiftModal($('shift-open-modal'));
+    $('opening-float-eur')?.focus();
+  }
+
+  function closeShiftCloseModal() {
+    const modal = $('shift-close-modal');
+    if (!modal) return;
+    modal.classList.add('is-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function updateShiftCloseDiff(expectedCash) {
+    const diffEl = $('shift-close-diff');
+    const counted = parseDecimalLoose($('close-cash-eur')?.value);
+    if (!diffEl) return;
+    if (Number.isNaN(counted) || expectedCash == null || Number.isNaN(Number(expectedCash))) {
+      diffEl.textContent = '';
+      diffEl.className = 'hint shift-arqueo-diff';
+      return;
+    }
+    const diff = counted - Number(expectedCash);
+    const ok = Math.abs(diff) < 0.005;
+    diffEl.className = ok
+      ? 'hint shift-arqueo-diff shift-arqueo-diff--ok'
+      : 'hint shift-arqueo-diff shift-arqueo-diff--warn';
+    diffEl.textContent = ok
+      ? 'Cuadra con el efectivo esperado según el POS.'
+      : `Diferencia: ${diff >= 0 ? '+' : ''}${formatMoneyEUR(diff)} (contado − esperado).`;
+  }
+
+  async function openShiftCloseModal(shiftId, ctx) {
     shiftWizard.shiftId = shiftId;
     shiftWizard.ctx = ctx;
     shiftWizard.logoutAfter = false;
-    renderWizardStockQuestion();
-    openShiftWizardModal();
+    shiftWizard.closeCash = null;
+    shiftWizard.closeFloat = null;
+    shiftWizard.noteClose = '';
+    shiftWizard.closeExpectedCash = null;
+    if ($('close-cash-eur')) $('close-cash-eur').value = '';
+    if ($('close-float-eur')) $('close-float-eur').value = '';
+    if ($('note-close')) $('note-close').value = '';
+    const hintEl = $('shift-close-expected');
+    if (hintEl) {
+      hintEl.textContent = 'Calculando efectivo esperado…';
+      hintEl.className = 'hint shift-arqueo-hint';
+    }
+    if ($('shift-close-diff')) {
+      $('shift-close-diff').textContent = '';
+      $('shift-close-diff').className = 'hint shift-arqueo-diff';
+    }
+    window.scOpenShiftModal($('shift-close-modal'));
+    $('close-cash-eur')?.focus();
+
+    try {
+      const info = await fetchShiftCashExpected(shiftId);
+      shiftWizard.closeExpectedCash = info.expectedCash;
+      if (hintEl) {
+        const walletLine =
+          (info.walletSales || 0) > 0.005
+            ? ` Ventas con monedero: ${formatMoneyEUR(info.walletSales)} (no en caja).`
+            : '';
+        const walletCashLine =
+          Math.abs(info.walletCashNet || 0) > 0.005
+            ? ` Monedero en efectivo (neto): ${info.walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(info.walletCashNet)}.`
+            : '';
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(info.expectedCash)} = cambio ${formatMoneyEUR(info.opening)} + ventas efectivo ${formatMoneyEUR(info.cashSales)}${walletCashLine}${walletLine}`;
+      }
+      updateShiftCloseDiff(info.expectedCash);
+    } catch (_) {
+      if (hintEl) {
+        hintEl.textContent = 'No se pudo calcular el efectivo esperado.';
+        hintEl.classList.add('shift-arqueo-hint--warn');
+      }
+    }
+  }
+
+  function startCloseShiftFlow(shiftId, ctx) {
+    void openShiftCloseModal(shiftId, ctx);
+  }
+
+  async function performOpenShift(ctx) {
+    const note = ($('note-open')?.value || '').trim();
+    const floatRaw = ($('opening-float-eur')?.value || '').trim();
+    let opening_float_eur = 0;
+    if (floatRaw) {
+      const p = parseDecimalLoose(floatRaw);
+      if (!Number.isNaN(p) && p >= 0) opening_float_eur = p;
+    }
+    setStatus('Abriendo turno…', false);
+    const {
+      data: { user },
+    } = await sb().auth.getUser();
+    if (!user) throw new Error('Sesión no válida.');
+
+    const row = {
+      club_id: ctx.club.id,
+      opened_by: user.id,
+      note_open: note,
+      opening_float_eur,
+    };
+
+    const { error } = await sb().from('shifts').insert([row]);
+    if (error) throw error;
+    if ($('note-open')) $('note-open').value = '';
+    if ($('opening-float-eur')) $('opening-float-eur').value = '';
+    closeShiftOpenModal();
+    await refreshShiftsUI(ctx);
+    setStatus('Turno abierto.', false);
   }
 
   function initClubDarkMode() {
@@ -1886,36 +2028,25 @@
       if (logoutBtn) logoutBtn.textContent = 'Volver';
     }
     $('btn-open-shift')?.addEventListener('click', async () => {
-      const note = ($('note-open')?.value || '').trim();
-      const floatRaw = ($('opening-float-eur')?.value || '').trim();
-      let opening_float_eur = 0;
-      if (floatRaw) {
-        const p = parseDecimalLoose(floatRaw);
-        if (!Number.isNaN(p) && p >= 0) opening_float_eur = p;
-      }
+      if ($('btn-open-shift')?.disabled) return;
       try {
-        setStatus('Abriendo turno…', false);
-        const {
-          data: { user },
-        } = await sb().auth.getUser();
-        if (!user) throw new Error('Sesión no válida.');
+        if (ctx?.club?.id) await refreshOpeningFloatHint(ctx.club.id);
+      } catch (_) {
+        /* ignore */
+      }
+      openShiftOpenModal();
+    });
 
-        const row = {
-          club_id: ctx.club.id,
-          opened_by: user.id,
-          note_open: note,
-          opening_float_eur,
-        };
-
-        const { error } = await sb().from('shifts').insert([row]);
-        if (error) throw error;
-        $('note-open').value = '';
-        if ($('opening-float-eur')) $('opening-float-eur').value = '';
-        await refreshShiftsUI(ctx);
-        setStatus('Turno abierto.', false);
+    $('shift-open-confirm')?.addEventListener('click', async () => {
+      try {
+        await performOpenShift(ctx);
       } catch (e) {
         setStatus(e.message || 'No se pudo abrir el turno.', true);
       }
+    });
+
+    document.querySelectorAll('[data-shift-open-close]').forEach((el) => {
+      el.addEventListener('click', () => closeShiftOpenModal());
     });
 
     $('btn-close-shift')?.addEventListener('click', async () => {
@@ -1923,6 +2054,35 @@
       if (!id) return;
       startCloseShiftFlow(id, ctx);
     });
+
+    $('shift-close-confirm')?.addEventListener('click', () => {
+      const cash = parseDecimalLoose($('close-cash-eur')?.value);
+      const fl = parseDecimalLoose($('close-float-eur')?.value);
+      if (Number.isNaN(cash) || cash < 0) {
+        setStatus('Indica el dinero contado en caja.', true);
+        $('close-cash-eur')?.focus();
+        return;
+      }
+      if (Number.isNaN(fl) || fl < 0) {
+        setStatus('Indica el cambio que dejas para el siguiente turno (0 si no dejas).', true);
+        $('close-float-eur')?.focus();
+        return;
+      }
+      shiftWizard.closeCash = cash;
+      shiftWizard.closeFloat = fl;
+      shiftWizard.noteClose = ($('note-close')?.value || '').trim();
+      closeShiftCloseModal();
+      renderWizardStockQuestion();
+      openShiftWizardModal();
+    });
+
+    document.querySelectorAll('[data-shift-close-close]').forEach((el) => {
+      el.addEventListener('click', () => closeShiftCloseModal());
+    });
+
+    const onCloseCashInput = () => updateShiftCloseDiff(shiftWizard.closeExpectedCash);
+    $('close-cash-eur')?.addEventListener('input', onCloseCashInput);
+    $('close-cash-eur')?.addEventListener('change', onCloseCashInput);
 
     $('shift-summary-ok')?.addEventListener('click', async () => {
       closeSummaryModal();

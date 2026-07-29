@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=8" />
     <link rel="stylesheet" href="css/theme.css?v=35" />
     <link rel="stylesheet" href="css/dashboard-club.css?v=52" />
-    <link rel="stylesheet" href="css/sc-dashboard.css?v=56" />
+    <link rel="stylesheet" href="css/sc-dashboard.css?v=57" />
     <link rel="stylesheet" href="css/sc-tpv.css?v=15" />
     <link rel="stylesheet" href="css/sc-membership.css?v=13" />
   </head>
@@ -216,6 +216,81 @@
       </div>
     </div>
 
+    <div
+      id="shift-open-modal"
+      class="shift-modal is-hidden"
+      aria-hidden="true"
+      aria-labelledby="shift-open-title"
+    >
+      <div class="shift-modal__backdrop" data-shift-open-close></div>
+      <div class="shift-modal__panel card-section" role="dialog" aria-modal="true">
+        <div class="sc-section-head" style="margin-bottom: 0.75rem">
+          <h3 id="shift-open-title" class="shift-modal__title" style="margin:0">Abrir turno</h3>
+          <button type="button" class="btn btn--ghost btn--small" data-shift-open-close aria-label="Cerrar">×</button>
+        </div>
+        <div class="shift-modal__body">
+          <p class="hint" style="margin-top:0">Indica el dinero que hay ahora en caja para empezar el turno.</p>
+          <div class="form__row">
+            <label for="opening-float-eur" data-currency-label="Dinero en caja ({s})">Dinero en caja (€)</label>
+            <input
+              class="input"
+              id="opening-float-eur"
+              inputmode="decimal"
+              placeholder="0"
+              autocomplete="off"
+            />
+            <p id="opening-float-hint" class="hint hint--small" style="margin-top: 0.35rem"></p>
+          </div>
+          <div class="form__row">
+            <label for="note-open">Nota al abrir (opcional)</label>
+            <input class="input" id="note-open" placeholder="Ej. Mañana" />
+          </div>
+        </div>
+        <div class="row-actions shift-modal__actions">
+          <button type="button" class="btn" id="shift-open-confirm">Abrir turno</button>
+          <button type="button" class="btn btn--ghost" data-shift-open-close>Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="shift-close-modal"
+      class="shift-modal is-hidden"
+      aria-hidden="true"
+      aria-labelledby="shift-close-title"
+    >
+      <div class="shift-modal__backdrop" data-shift-close-close></div>
+      <div class="shift-modal__panel card-section" role="dialog" aria-modal="true">
+        <div class="sc-section-head" style="margin-bottom: 0.75rem">
+          <h3 id="shift-close-title" class="shift-modal__title" style="margin:0">Cerrar turno</h3>
+          <button type="button" class="btn btn--ghost btn--small" data-shift-close-close aria-label="Cerrar">×</button>
+        </div>
+        <div class="shift-modal__body">
+          <p class="hint" style="margin-top:0">
+            Indica el efectivo contado en caja y el cambio que dejas para el siguiente turno.
+          </p>
+          <p id="shift-close-expected" class="hint shift-arqueo-hint">Calculando efectivo esperado…</p>
+          <div class="form__row">
+            <label for="close-cash-eur" data-currency-label="Dinero en caja ({s})">Dinero en caja (€)</label>
+            <input class="input" id="close-cash-eur" inputmode="decimal" placeholder="Ej. 240,50" autocomplete="off" />
+          </div>
+          <div class="form__row">
+            <label for="close-float-eur" data-currency-label="Cambio que dejas ({s})">Cambio que dejas (€)</label>
+            <input class="input" id="close-float-eur" inputmode="decimal" placeholder="Ej. 80" autocomplete="off" />
+          </div>
+          <div class="form__row">
+            <label for="note-close">Nota al cerrar (opcional)</label>
+            <input class="input" id="note-close" placeholder="Ej. Arqueo OK" />
+          </div>
+          <p id="shift-close-diff" class="hint shift-arqueo-diff" role="status"></p>
+        </div>
+        <div class="row-actions shift-modal__actions">
+          <button type="button" class="btn" id="shift-close-confirm">Continuar</button>
+          <button type="button" class="btn btn--ghost" data-shift-close-close>Cancelar</button>
+        </div>
+      </div>
+    </div>
+
     <div id="shift-summary-modal" class="shift-modal is-hidden" aria-hidden="true">
       <div class="shift-modal__backdrop"></div>
       <div class="shift-modal__panel card-section shift-modal__panel--wide" role="dialog">
@@ -384,7 +459,7 @@
     <script src="js/club-stock.js?v=25"></script>
     <script src="js/club-socios-finance.js?v=75"></script>
     <script src="js/club-membership.js?v=15"></script>
-    <script src="js/dashboard-club.js?v=48"></script>
+    <script src="js/dashboard-club.js?v=49"></script>
     <script src="js/account-password.js"></script>
   </body>
 </html>

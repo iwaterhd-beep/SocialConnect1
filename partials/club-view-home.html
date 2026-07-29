@@ -1,10 +1,16 @@
 <div class="club-view-stage sc-home-grid">
 <section class="card-section sc-home-summary sc-card--flat sc-home-shortcuts" aria-labelledby="home-next-title">
   <div class="sc-home-shortcuts__hero">
-    <div class="sc-home-shortcuts__head">
-      <p class="sc-home-eyebrow">Hoy en el club</p>
-      <h2 id="home-next-title">¿Qué quieres hacer?</h2>
-      <p class="hint sc-home-shortcuts__lede">Elige un acceso y arranca en un toque.</p>
+    <div class="sc-home-shortcuts__hero-row">
+      <div class="sc-home-shortcuts__head">
+        <p class="sc-home-eyebrow">Hoy en el club</p>
+        <h2 id="home-next-title">¿Qué quieres hacer?</h2>
+        <p class="hint sc-home-shortcuts__lede">Elige un acceso y arranca en un toque.</p>
+      </div>
+      <div class="sc-home-shortcuts__shift-actions" role="group" aria-label="Turno de caja">
+        <button type="button" class="btn sc-home-shift__open-btn" id="btn-open-shift">Abrir turno</button>
+        <button type="button" class="btn btn--ghost sc-home-shift__close-btn" id="btn-close-shift" disabled>Cerrar turno</button>
+      </div>
     </div>
   </div>
   <nav class="sc-quick-nav" aria-label="Ir a sección">
@@ -120,32 +126,10 @@
       <p id="shift-state" class="hint sc-section-head__meta sc-home-shift__state">Cargando…</p>
     </div>
   </div>
-  <div class="grid grid--2 sc-compact-grid">
-    <div class="form__row">
-      <label for="opening-float-eur" data-currency-label="Cambio inicial en caja ({s})">Cambio inicial en caja (€)</label>
-      <input
-        class="input"
-        id="opening-float-eur"
-        inputmode="decimal"
-        placeholder="0"
-        autocomplete="off"
-      />
-      <p id="opening-float-hint" class="hint hint--small" style="margin-top: 0.35rem"></p>
-    </div>
-    <div class="form__row">
-      <label for="note-open">Nota al abrir (opcional)</label>
-      <input class="input" id="note-open" placeholder="Ej. Mañana" />
-    </div>
-    <div class="form__row">
-      <label for="note-close">Nota al cerrar (opcional)</label>
-      <input class="input" id="note-close" placeholder="Ej. Arqueo OK" />
-    </div>
-  </div>
-  <div class="row-actions sc-home-shift__actions">
-    <button type="button" class="btn sc-home-shift__open-btn" id="btn-open-shift">Abrir turno</button>
-    <button type="button" class="btn btn--ghost" id="btn-close-shift" disabled>Cerrar turno</button>
-  </div>
-  <div class="sc-finance-toolbar sc-home-shifts-toolbar" style="margin-top: 1rem">
+  <p class="hint sc-home-shift__lede" style="margin:0 0 0.85rem">
+    Usa <strong>Abrir turno</strong> / <strong>Cerrar turno</strong> arriba para gestionar la caja. Aquí tienes el historial.
+  </p>
+  <div class="sc-finance-toolbar sc-home-shifts-toolbar">
     <div class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo historial de turnos">
       <button type="button" class="chip" data-home-shifts-range="today">Hoy</button>
       <button type="button" class="chip is-active" data-home-shifts-range="7d">7 días</button>

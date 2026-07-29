@@ -1003,9 +1003,40 @@ body.club-app.has-club-topnav {
   box-shadow: inset 4px 0 0 #16a34a;
 }
 
+.sc-home-shortcuts__hero-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sc-home-shortcuts__shift-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.sc-home-shortcuts__shift-actions .btn {
+  min-height: 40px;
+  padding-inline: 1rem;
+  font-weight: 700;
+}
+
+.sc-home-shortcuts__shift-actions .sc-home-shift__open-btn:disabled,
+.sc-home-shortcuts__shift-actions .sc-home-shift__close-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .sc-home-shortcuts__head {
   position: relative;
   z-index: 1;
+  flex: 1;
+  min-width: min(100%, 220px);
 }
 
 .sc-home-shortcuts h2,
