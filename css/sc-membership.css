@@ -449,12 +449,109 @@
   gap: 0.65rem 0.85rem;
 }
 
-.sc-membership-rewards-table {
-  margin-top: 0.65rem;
+.sc-membership-tier__gift-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--tier-color) 75%, #0f172a);
+  background: color-mix(in srgb, var(--tier-color) 18%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tier-color) 35%, transparent);
 }
 
-.sc-membership-reward-inactive {
-  opacity: 0.55;
+.sc-membership-tier-gifts {
+  margin-top: 0.85rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--tier-color, #64748b) 22%, var(--bd, #e5e7eb));
+  background: color-mix(in srgb, var(--tier-color, #64748b) 6%, var(--bg, #f9fafb));
+  display: grid;
+  gap: 0.7rem;
+}
+
+.sc-membership-tier-gifts--create {
+  margin-top: 1rem;
+  --tier-color: #7c3aed;
+}
+
+.sc-membership-tier-gifts__head h4 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.sc-membership-tier-gifts__head .hint {
+  margin: 0.2rem 0 0;
+}
+
+.sc-membership-tier-gifts__empty {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed var(--bd, #e5e7eb);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.8rem;
+  color: var(--tx3, #6b7280);
+}
+
+.sc-membership-tier-gifts__list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.sc-membership-tier-gift {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--bd, #e5e7eb);
+  background: rgba(255, 255, 255, 0.82);
+  transition: transform 160ms var(--ease-out, ease-out), border-color 160ms ease;
+}
+
+.sc-membership-tier-gift:active {
+  transform: scale(0.99);
+}
+
+.sc-membership-tier-gift--paused {
+  opacity: 0.62;
+}
+
+.sc-membership-tier-gift__main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sc-membership-tier-gift__main strong {
+  font-size: 0.88rem;
+}
+
+.sc-membership-tier-gift__meta {
+  font-size: 0.75rem;
+  color: var(--tx3, #6b7280);
+}
+
+.sc-membership-tier-gift__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.sc-membership-orphan-rewards {
+  margin-top: 0.35rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px dashed #f59e0b;
+  background: color-mix(in srgb, #f59e0b 8%, #fff);
 }
 
 .sc-membership-empty {
@@ -489,10 +586,13 @@
   .sc-membership-reward-form__grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  .sc-membership-reward-form__grid .form__row--full {
+    grid-column: 1 / -1;
+  }
 }
 
 body.club-dark .sc-membership-tier,
-body.club-dark .sc-membership-reward-form,
 body.club-dark .sc-membership-empty {
   background: #1e293b;
   border-color: #334155;
@@ -522,6 +622,28 @@ body.club-dark .sc-membership-tier__auto--ref {
 body.club-dark .sc-membership-tier__preview {
   background: color-mix(in srgb, var(--tier-color) 28%, #0f172a);
   border-color: color-mix(in srgb, var(--tier-color) 45%, #334155);
+}
+
+body.club-dark .sc-membership-tier-gifts {
+  background: color-mix(in srgb, var(--tier-color, #64748b) 12%, #0f172a);
+  border-color: color-mix(in srgb, var(--tier-color, #64748b) 30%, #334155);
+}
+
+body.club-dark .sc-membership-tier-gifts__empty,
+body.club-dark .sc-membership-tier-gift {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: #334155;
+}
+
+body.club-dark .sc-membership-tier__gift-count {
+  color: #e2e8f0;
+  background: color-mix(in srgb, var(--tier-color) 28%, #0f172a);
+  border-color: color-mix(in srgb, var(--tier-color) 40%, #334155);
+}
+
+body.club-dark .sc-membership-orphan-rewards {
+  background: color-mix(in srgb, #f59e0b 12%, #0f172a);
+  border-color: #a16207;
 }
 
 body.club-dark .sc-membership-tips,

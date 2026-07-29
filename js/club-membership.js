@@ -200,14 +200,13 @@
     return rewardProductsCache;
   }
 
-  function fillRewardProductSelect() {
-    const sel = $('reward-product');
+  function fillRewardProductSelect(sel, emptyLabel) {
     if (!sel) return;
     const keep = sel.value;
     sel.innerHTML = '';
     const empty = document.createElement('option');
     empty.value = '';
-    empty.textContent = '— Elige un producto del inventario —';
+    empty.textContent = emptyLabel || '— Elige un producto del inventario —';
     sel.appendChild(empty);
     rewardProductsCache.forEach((p) => {
       const opt = document.createElement('option');
@@ -219,13 +218,9 @@
       sel.appendChild(opt);
     });
     if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
-    syncRewardQtyUnitLabel();
   }
 
-  function syncRewardQtyUnitLabel() {
-    const sel = $('reward-product');
-    const unitEl = $('reward-qty-unit');
-    const qtyInput = $('reward-qty');
+  function syncRewardQtyUnitLabel(sel, unitEl, qtyInput) {
     const productId = (sel?.value || '').trim();
     const product = rewardProductsCache.find((p) => String(p.id) === productId);
     const isUnit = product ? product.sale_unit === 'unit' : true;
@@ -234,6 +229,93 @@
       qtyInput.step = isUnit ? '1' : 'any';
       qtyInput.min = isUnit ? '1' : '0.001';
     }
+  }
+
+  function fillAllRewardProductSelects() {
+    document.querySelectorAll('[data-reward-product]').forEach((sel) => {
+      fillRewardProductSelect(sel);
+      const root = sel.closest('[data-tier-gifts], [data-create-gift-form]') || sel.parentElement;
+      syncRewardQtyUnitLabel(
+        sel,
+        root?.querySelector('[data-reward-qty-unit]'),
+        root?.querySelector('[data-reward-qty]'),
+      );
+    });
+    fillRewardProductSelect($('tier-create-gift-product'), '— Sin regalo por ahora —');
+    syncRewardQtyUnitLabel(
+      $('tier-create-gift-product'),
+      $('tier-create-gift-qty-unit'),
+      $('tier-create-gift-qty'),
+    );
+  }
+
+  function rewardsForTier(tierKey) {
+    return (rewardsCache || []).filter((r) => r.tier_key === tierKey);
+  }
+
+  function syncCreateGiftSpendVisibility() {
+    const wrap = $('tier-create-gift-spend-wrap');
+    const trigger = $('tier-create-gift-trigger')?.value;
+    if (!wrap) return;
+    const show = trigger === 'spend_threshold';
+    wrap.hidden = !show;
+    wrap.classList.toggle('is-hidden', !show);
+  }
+
+  function readRewardFieldsFromRoot(root) {
+    if (!root) return null;
+    const productId = (root.querySelector('[data-reward-product]')?.value || '').trim();
+    const qtyRaw = (root.querySelector('[data-reward-qty]')?.value || '').trim();
+    const trigger = root.querySelector('[data-reward-trigger]')?.value || 'on_upgrade';
+    const desc = (root.querySelector('[data-reward-desc]')?.value || '').trim();
+    const spendRaw = (root.querySelector('[data-reward-spend]')?.value || '').trim();
+    return { productId, qtyRaw, trigger, desc, spendRaw };
+  }
+
+  function clearRewardFields(root) {
+    if (!root) return;
+    const product = root.querySelector('[data-reward-product]');
+    const qty = root.querySelector('[data-reward-qty]');
+    const desc = root.querySelector('[data-reward-desc]');
+    const spend = root.querySelector('[data-reward-spend]');
+    const trigger = root.querySelector('[data-reward-trigger]');
+    if (product) product.value = '';
+    if (qty) qty.value = '1';
+    if (desc) desc.value = '';
+    if (spend) spend.value = '';
+    if (trigger) trigger.value = 'on_upgrade';
+    const spendWrap = root.querySelector('[data-reward-spend-wrap]');
+    if (spendWrap) {
+      spendWrap.hidden = true;
+      spendWrap.classList.add('is-hidden');
+    }
+    syncRewardQtyUnitLabel(product, root.querySelector('[data-reward-qty-unit]'), qty);
+  }
+
+  function readCreateGiftDraft() {
+    const productId = ($('tier-create-gift-product')?.value || '').trim();
+    if (!productId) return null;
+    return {
+      productId,
+      qtyRaw: ($('tier-create-gift-qty')?.value || '').trim(),
+      trigger: $('tier-create-gift-trigger')?.value || 'on_upgrade',
+      desc: ($('tier-create-gift-desc')?.value || '').trim(),
+      spendRaw: ($('tier-create-gift-spend')?.value || '').trim(),
+    };
+  }
+
+  function clearCreateGiftFields() {
+    if ($('tier-create-gift-product')) $('tier-create-gift-product').value = '';
+    if ($('tier-create-gift-qty')) $('tier-create-gift-qty').value = '1';
+    if ($('tier-create-gift-desc')) $('tier-create-gift-desc').value = '';
+    if ($('tier-create-gift-spend')) $('tier-create-gift-spend').value = '';
+    if ($('tier-create-gift-trigger')) $('tier-create-gift-trigger').value = 'on_upgrade';
+    syncCreateGiftSpendVisibility();
+    syncRewardQtyUnitLabel(
+      $('tier-create-gift-product'),
+      $('tier-create-gift-qty-unit'),
+      $('tier-create-gift-qty'),
+    );
   }
 
   function useDefaultTiers() {
@@ -459,6 +541,12 @@
         `;
       }
 
+      const giftCount = rewardsForTier(key).length;
+      const giftBadge =
+        giftCount > 0
+          ? `<span class="sc-membership-tier__gift-count">${giftCount} regalo${giftCount === 1 ? '' : 's'}</span>`
+          : '';
+
       const deleteBtn = !isBuiltinTier(key)
         ? `<div class="sc-membership-tier__actions">
             <button type="button" class="btn btn--ghost btn--small btn--danger" data-tier-delete>
@@ -471,6 +559,7 @@
         <button type="button" class="sc-membership-tier__summary" data-tier-toggle aria-expanded="false">
           <span class="sc-membership-tier__preview" data-tier-preview>${escapeHtml(name)}</span>
           <span class="sc-membership-tier__summary-meta">
+            ${giftBadge}
             <span class="sc-membership-tier__key">${escapeHtml(key)}</span>
             <span class="sc-membership-tier__chevron" aria-hidden="true"></span>
           </span>
@@ -525,6 +614,47 @@
             </div>
           </div>
           ${autoBlock}
+          <section class="sc-membership-tier-gifts" data-tier-gifts="${escapeHtml(key)}" aria-label="Regalos de ${escapeHtml(name)}">
+            <div class="sc-membership-tier-gifts__head">
+              <h4>Regalos de este nivel</h4>
+              <p class="hint">Producto del POS · se entrega <strong>gratis</strong> según la regla</p>
+            </div>
+            <div class="sc-membership-tier-gifts__list" data-tier-gifts-list></div>
+            <div class="sc-membership-tier-gifts__form" data-tier-gifts-form>
+              <div class="sc-membership-reward-form__grid">
+                <div class="form__row">
+                  <label>Producto del POS</label>
+                  <select class="input" data-reward-product>
+                    <option value="">— Elige un producto —</option>
+                  </select>
+                </div>
+                <div class="form__row">
+                  <label>Cantidad <span class="hint" data-reward-qty-unit>(ud)</span></label>
+                  <input class="input" data-reward-qty type="number" min="0.001" step="any" value="1" />
+                </div>
+                <div class="form__row">
+                  <label>Cuándo se aplica</label>
+                  <select class="input" data-reward-trigger>
+                    <option value="on_upgrade">Al subir a este nivel</option>
+                    <option value="spend_threshold">Por gasto acumulado</option>
+                    <option value="birthday">Cumpleaños</option>
+                    <option value="manual">Manual / nota interna</option>
+                  </select>
+                </div>
+                <div class="form__row is-hidden" data-reward-spend-wrap hidden>
+                  <label data-currency-label="Gasto objetivo ({s})">Gasto objetivo (€)</label>
+                  <input class="input" data-reward-spend type="number" min="0" step="0.01" placeholder="Ej. 200" />
+                </div>
+                <div class="form__row form__row--full">
+                  <label>Instrucciones para el equipo</label>
+                  <input class="input" data-reward-desc type="text" placeholder="Qué entregar y cómo anotarlo" autocomplete="off" />
+                </div>
+              </div>
+              <div class="row-actions" style="margin-top:0.55rem">
+                <button type="button" class="btn btn--small" data-reward-add>Añadir regalo</button>
+              </div>
+            </div>
+          </section>
           ${deleteBtn}
         </div>
       `;
@@ -585,14 +715,64 @@
         void removeCustomTier(key);
       });
 
+      bindTierGiftForm(card, key);
+      renderTierGiftList(card, key);
+
       setOpen(false);
       grid.appendChild(card);
     });
 
-    syncRewardTierOptions();
     if (typeof window.scRefreshCurrencyDom === 'function') {
       window.scRefreshCurrencyDom();
     }
+    renderOrphanRewardsNote(grid);
+  }
+
+  function renderOrphanRewardsNote(grid) {
+    if (!grid) return;
+    grid.querySelector('[data-orphan-rewards]')?.remove();
+    const orphans = (rewardsCache || []).filter((r) => !r.tier_key);
+    if (!orphans.length) return;
+    const note = document.createElement('div');
+    note.className = 'sc-membership-orphan-rewards';
+    note.setAttribute('data-orphan-rewards', '1');
+    note.innerHTML = `
+      <p class="hint" style="margin:0 0 0.45rem">
+        <strong>${orphans.length}</strong> regalo(s) antiguos sin nivel concreto.
+        Ábrelo aquí para pausarlo o borrarlo; los nuevos van dentro de cada nivel.
+      </p>
+      <div class="sc-membership-tier-gifts__list" data-orphan-list></div>
+    `;
+    const list = note.querySelector('[data-orphan-list]');
+    orphans.forEach((r) => {
+      const item = document.createElement('article');
+      item.className =
+        'sc-membership-tier-gift' + (r.is_active ? '' : ' sc-membership-tier-gift--paused');
+      item.innerHTML = `
+        <div class="sc-membership-tier-gift__main">
+          <strong>${escapeHtml(r.title)}</strong>
+          <span class="sc-membership-tier-gift__meta">
+            ${escapeHtml(triggerLabel(r.trigger_type))} · ${r.is_active ? 'Activo' : 'Pausado'}
+          </span>
+        </div>
+        <div class="sc-membership-tier-gift__actions">
+          <button type="button" class="btn btn--ghost btn--small" data-reward-toggle="${r.id}">
+            ${r.is_active ? 'Pausar' : 'Activar'}
+          </button>
+          <button type="button" class="btn btn--ghost btn--small btn--danger" data-reward-del="${r.id}">
+            Borrar
+          </button>
+        </div>
+      `;
+      item.querySelector('[data-reward-toggle]')?.addEventListener('click', () => {
+        void toggleReward(r.id, !r.is_active);
+      });
+      item.querySelector('[data-reward-del]')?.addEventListener('click', () => {
+        void deleteReward(r.id);
+      });
+      list.appendChild(item);
+    });
+    grid.appendChild(note);
   }
 
   function setCreateTierMsg(text, isError) {
@@ -638,8 +818,11 @@
     if ($('tier-create-threshold')) $('tier-create-threshold').value = '0';
     if ($('tier-create-window')) $('tier-create-window').value = '7';
     if ($('tier-create-enabled')) $('tier-create-enabled').checked = true;
+    clearCreateGiftFields();
+    fillRewardProductSelect($('tier-create-gift-product'), '— Sin regalo por ahora —');
     setCreateTierMsg('', false);
     syncCreateTierPreview();
+    syncCreateGiftSpendVisibility();
 
     const modal = $('membership-tier-create-modal');
     if (!modal) return;
@@ -725,6 +908,8 @@
       sort_order: nextSortOrder(),
     };
 
+    const giftDraft = readCreateGiftDraft();
+
     tiersCache = [...fromDom.filter((t) => t.tier_key !== tier_key), row];
     publishTierGlobal();
     renderTiers();
@@ -736,12 +921,35 @@
     if (card) {
       card.querySelector('[data-tier-toggle]')?.click();
     }
-    setMsg(
-      migrationMissing
-        ? 'Nivel añadido en esta sesión. Ejecuta las migraciones de membresía para guardarlo.'
-        : 'Nivel creado. Pulsa «Guardar cambios» para fijarlo en la nube.',
-      false,
-    );
+
+    if (giftDraft) {
+      setMsg(
+        migrationMissing
+          ? 'Nivel añadido en esta sesión. Guardando regalo…'
+          : 'Nivel creado. Guardando regalo… Pulsa «Guardar cambios» para fijar el nivel en la nube.',
+        false,
+      );
+      void addRewardForTier(tier_key, giftDraft, {
+        quietOk: true,
+        openCard: false,
+      }).then((ok) => {
+        if (ok) {
+          setMsg(
+            migrationMissing
+              ? 'Nivel y regalo añadidos en esta sesión. Ejecuta las migraciones para guardarlos.'
+              : 'Nivel creado con regalo. Pulsa «Guardar cambios» para fijar el nivel en la nube.',
+            false,
+          );
+        }
+      });
+    } else {
+      setMsg(
+        migrationMissing
+          ? 'Nivel añadido en esta sesión. Ejecuta las migraciones de membresía para guardarlo.'
+          : 'Nivel creado. Pulsa «Guardar cambios» para fijarlo en la nube.',
+        false,
+      );
+    }
     notifyLabelsUpdated();
   }
 
@@ -915,29 +1123,6 @@
     setMsg('Niveles guardados. Los nombres se verán en Socios y POS.', false);
   }
 
-  function syncRewardTierOptions() {
-    const sel = $('reward-tier');
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = '<option value="">Cualquiera</option>';
-    tiersCache.forEach((t) => {
-      const opt = document.createElement('option');
-      opt.value = t.tier_key;
-      opt.textContent = t.display_name || t.tier_key;
-      sel.appendChild(opt);
-    });
-    if ([...sel.options].some((o) => o.value === current)) sel.value = current;
-  }
-
-  function syncRewardSpendVisibility() {
-    const wrap = $('reward-spend-wrap');
-    const trigger = $('reward-trigger')?.value;
-    if (!wrap) return;
-    const show = trigger === 'spend_threshold';
-    wrap.hidden = !show;
-    wrap.classList.toggle('is-hidden', !show);
-  }
-
   async function loadRewards() {
     if (!ctx?.club?.id || !sb()) {
       rewardsCache = [];
@@ -964,25 +1149,75 @@
     return rewardsCache;
   }
 
-  function renderRewards() {
-    const tbody = $('membership-rewards-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    if (!rewardsCache.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="6"><div class="sc-membership-empty" style="margin:0;border-style:dashed">Aún no hay regalos. Añade el primero arriba para que el equipo sepa qué entregar.</div></td></tr>';
+  function bindTierGiftForm(card, tierKey) {
+    const form = card.querySelector('[data-tier-gifts-form]');
+    if (!form) return;
+    const productSel = form.querySelector('[data-reward-product]');
+    fillRewardProductSelect(productSel);
+    syncRewardQtyUnitLabel(
+      productSel,
+      form.querySelector('[data-reward-qty-unit]'),
+      form.querySelector('[data-reward-qty]'),
+    );
+
+    productSel?.addEventListener('change', () => {
+      syncRewardQtyUnitLabel(
+        productSel,
+        form.querySelector('[data-reward-qty-unit]'),
+        form.querySelector('[data-reward-qty]'),
+      );
+    });
+
+    const triggerSel = form.querySelector('[data-reward-trigger]');
+    const spendWrap = form.querySelector('[data-reward-spend-wrap]');
+    const syncSpend = () => {
+      if (!spendWrap) return;
+      const show = triggerSel?.value === 'spend_threshold';
+      spendWrap.hidden = !show;
+      spendWrap.classList.toggle('is-hidden', !show);
+    };
+    triggerSel?.addEventListener('change', syncSpend);
+    syncSpend();
+
+    form.querySelector('[data-reward-add]')?.addEventListener('click', () => {
+      const fields = readRewardFieldsFromRoot(form);
+      void addRewardForTier(tierKey, fields, { formRoot: form });
+    });
+  }
+
+  function updateTierGiftBadge(card, tierKey) {
+    const meta = card?.querySelector('.sc-membership-tier__summary-meta');
+    if (!meta) return;
+    const count = rewardsForTier(tierKey).length;
+    let badge = meta.querySelector('.sc-membership-tier__gift-count');
+    if (count <= 0) {
+      badge?.remove();
       return;
     }
-    rewardsCache.forEach((r) => {
-      const tr = document.createElement('tr');
-      if (!r.is_active) tr.classList.add('sc-membership-reward-inactive');
-      const tierName = r.tier_key
-        ? window.scClubMembershipTierLabel?.(r.tier_key) || r.tier_key
-        : 'Cualquiera';
-      const triggerExtra =
-        r.trigger_type === 'spend_threshold' && r.trigger_spend_eur != null
-          ? ` (≥ ${typeof window.scFormatMoney === 'function' ? window.scFormatMoney(r.trigger_spend_eur) : `${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €`})`
-          : '';
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'sc-membership-tier__gift-count';
+      const keyEl = meta.querySelector('.sc-membership-tier__key');
+      meta.insertBefore(badge, keyEl || meta.firstChild);
+    }
+    badge.textContent = `${count} regalo${count === 1 ? '' : 's'}`;
+  }
+
+  function renderTierGiftList(card, tierKey) {
+    const list = card?.querySelector('[data-tier-gifts-list]');
+    if (!list) return;
+    const rows = rewardsForTier(tierKey);
+    list.innerHTML = '';
+    if (!rows.length) {
+      list.innerHTML =
+        '<p class="sc-membership-tier-gifts__empty">Sin regalos en este nivel. Añade uno abajo.</p>';
+      updateTierGiftBadge(card, tierKey);
+      return;
+    }
+    rows.forEach((r) => {
+      const item = document.createElement('article');
+      item.className =
+        'sc-membership-tier-gift' + (r.is_active ? '' : ' sc-membership-tier-gift--paused');
       const product = rewardProductsCache.find((p) => String(p.id) === String(r.product_id || ''));
       const unitLabel = product?.sale_unit === 'unit' ? 'ud' : product ? 'g' : '';
       const qtyNum = Number(r.quantity);
@@ -990,94 +1225,104 @@
         Number.isFinite(qtyNum) && qtyNum > 0
           ? `${qtyNum.toLocaleString('es-ES', { maximumFractionDigits: 3 })}${unitLabel ? ` ${unitLabel}` : ''}`
           : '1';
-      const productHint =
-        r.product_id
-          ? `<div class="hint">POS · entrega automática gratis</div>`
-          : `<div class="hint">Sin producto POS (solo nota)</div>`;
-      tr.innerHTML = `
-        <td>
+      const triggerExtra =
+        r.trigger_type === 'spend_threshold' && r.trigger_spend_eur != null
+          ? ` · ≥ ${typeof window.scFormatMoney === 'function' ? window.scFormatMoney(r.trigger_spend_eur) : `${Number(r.trigger_spend_eur).toLocaleString('es-ES')} €`}`
+          : '';
+      item.innerHTML = `
+        <div class="sc-membership-tier-gift__main">
           <strong>${escapeHtml(r.title)}</strong>
-          ${productHint}
-          ${r.description ? `<div class="hint">${escapeHtml(r.description)}</div>` : ''}
-        </td>
-        <td>${escapeHtml(qtyText)}</td>
-        <td>${escapeHtml(tierName)}</td>
-        <td>${escapeHtml(triggerLabel(r.trigger_type))}${escapeHtml(triggerExtra)}</td>
-        <td>${r.is_active ? 'Activo' : 'Pausado'}</td>
-        <td class="actions">
+          <span class="sc-membership-tier-gift__meta">
+            ${escapeHtml(qtyText)} · ${escapeHtml(triggerLabel(r.trigger_type))}${escapeHtml(triggerExtra)}
+            · ${r.is_active ? 'Activo' : 'Pausado'}
+          </span>
+          ${r.description ? `<span class="hint">${escapeHtml(r.description)}</span>` : ''}
+        </div>
+        <div class="sc-membership-tier-gift__actions">
           <button type="button" class="btn btn--ghost btn--small" data-reward-toggle="${r.id}">
             ${r.is_active ? 'Pausar' : 'Activar'}
           </button>
           <button type="button" class="btn btn--ghost btn--small btn--danger" data-reward-del="${r.id}">
             Borrar
           </button>
-        </td>
+        </div>
       `;
-      tr.querySelector('[data-reward-toggle]')?.addEventListener('click', () => {
+      item.querySelector('[data-reward-toggle]')?.addEventListener('click', () => {
         void toggleReward(r.id, !r.is_active);
       });
-      tr.querySelector('[data-reward-del]')?.addEventListener('click', () => {
+      item.querySelector('[data-reward-del]')?.addEventListener('click', () => {
         void deleteReward(r.id);
       });
-      tbody.appendChild(tr);
+      list.appendChild(item);
     });
+    updateTierGiftBadge(card, tierKey);
   }
 
-  async function addReward() {
+  function renderRewards() {
+    const grid = $('membership-tiers-grid');
+    document.querySelectorAll('#membership-tiers-grid [data-tier-key]').forEach((card) => {
+      const key = card.getAttribute('data-tier-key');
+      if (key) renderTierGiftList(card, key);
+    });
+    renderOrphanRewardsNote(grid);
+  }
+
+  async function addRewardForTier(tierKey, fields, opts = {}) {
     if (!isAdmin()) {
       setMsg('Solo el administrador puede añadir regalos.', true);
-      return;
+      return false;
     }
     if (migrationMissing) {
       setMsg('Ejecuta 046_club_membership_tiers.sql en Supabase para poder guardar regalos.', true);
-      return;
+      return false;
     }
-    const productId = ($('reward-product')?.value || '').trim();
+    if (!tierKey) {
+      setMsg('Falta el nivel del regalo.', true);
+      return false;
+    }
+    const productId = (fields?.productId || '').trim();
     if (!productId) {
       setMsg('Elige un producto del POS para el regalo.', true);
-      $('reward-product')?.focus?.();
-      return;
+      return false;
     }
     const product = rewardProductsCache.find((p) => String(p.id) === productId);
     const title = String(product?.name || '').trim();
     if (!title) {
       setMsg('El producto elegido no es válido.', true);
-      return;
+      return false;
     }
     const isUnitProduct = product?.sale_unit === 'unit';
-    const qtyRaw = ($('reward-qty')?.value || '').trim();
+    const qtyRaw = (fields?.qtyRaw || '').trim();
     let quantity = qtyRaw === '' ? 1 : Number(qtyRaw);
     if (!Number.isFinite(quantity) || quantity <= 0) {
       setMsg('Indica una cantidad válida mayor que 0.', true);
-      $('reward-qty')?.focus?.();
-      return;
+      return false;
     }
     if (isUnitProduct) {
       quantity = Math.round(quantity);
       if (quantity < 1) {
         setMsg('Para productos por unidad la cantidad debe ser al menos 1.', true);
-        return;
+        return false;
       }
     }
-    const trigger = $('reward-trigger')?.value || 'on_upgrade';
-    const tier = ($('reward-tier')?.value || '').trim() || null;
-    const desc = ($('reward-desc')?.value || '').trim();
+    const trigger = fields?.trigger || 'on_upgrade';
+    const desc = (fields?.desc || '').trim();
     let spend = null;
     if (trigger === 'spend_threshold') {
-      const raw = ($('reward-spend')?.value || '').trim();
+      const raw = (fields?.spendRaw || '').trim();
       spend = raw === '' ? null : Number(raw);
       if (spend == null || Number.isNaN(spend) || spend < 0) {
         setMsg('Indica un gasto objetivo válido.', true);
-        return;
+        return false;
       }
     }
 
-    setMsg('Guardando regalo…', false);
+    if (!opts.quietOk) setMsg('Guardando regalo…', false);
     const payload = {
       club_id: ctx.club.id,
       title,
       description: desc,
-      tier_key: tier,
+      tier_key: tierKey,
       trigger_type: trigger,
       trigger_spend_eur: spend,
       is_active: true,
@@ -1100,14 +1345,10 @@
           'Regalo guardado sin cantidad. Ejecuta 053_membership_reward_quantity.sql en Supabase.',
           true,
         );
-        if ($('reward-product')) $('reward-product').value = '';
-        if ($('reward-qty')) $('reward-qty').value = '1';
-        if ($('reward-desc')) $('reward-desc').value = '';
-        if ($('reward-spend')) $('reward-spend').value = '';
-        syncRewardQtyUnitLabel();
+        if (opts.formRoot) clearRewardFields(opts.formRoot);
         await loadRewards();
         renderRewards();
-        return;
+        return true;
       }
     }
     if (
@@ -1126,13 +1367,10 @@
           'Regalo guardado sin enlace al POS. Ejecuta 052_membership_reward_products.sql en Supabase para la entrega automática.',
           true,
         );
-        if ($('reward-product')) $('reward-product').value = '';
-        if ($('reward-qty')) $('reward-qty').value = '1';
-        if ($('reward-desc')) $('reward-desc').value = '';
-        if ($('reward-spend')) $('reward-spend').value = '';
+        if (opts.formRoot) clearRewardFields(opts.formRoot);
         await loadRewards();
         renderRewards();
-        return;
+        return true;
       }
     }
 
@@ -1140,20 +1378,19 @@
       if (isMissingTableErr(error)) {
         migrationMissing = true;
         setMsg('Ejecuta 046_club_membership_tiers.sql en Supabase para activar regalos.', true);
-        return;
+        return false;
       }
       setMsg(error.message || 'No se pudo añadir el regalo.', true);
-      return;
+      return false;
     }
 
-    if ($('reward-product')) $('reward-product').value = '';
-    if ($('reward-qty')) $('reward-qty').value = '1';
-    if ($('reward-desc')) $('reward-desc').value = '';
-    if ($('reward-spend')) $('reward-spend').value = '';
-    syncRewardQtyUnitLabel();
+    if (opts.formRoot) clearRewardFields(opts.formRoot);
     await loadRewards();
     renderRewards();
-    setMsg('Regalo añadido. En el POS se entregará gratis a socios de ese nivel (una vez).', false);
+    if (!opts.quietOk) {
+      setMsg('Regalo añadido a este nivel. En el POS se entregará gratis (una vez).', false);
+    }
+    return true;
   }
 
   /**
@@ -1359,6 +1596,14 @@
     });
     $('tier-create-name')?.addEventListener('input', syncCreateTierPreview);
     $('tier-create-color')?.addEventListener('input', syncCreateTierPreview);
+    $('tier-create-gift-product')?.addEventListener('change', () => {
+      syncRewardQtyUnitLabel(
+        $('tier-create-gift-product'),
+        $('tier-create-gift-qty-unit'),
+        $('tier-create-gift-qty'),
+      );
+    });
+    $('tier-create-gift-trigger')?.addEventListener('change', syncCreateGiftSpendVisibility);
     $('tier-create-name')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1371,11 +1616,7 @@
       if (!modal || modal.classList.contains('is-hidden')) return;
       closeCreateTierModal();
     });
-    $('reward-add')?.addEventListener('click', () => void addReward());
-    $('reward-trigger')?.addEventListener('change', syncRewardSpendVisibility);
-    $('reward-product')?.addEventListener('change', syncRewardQtyUnitLabel);
-    syncRewardSpendVisibility();
-    syncRewardQtyUnitLabel();
+    syncCreateGiftSpendVisibility();
   }
 
   async function refreshMembershipUi() {
@@ -1387,7 +1628,7 @@
       await loadTiers();
       renderTiers();
       await loadRewardProducts();
-      fillRewardProductSelect();
+      fillAllRewardProductSelects();
       await loadRewards();
       renderRewards();
       notifyLabelsUpdated();
@@ -1428,7 +1669,7 @@
       if (isAdmin()) {
         renderTiers();
         await loadRewardProducts();
-        fillRewardProductSelect();
+        fillAllRewardProductSelects();
         renderRewards();
       }
       notifyLabelsUpdated();
