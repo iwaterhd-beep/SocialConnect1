@@ -41,10 +41,32 @@ create table if not exists public.club_member_dues_payments (
   shift_id uuid references public.shifts (id) on delete set null,
   notes text not null default '',
   created_by uuid references auth.users (id) on delete set null,
-  created_at timestamptz not null default now(),
-  constraint club_member_dues_payments_split_check
-    check (abs((wallet_eur + club_eur) - total_eur) < 0.005)
+  created_at timestamptz not null default now()
 );
+
+-- Por si la tabla quedó a medias de un intento anterior.
+alter table public.club_member_dues_payments
+  add column if not exists total_eur numeric(12, 2);
+alter table public.club_member_dues_payments
+  add column if not exists wallet_eur numeric(12, 2) not null default 0;
+alter table public.club_member_dues_payments
+  add column if not exists club_eur numeric(12, 2) not null default 0;
+alter table public.club_member_dues_payments
+  add column if not exists payment_method text not null default 'cash';
+alter table public.club_member_dues_payments
+  add column if not exists shift_id uuid references public.shifts (id) on delete set null;
+alter table public.club_member_dues_payments
+  add column if not exists notes text not null default '';
+alter table public.club_member_dues_payments
+  add column if not exists created_by uuid references auth.users (id) on delete set null;
+alter table public.club_member_dues_payments
+  add column if not exists created_at timestamptz not null default now();
+
+alter table public.club_member_dues_payments
+  drop constraint if exists club_member_dues_payments_split_check;
+alter table public.club_member_dues_payments
+  add constraint club_member_dues_payments_split_check
+  check (abs((wallet_eur + club_eur) - total_eur) < 0.005);
 
 create index if not exists club_member_dues_payments_member_idx
   on public.club_member_dues_payments (member_id, created_at desc);
