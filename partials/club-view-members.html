@@ -165,6 +165,20 @@
             <button type="button" class="btn btn--ghost btn--small" id="member-wallet-adjust-sub">− Retirar</button>
           </div>
           <p id="member-wallet-adjust-status" class="msg" role="status"></p>
+
+          <div class="member-dues-pay" id="member-dues-pay">
+            <h3 class="member-wallet-adjust__title">Cuota de socio</h3>
+            <p class="hint member-dues-pay__hint" id="member-dues-pay-hint">Configura la cuota en Ajustes.</p>
+            <div class="member-dues-pay__row">
+              <label class="visually-hidden" for="member-dues-pay-method">Forma de cobro</label>
+              <select class="select" id="member-dues-pay-method" aria-label="Forma de cobro de la cuota">
+                <option value="cash">Efectivo</option>
+                <option value="card">Tarjeta</option>
+              </select>
+              <button type="button" class="btn btn--small" id="member-dues-pay-btn">Cobrar cuota</button>
+            </div>
+            <p id="member-dues-pay-status" class="msg" role="status"></p>
+          </div>
         </div>
 
         <div id="member-wallet-ledger-wrap" class="member-wallet-ledger is-hidden" hidden>
@@ -326,8 +340,9 @@
             </p>
           </div>
           <div class="form__row">
-            <label for="member-enrollment-fee" data-currency-label="Cuota inscripción ({s})">Cuota inscripción (€)</label>
+            <label for="member-enrollment-fee" data-currency-label="Cuota inscripción (ficha, {s})">Cuota inscripción (ficha, €)</label>
             <input class="input" id="member-enrollment-fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            <p class="hint hint--small">Solo informativa. La cuota cobrable se configura en Ajustes.</p>
           </div>
           <div class="form__row">
             <label for="member-wallet-balance" data-currency-label="Saldo monedero ({s})">Saldo monedero (€)</label>

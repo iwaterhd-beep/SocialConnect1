@@ -1627,6 +1627,9 @@
     }
     const adjustStatus = $('member-wallet-adjust-status');
     if (adjustStatus) adjustStatus.textContent = '';
+    const duesStatus = $('member-dues-pay-status');
+    if (duesStatus) duesStatus.textContent = '';
+    refreshMemberDuesPayUi();
     await renderMemberProfileHero(m, 0, 0);
     const ledgerPromise = renderMemberWalletLedger(memberId);
 
@@ -2263,6 +2266,7 @@
     const k = String(kind || '').toLowerCase();
     if (k === 'tpv_sale') return 'Venta POS';
     if (k === 'tpv_void') return 'Anulación POS';
+    if (k === 'membership_dues') return 'Cuota de socio';
     return 'Ajuste';
   }
 
@@ -2533,6 +2537,109 @@
     const verb = sign < 0 ? 'Retirados' : 'Ingresados';
     setMemberWalletAdjustStatus(
       `${verb} ${formatMoney(amt)}${affectsCash ? ' (en caja del turno)' : ''}. Saldo: ${newBal != null ? formatMoney(newBal) : 'actualizado'}.`,
+      false,
+    );
+    if (typeof window.scClubRefreshFinance === 'function') {
+      await window.scClubRefreshFinance();
+    }
+    await loadMembersTable();
+    if (typeof window.scClubInventoryReloadMembers === 'function') {
+      await window.scClubInventoryReloadMembers();
+    }
+    await showMemberProfile(selectedMemberId);
+  }
+
+  function setMemberDuesPayStatus(text, isError) {
+    const el = $('member-dues-pay-status');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (isError ? ' msg--error' : text ? ' msg--ok' : '');
+  }
+
+  function getClubDuesConfig() {
+    const club = ctx?.club || {};
+    const amount = club.member_dues_amount_eur != null ? Number(club.member_dues_amount_eur) : 0;
+    let wallet = club.member_dues_wallet_eur != null ? Number(club.member_dues_wallet_eur) : 0;
+    if (!Number.isFinite(amount) || amount < 0) return { amount: 0, wallet: 0, clubPart: 0 };
+    if (!Number.isFinite(wallet) || wallet < 0) wallet = 0;
+    if (wallet > amount) wallet = amount;
+    return {
+      amount,
+      wallet,
+      clubPart: Math.round((amount - wallet) * 100) / 100,
+    };
+  }
+
+  function refreshMemberDuesPayUi() {
+    const hint = $('member-dues-pay-hint');
+    const btn = $('member-dues-pay-btn');
+    const cfg = getClubDuesConfig();
+    if (!hint) return;
+    if (cfg.amount <= 0) {
+      hint.textContent = 'Configura la cuota en Ajustes para poder cobrarla aquí.';
+      if (btn) btn.disabled = true;
+      return;
+    }
+    if (btn) btn.disabled = false;
+    if (cfg.wallet >= cfg.amount - 0.0005) {
+      hint.textContent = `Cuota ${formatMoney(cfg.amount)} → todo al monedero.`;
+    } else if (cfg.wallet <= 0.0005) {
+      hint.textContent = `Cuota ${formatMoney(cfg.amount)} → todo para el club.`;
+    } else {
+      hint.textContent = `Cuota ${formatMoney(cfg.amount)} → ${formatMoney(cfg.wallet)} monedero + ${formatMoney(cfg.clubPart)} club.`;
+    }
+  }
+
+  window.scClubRefreshMemberDuesUi = refreshMemberDuesPayUi;
+
+  async function payMemberDues() {
+    if (!selectedMemberId) {
+      setMemberDuesPayStatus('Abre el perfil de un socio primero.', true);
+      return;
+    }
+    const cfg = getClubDuesConfig();
+    if (cfg.amount <= 0) {
+      setMemberDuesPayStatus('Configura la cuota en Ajustes (importe > 0).', true);
+      return;
+    }
+    const method = String($('member-dues-pay-method')?.value || 'cash').toLowerCase() === 'card' ? 'card' : 'cash';
+    let shiftId = null;
+    if (method === 'cash') {
+      shiftId = await getClubOpenShiftId();
+      if (!shiftId) {
+        setMemberDuesPayStatus('Abre un turno de caja para cobrar la cuota en efectivo.', true);
+        return;
+      }
+    }
+    const ok = confirm(
+      method === 'cash'
+        ? `¿Cobrar cuota de ${formatMoney(cfg.amount)} en efectivo?`
+        : `¿Cobrar cuota de ${formatMoney(cfg.amount)} con tarjeta?`,
+    );
+    if (!ok) return;
+
+    setMemberDuesPayStatus('Cobrando cuota…', false);
+    const { data, error } = await sb().rpc('club_member_pay_dues', {
+      p_member_id: selectedMemberId,
+      p_payment_method: method,
+      p_shift_id: shiftId,
+      p_notes: 'Cuota de socio',
+    });
+    if (error) {
+      const msg =
+        error.code === 'PGRST202' ||
+        error.code === '42883' ||
+        /club_member_pay_dues/i.test(error.message || '')
+          ? 'Ejecuta la migración 059_club_member_dues.sql en Supabase.'
+          : error.message || 'No se pudo cobrar la cuota.';
+      setMemberDuesPayStatus(msg, true);
+      return;
+    }
+    const wallet = data?.wallet_eur != null ? Number(data.wallet_eur) : cfg.wallet;
+    const clubPart = data?.club_eur != null ? Number(data.club_eur) : cfg.clubPart;
+    const bal = data?.new_balance != null ? Number(data.new_balance) : null;
+    setMemberDuesPayStatus(
+      `Cuota cobrada: ${formatMoney(data?.total_eur ?? cfg.amount)} (${formatMoney(wallet)} monedero · ${formatMoney(clubPart)} club)${bal != null ? `. Saldo: ${formatMoney(bal)}` : ''}.`,
       false,
     );
     if (typeof window.scClubRefreshFinance === 'function') {
@@ -5304,6 +5411,10 @@
     $('member-wallet-adjust-sub')?.addEventListener('click', () => {
       void applyMemberWalletAdjust(-1);
     });
+    $('member-dues-pay-btn')?.addEventListener('click', () => {
+      void payMemberDues();
+    });
+    refreshMemberDuesPayUi();
     $('member-cancel')?.addEventListener('click', () => {
       const id = ($('member-edit-id')?.value || '').trim();
       setMemberMsg('', false);

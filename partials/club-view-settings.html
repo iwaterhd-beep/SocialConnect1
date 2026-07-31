@@ -119,6 +119,69 @@
 </section>
 
 <section
+  class="card-section sc-settings-dues"
+  id="club-dues-section"
+  hidden
+  aria-labelledby="club-dues-title"
+>
+  <div class="sc-settings-head">
+    <h2 id="club-dues-title">Cuota de socios</h2>
+    <p class="hint sc-settings-head__meta">Importe y reparto al cobrar la cuota.</p>
+  </div>
+  <div class="sc-settings-dues__body">
+    <div class="form__row">
+      <label for="club-dues-amount" id="club-dues-amount-label" data-currency-label="Importe de la cuota ({s})">Importe de la cuota (€)</label>
+      <input
+        class="input"
+        id="club-dues-amount"
+        type="number"
+        inputmode="decimal"
+        min="0"
+        step="0.01"
+        placeholder="0"
+      />
+      <p class="hint hint--small">0 = sin cuota por defecto. Usa la moneda de Ajustes.</p>
+    </div>
+    <fieldset class="sc-settings-dues__split" aria-labelledby="club-dues-split-legend">
+      <legend id="club-dues-split-legend">Al cobrar la cuota</legend>
+      <label class="sc-settings-pay__item">
+        <input type="radio" name="club-dues-mode" id="club-dues-mode-wallet" value="wallet" checked />
+        <span class="sc-settings-pay__copy">
+          <strong>Todo al monedero</strong>
+          <span class="hint">El socio puede gastarlo en el POS</span>
+        </span>
+      </label>
+      <label class="sc-settings-pay__item">
+        <input type="radio" name="club-dues-mode" id="club-dues-mode-split" value="split" />
+        <span class="sc-settings-pay__copy">
+          <strong>Reparto club + monedero</strong>
+          <span class="hint">Parte para el club y parte para dispensar</span>
+        </span>
+      </label>
+    </fieldset>
+    <div id="club-dues-split-fields" class="sc-settings-dues__split-fields is-hidden" hidden>
+      <div class="form__row">
+        <label for="club-dues-wallet" id="club-dues-wallet-label" data-currency-label="Al monedero ({s})">Al monedero (€)</label>
+        <input
+          class="input"
+          id="club-dues-wallet"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          step="0.01"
+          placeholder="0"
+        />
+      </div>
+      <p class="hint sc-settings-dues__club-preview" id="club-dues-club-preview">Para el club: —</p>
+    </div>
+  </div>
+  <div class="row-actions sc-settings-actions">
+    <button type="button" class="btn btn--small" id="club-dues-save">Guardar cuota</button>
+  </div>
+  <p id="club-dues-msg" class="msg" role="status" aria-live="polite"></p>
+</section>
+
+<section
   class="card-section sc-settings-team"
   id="club-team-section"
   hidden

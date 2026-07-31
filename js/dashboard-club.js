@@ -31,18 +31,28 @@
     let { data: club, error } = await sb()
       .from('clubs')
       .select(
-        'id, name, cif, email, address, member_min_age, currency_symbol, is_active, pay_cash_enabled, pay_card_enabled, pay_wallet_enabled',
+        'id, name, cif, email, address, member_min_age, currency_symbol, is_active, pay_cash_enabled, pay_card_enabled, pay_wallet_enabled, member_dues_amount_eur, member_dues_wallet_eur',
       )
       .eq('id', clubId)
       .maybeSingle();
 
-    if (error && (error.code === '42703' || /currency_symbol|member_min_age|pay_(cash|card|wallet)_enabled/i.test(error.message || ''))) {
+    if (
+      error &&
+      (error.code === '42703' ||
+        /currency_symbol|member_min_age|pay_(cash|card|wallet)_enabled|member_dues_/i.test(error.message || ''))
+    ) {
       const msg = String(error.message || '');
+      const missingDues = /member_dues_/i.test(msg);
       const missingPay = /pay_(cash|card|wallet)_enabled/i.test(msg);
       const missingCurrency = /currency_symbol/i.test(msg);
-      const missingAge = /member_min_age/i.test(msg) || (!missingCurrency && !missingPay && error.code === '42703');
+      const missingAge =
+        /member_min_age/i.test(msg) ||
+        (!missingCurrency && !missingPay && !missingDues && error.code === '42703');
       let cols = 'id, name, cif, email, address, is_active';
-      if (!missingAge && !missingCurrency) {
+      if (!missingAge && !missingCurrency && !missingPay) {
+        cols =
+          'id, name, cif, email, address, member_min_age, currency_symbol, is_active, pay_cash_enabled, pay_card_enabled, pay_wallet_enabled';
+      } else if (!missingAge && !missingCurrency) {
         cols = 'id, name, cif, email, address, member_min_age, currency_symbol, is_active';
       } else if (!missingAge) {
         cols = 'id, name, cif, email, address, member_min_age, is_active';
@@ -58,6 +68,8 @@
         if (club.pay_cash_enabled == null) club.pay_cash_enabled = true;
         if (club.pay_card_enabled == null) club.pay_card_enabled = true;
         if (club.pay_wallet_enabled == null) club.pay_wallet_enabled = true;
+        if (club.member_dues_amount_eur == null) club.member_dues_amount_eur = 0;
+        if (club.member_dues_wallet_eur == null) club.member_dues_wallet_eur = 0;
       }
     }
 
@@ -554,6 +566,136 @@
         window.scClubApplyTpvPayMethods();
       }
       setClubPayMethodsMsg('Métodos de cobro guardados.', false);
+    });
+  }
+
+  function setClubDuesMsg(text, isError) {
+    const el = $('club-dues-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('msg--error', Boolean(isError));
+  }
+
+  function currencySymFromClub(club) {
+    return (
+      club?.currency_symbol ||
+      (typeof window.scGetCurrencySymbol === 'function' ? window.scGetCurrencySymbol() : '€')
+    );
+  }
+
+  function updateClubDuesPreview() {
+    const sym = currencySymFromClub(ctxRef?.club);
+    const total = Number(($('club-dues-amount')?.value || '').replace(',', '.'));
+    const splitOn = $('club-dues-mode-split')?.checked === true;
+    const splitFields = $('club-dues-split-fields');
+    if (splitFields) {
+      splitFields.hidden = !splitOn;
+      splitFields.classList.toggle('is-hidden', !splitOn);
+    }
+    const preview = $('club-dues-club-preview');
+    if (!preview) return;
+    if (!splitOn || !Number.isFinite(total) || total < 0) {
+      preview.textContent = `Para el club: —`;
+      return;
+    }
+    let wallet = Number(($('club-dues-wallet')?.value || '').replace(',', '.'));
+    if (!Number.isFinite(wallet) || wallet < 0) wallet = 0;
+    if (wallet > total) wallet = total;
+    const clubPart = Math.round((total - wallet) * 100) / 100;
+    preview.textContent = `Para el club: ${clubPart.toLocaleString('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}\u00a0${sym}`;
+  }
+
+  function fillClubDuesForm(club) {
+    const amount = club?.member_dues_amount_eur != null ? Number(club.member_dues_amount_eur) : 0;
+    const wallet = club?.member_dues_wallet_eur != null ? Number(club.member_dues_wallet_eur) : 0;
+    if ($('club-dues-amount')) {
+      $('club-dues-amount').value = Number.isFinite(amount) ? String(amount) : '0';
+    }
+    const isSplit = Number.isFinite(amount) && amount > 0 && Number.isFinite(wallet) && wallet < amount - 0.0005;
+    if ($('club-dues-mode-wallet')) $('club-dues-mode-wallet').checked = !isSplit;
+    if ($('club-dues-mode-split')) $('club-dues-mode-split').checked = isSplit;
+    if ($('club-dues-wallet')) {
+      $('club-dues-wallet').value = Number.isFinite(wallet) ? String(wallet) : '0';
+    }
+    const sym = currencySymFromClub(club);
+    const amountLabel = $('club-dues-amount-label');
+    if (amountLabel) amountLabel.textContent = `Importe de la cuota (${sym})`;
+    const walletLabel = $('club-dues-wallet-label');
+    if (walletLabel) walletLabel.textContent = `Al monedero (${sym})`;
+    updateClubDuesPreview();
+  }
+
+  function initClubDuesSection(ctx) {
+    const sec = $('club-dues-section');
+    if (!sec || ctx.profile.role !== 'admin_club') return;
+    sec.hidden = false;
+    fillClubDuesForm(ctx.club);
+
+    if (sec.dataset.bound === '1') return;
+    sec.dataset.bound = '1';
+
+    $('club-dues-amount')?.addEventListener('input', updateClubDuesPreview);
+    $('club-dues-wallet')?.addEventListener('input', updateClubDuesPreview);
+    sec.querySelectorAll('input[name="club-dues-mode"]').forEach((el) => {
+      el.addEventListener('change', updateClubDuesPreview);
+    });
+
+    $('club-dues-save')?.addEventListener('click', async () => {
+      const amountRaw = ($('club-dues-amount')?.value || '').trim().replace(',', '.');
+      const amount = amountRaw === '' ? 0 : Number(amountRaw);
+      if (!Number.isFinite(amount) || amount < 0) {
+        setClubDuesMsg('Indica un importe de cuota válido (≥ 0).', true);
+        return;
+      }
+      const splitOn = $('club-dues-mode-split')?.checked === true;
+      let wallet = amount;
+      if (splitOn) {
+        const walletRaw = ($('club-dues-wallet')?.value || '').trim().replace(',', '.');
+        wallet = walletRaw === '' ? 0 : Number(walletRaw);
+        if (!Number.isFinite(wallet) || wallet < 0) {
+          setClubDuesMsg('Indica cuánto va al monedero (≥ 0).', true);
+          return;
+        }
+        if (wallet > amount) {
+          setClubDuesMsg('El monedero no puede ser mayor que la cuota.', true);
+          return;
+        }
+      }
+
+      setClubDuesMsg('Guardando…', false);
+      const { data, error } = await sb()
+        .from('clubs')
+        .update({
+          member_dues_amount_eur: Math.round(amount * 100) / 100,
+          member_dues_wallet_eur: Math.round(wallet * 100) / 100,
+        })
+        .eq('id', ctx.club.id)
+        .select('id, member_dues_amount_eur, member_dues_wallet_eur')
+        .single();
+
+      if (error) {
+        const msg =
+          error.code === '42501' || /policy/i.test(error.message || '')
+            ? 'Sin permiso para actualizar el club. Revisa las políticas RLS (migración 042).'
+            : error.code === '42703' || /member_dues_/i.test(error.message || '')
+              ? 'Ejecuta en Supabase la migración 059_club_member_dues.sql.'
+              : error.message || 'No se pudo guardar la cuota.';
+        setClubDuesMsg(msg, true);
+        return;
+      }
+
+      Object.assign(ctx.club, {
+        member_dues_amount_eur: data?.member_dues_amount_eur != null ? Number(data.member_dues_amount_eur) : amount,
+        member_dues_wallet_eur: data?.member_dues_wallet_eur != null ? Number(data.member_dues_wallet_eur) : wallet,
+      });
+      fillClubDuesForm(ctx.club);
+      if (typeof window.scClubRefreshMemberDuesUi === 'function') {
+        window.scClubRefreshMemberDuesUi();
+      }
+      setClubDuesMsg('Cuota de socios guardada.', false);
     });
   }
 
@@ -1117,6 +1259,7 @@
     const k = String(kind || '').toLowerCase();
     if (k === 'tpv_sale') return 'Venta POS (monedero)';
     if (k === 'tpv_void') return 'Anulación POS';
+    if (k === 'membership_dues') return 'Cuota de socio';
     return 'Ajuste monedero';
   }
 
@@ -1196,13 +1339,42 @@
     return summarizeShiftWalletLedger(rows).cashNet;
   }
 
+  async function fetchShiftDuesCashExtra(shiftId) {
+    if (!shiftId) return 0;
+    let { data, error } = await sb()
+      .from('club_member_dues_payments')
+      .select('total_eur, wallet_eur, payment_method')
+      .eq('shift_id', shiftId)
+      .eq('payment_method', 'cash');
+    if (
+      error &&
+      (error.code === '42P01' ||
+        error.code === '42703' ||
+        /club_member_dues_payments|member_dues/i.test(error.message || ''))
+    ) {
+      return 0;
+    }
+    if (error) return 0;
+    let extra = 0;
+    (data || []).forEach((r) => {
+      const wallet = Number(r.wallet_eur) || 0;
+      const total = Number(r.total_eur) || 0;
+      // Si hubo crédito a monedero, el total ya entró en caja vía cash_eur del ledger.
+      if (wallet <= 0.005 && total > 0) extra += total;
+    });
+    return extra;
+  }
+
   async function fetchShiftCashExpected(shiftId) {
     const [shiftRes, dispRes] = await Promise.all([
       sb().from('shifts').select('opening_float_eur').eq('id', shiftId).maybeSingle(),
       fetchShiftDispenses(shiftId),
     ]);
     const dispenseIds = (dispRes.dispenses || []).map((d) => d.id).filter(Boolean);
-    const walletCashNet = await fetchShiftWalletCashNet(shiftId, dispenseIds);
+    const [walletCashNet, duesCashExtra] = await Promise.all([
+      fetchShiftWalletCashNet(shiftId, dispenseIds),
+      fetchShiftDuesCashExtra(shiftId),
+    ]);
     const opening =
       shiftRes.data && shiftRes.data.opening_float_eur != null
         ? Number(shiftRes.data.opening_float_eur)
@@ -1214,7 +1386,8 @@
       cardSales,
       walletSales,
       walletCashNet,
-      expectedCash: opening + cashSales + walletCashNet,
+      duesCashExtra,
+      expectedCash: opening + cashSales + walletCashNet + duesCashExtra,
       hasPaymentMethod: dispRes.hasPaymentMethod,
       dispenseIds,
     };
@@ -1270,9 +1443,10 @@
   async function buildShiftSummaryHtml(clubId, shiftId) {
     const dispRes = await fetchShiftDispenses(shiftId);
     const dispenseIds = (dispRes.dispenses || []).map((d) => d.id).filter(Boolean);
-    const [shiftRes, walletCashNet, walletSectionHtml, evRes, prodRes] = await Promise.all([
+    const [shiftRes, walletCashNet, duesCashExtra, walletSectionHtml, evRes, prodRes] = await Promise.all([
       sb().from('shifts').select('*').eq('id', shiftId).maybeSingle(),
       fetchShiftWalletCashNet(shiftId, dispenseIds),
+      fetchShiftDuesCashExtra(shiftId),
       buildShiftWalletSectionHtml(shiftId, dispRes.dispenses),
       fetchShiftStockEvents(shiftId),
       sb()
@@ -1330,7 +1504,8 @@
 
     const opening = shift && shift.opening_float_eur != null ? Number(shift.opening_float_eur) : 0;
     const walletCash = Number(walletCashNet) || 0;
-    const expectedCash = opening + cashSales + walletCash;
+    const duesCash = Number(duesCashExtra) || 0;
+    const expectedCash = opening + cashSales + walletCash + duesCash;
     const closingCash =
       shift && shift.closing_cash_total_eur != null ? Number(shift.closing_cash_total_eur) : null;
     const floatFwd =
@@ -1399,7 +1574,12 @@
             ? `<p style="margin:0.35rem 0 0">Recargas / retiradas monedero en efectivo: <strong>${escapeHtml(walletCash >= 0 ? `+${formatMoneyEUR(walletCash)}` : formatMoneyEUR(walletCash))}</strong></p>`
             : ''
         }
-        <p style="margin:0.35rem 0 0">Efectivo esperado en caja (cambio + ventas efectivo + monedero en efectivo): <strong>${escapeHtml(formatMoneyEUR(expectedCash))}</strong></p>
+        ${
+          duesCash > 0.005
+            ? `<p style="margin:0.35rem 0 0">Cuotas en efectivo (solo club): <strong>${escapeHtml(formatMoneyEUR(duesCash))}</strong></p>`
+            : ''
+        }
+        <p style="margin:0.35rem 0 0">Efectivo esperado en caja (cambio + ventas efectivo + monedero/cuotas en efectivo): <strong>${escapeHtml(formatMoneyEUR(expectedCash))}</strong></p>
         <p style="margin:0.35rem 0 0">Efectivo contado al cerrar: <strong>${closingCash !== null ? escapeHtml(formatMoneyEUR(closingCash)) : '—'}</strong></p>
         ${
           cashDiff !== null
@@ -1620,6 +1800,7 @@
       let opening = 0;
       let walletSales = 0;
       let walletCashNet = 0;
+      let duesCashExtra = 0;
       let walletRecargas = 0;
       try {
         if (shiftId) {
@@ -1630,6 +1811,7 @@
           expectedCash = info.expectedCash;
           walletSales = info.walletSales || 0;
           walletCashNet = info.walletCashNet || 0;
+          duesCashExtra = info.duesCashExtra || 0;
           const ledgerRows = await fetchShiftWalletLedger(shiftId, info.dispenseIds || []);
           const wSum = summarizeShiftWalletLedger(ledgerRows);
           walletRecargas = wSum.recargasCash;
@@ -1654,7 +1836,9 @@
           Math.abs(walletCashNet) > 0.005
             ? ` Monedero en efectivo (neto): ${walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(walletCashNet)}.`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} = cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}${cardLine}${walletLine}`;
+        const duesLine =
+          duesCashExtra > 0.005 ? ` Cuotas solo club: ${formatMoneyEUR(duesCashExtra)}.` : '';
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(expectedCash)} = cambio ${formatMoneyEUR(opening)} + ventas efectivo ${formatMoneyEUR(cashSales)}${walletCashLine}${duesLine}${cardLine}${walletLine}`;
       }
       const onCashInput = () => updateWizardArqueoDiff(expectedCash);
       $('wiz-close-cash')?.addEventListener('input', onCashInput);
@@ -1802,7 +1986,11 @@
           Math.abs(info.walletCashNet || 0) > 0.005
             ? ` Monedero en efectivo (neto): ${info.walletCashNet >= 0 ? '+' : ''}${formatMoneyEUR(info.walletCashNet)}.`
             : '';
-        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(info.expectedCash)} = cambio ${formatMoneyEUR(info.opening)} + ventas efectivo ${formatMoneyEUR(info.cashSales)}${walletCashLine}${cardLine}${walletLine}`;
+        const duesLine =
+          (info.duesCashExtra || 0) > 0.005
+            ? ` Cuotas solo club: ${formatMoneyEUR(info.duesCashExtra)}.`
+            : '';
+        hintEl.textContent = `Efectivo esperado: ${formatMoneyEUR(info.expectedCash)} = cambio ${formatMoneyEUR(info.opening)} + ventas efectivo ${formatMoneyEUR(info.cashSales)}${walletCashLine}${duesLine}${cardLine}${walletLine}`;
       }
       updateShiftCloseDiff(info.expectedCash);
     } catch (_) {
@@ -1902,6 +2090,8 @@
     if (viewName === 'settings' && ctxRef?.profile?.role === 'admin_club') {
       fillClubLegalForm(ctxRef.club);
       fillClubCurrencyForm(ctxRef.club);
+      fillClubPayMethodsForm(ctxRef.club);
+      fillClubDuesForm(ctxRef.club);
       void refreshClubTeamTable(ctxRef.club.id, ctxRef.profile.id);
     }
   }
@@ -2064,6 +2254,7 @@
       initClubLegalSection(ctx);
       initClubCurrencySection(ctx);
       initClubPayMethodsSection(ctx);
+      initClubDuesSection(ctx);
       initClubTeamSection(ctx);
     }
 

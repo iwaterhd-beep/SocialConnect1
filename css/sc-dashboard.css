@@ -1539,11 +1539,12 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 .club-app .has-club-topnav .club-view-stage.sc-settings-grid {
   display: grid;
   grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.7fr);
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   grid-template-areas:
     'legal legal'
     'currency team'
     'pay team'
+    'dues team'
     'password team';
   gap: 10px;
   height: 100%;
@@ -1571,6 +1572,13 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   overflow: visible;
 }
 
+.sc-settings-grid .sc-settings-dues {
+  grid-area: dues;
+  align-self: start;
+  height: auto;
+  overflow: visible;
+}
+
 .sc-settings-grid .sc-settings-password {
   grid-area: password;
   align-self: start;
@@ -1589,10 +1597,11 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-grid:not(:has(#club-team-section:not([hidden]))) {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto auto auto;
   grid-template-areas:
     'legal legal'
     'currency pay'
+    'dues dues'
     'password password';
   height: 100%;
   max-height: 100%;
@@ -1637,6 +1646,10 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
 
 .sc-settings-pay .sc-settings-head::before {
   background: #16a34a;
+}
+
+.sc-settings-dues .sc-settings-head::before {
+  background: #ca8a04;
 }
 
 .sc-settings-team .sc-settings-head::before {
@@ -1825,6 +1838,66 @@ body.club-dark.club-app .sc-settings-pay__copy strong {
   color: #f8fafc;
 }
 
+.sc-settings-dues__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sc-settings-dues__split {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-settings-dues__split legend {
+  padding: 0;
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #64748b;
+}
+
+.sc-settings-dues__split-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-settings-dues__club-preview {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.member-dues-pay {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.member-dues-pay__hint {
+  margin: 0 0 8px;
+}
+
+.member-dues-pay__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.member-dues-pay__row .select {
+  min-width: 120px;
+  flex: 1 1 120px;
+}
+
+body.club-dark.club-app .member-dues-pay {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
 .sc-settings-team .sc-compact-grid {
   gap: 8px 12px !important;
   flex-shrink: 0;
@@ -1863,6 +1936,7 @@ body.club-dark.club-app .sc-settings-pay__copy strong {
       'legal'
       'currency'
       'pay'
+      'dues'
       'password'
       'team';
   }
