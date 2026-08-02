@@ -13,7 +13,8 @@
     products: [],
     categories: [],
     filterCategoryId: '',
-    sortBy: 'name_asc',
+    categoryFilterTouched: false,
+    sortBy: 'category',
     shiftId: null,
     shiftOpenedAt: null,
     uiBound: false,
@@ -184,7 +185,15 @@
       .order('name', { ascending: true });
     if (error) throw error;
     state.categories = data || [];
+    applyDefaultCategoryFilter();
     renderCategoryControls();
+  }
+
+  function applyDefaultCategoryFilter() {
+    if (state.categoryFilterTouched) return;
+    if (state.filterCategoryId) return;
+    if (!state.categories.length) return;
+    state.filterCategoryId = state.categories[0].id;
   }
 
   function renderCategoryControls() {
@@ -200,13 +209,19 @@
       });
       select.value = current;
       if (select.value !== current) {
-        state.filterCategoryId = '';
-        select.value = '';
+        // id inválido: volver a la primera categoría por defecto
+        if (!state.categoryFilterTouched && state.categories[0]) {
+          state.filterCategoryId = state.categories[0].id;
+          select.value = state.filterCategoryId;
+        } else {
+          state.filterCategoryId = '';
+          select.value = '';
+        }
       }
     }
 
     const sort = $('stk-sort-by');
-    if (sort) sort.value = state.sortBy || 'name_asc';
+    if (sort) sort.value = state.sortBy || 'category';
 
     const row = $('stk-cat-chips');
     if (!row) return;
@@ -218,6 +233,7 @@
       b.style.setProperty('--cat-accent', val ? categoryAccentColor(label) : '#16a34a');
       b.textContent = label;
       b.addEventListener('click', () => {
+        state.categoryFilterTouched = true;
         state.filterCategoryId = val;
         if ($('stk-filter-category')) $('stk-filter-category').value = val;
         renderCategoryControls();
@@ -545,12 +561,13 @@
     if (state.uiBound) return;
     state.uiBound = true;
     $('stk-filter-category')?.addEventListener('change', () => {
+      state.categoryFilterTouched = true;
       state.filterCategoryId = ($('stk-filter-category')?.value || '').trim();
       renderCategoryControls();
       renderManualTable();
     });
     $('stk-sort-by')?.addEventListener('change', () => {
-      state.sortBy = ($('stk-sort-by')?.value || 'name_asc').trim() || 'name_asc';
+      state.sortBy = ($('stk-sort-by')?.value || 'category').trim() || 'category';
       renderManualTable();
     });
     document.addEventListener('click', (e) => {
