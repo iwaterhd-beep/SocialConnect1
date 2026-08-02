@@ -2840,6 +2840,157 @@ body.club-dark.club-app .sc-stock-chips .chip {
   scrollbar-width: thin;
 }
 
+/* Finanzas — paneles + barra flotante */
+.sc-finance-layout--panels {
+  position: relative;
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.sc-finance-panel:not(.is-active) {
+  display: none !important;
+}
+
+.sc-finance-panel.is-active {
+  display: block;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.sc-finance-fab-nav {
+  position: sticky;
+  bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: calc(100% - 1rem);
+  margin: 0.5rem auto 0;
+  padding: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle, #e8ecf0);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.04),
+    0 14px 36px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  order: 99;
+}
+
+.sc-finance-fab-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sc-finance-layout--panels {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-finance-layout--panels > .sc-finance-fab-nav {
+  order: 99;
+  position: fixed;
+  left: 50%;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 40;
+}
+
+@media (min-width: 901px) {
+  .club-app .sc-finance-layout--panels > .sc-finance-fab-nav {
+    left: calc(var(--sidebar-w, 240px) + (100vw - var(--sidebar-w, 240px)) / 2);
+  }
+}
+
+.sc-finance-fab-nav__btn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary, #64748b);
+  background: transparent;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sc-finance-fab-nav__btn:hover {
+  color: var(--text-primary, #0f172a);
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.sc-finance-fab-nav__btn.is-active {
+  color: #fff;
+  background: var(--green-600, #16a34a);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.28);
+}
+
+.sc-finance-fab-filters {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.8rem !important;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle, #e8ecf0);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.sc-finance-fab-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.sc-finance-fab-chips .chip {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+body.club-dark.club-app .sc-finance-fab-nav {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+
+body.club-dark.club-app .sc-finance-fab-nav__btn {
+  color: #94a3b8;
+}
+
+body.club-dark.club-app .sc-finance-fab-nav__btn:hover {
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+body.club-dark.club-app .sc-finance-fab-nav__btn.is-active {
+  color: #fff;
+  background: var(--green-600, #16a34a);
+}
+
+body.club-dark.club-app .sc-finance-fab-filters {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
 .sc-finance-kpis-card {
   grid-column: 1 / -1;
 }
@@ -3282,64 +3433,18 @@ body.club-dark.club-app .sc-finance-layout .sc-finance-sales__filters .chip.is-a
   background: rgba(30, 41, 59, 0.95);
 }
 
-/* Finanzas — acordeones (cerrados en móvil) */
+/* Finanzas — paneles (legado collapse desactivado) */
 .sc-finance-collapse {
   padding: 0 !important;
   overflow: hidden;
 }
 
-.sc-finance-collapse > .sc-finance-collapse__summary {
-  list-style: none;
-  cursor: pointer;
-  user-select: none;
-  margin: 0;
-  padding: 12px 14px 12px 16px;
-}
-
-.sc-finance-collapse > .sc-finance-collapse__summary::-webkit-details-marker {
+.sc-finance-layout--panels .sc-finance-collapse {
   display: none;
-}
-
-.sc-finance-collapse > .sc-finance-collapse__summary::marker {
-  content: '';
-}
-
-.sc-finance-collapse > .sc-finance-collapse__summary::after {
-  content: '▾';
-  float: right;
-  margin-top: 0.15rem;
-  color: var(--text-muted, #64748b);
-  font-size: 0.85rem;
-  transition: transform 0.18s ease;
-}
-
-.sc-finance-collapse[open] > .sc-finance-collapse__summary::after {
-  transform: rotate(-180deg);
 }
 
 .sc-finance-collapse__body {
   padding: 0 14px 14px;
-}
-
-.club-app .sc-finance-collapse .sc-finance-sales__head::before {
-  left: 6px;
-  top: 0.55rem;
-  bottom: 0.55rem;
-}
-
-@media (min-width: 901px) {
-  .sc-finance-collapse > .sc-finance-collapse__summary {
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .sc-finance-collapse > .sc-finance-collapse__summary::after {
-    display: none;
-  }
-
-  .sc-finance-collapse__body {
-    padding: 0 16px 16px;
-  }
 }
 
 /* Finanzas — móvil */
@@ -3350,20 +3455,31 @@ body.club-dark.club-app .sc-finance-layout .sc-finance-sales__filters .chip.is-a
     overflow-x: hidden;
     overflow-y: visible;
     gap: 8px;
-    padding-bottom: 1.25rem;
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
     min-width: 0;
   }
 
   .club-app .sc-finance-layout > .card-section,
-  .club-app .sc-finance-layout > .sc-finance-collapse {
+  .club-app .sc-finance-layout > .sc-finance-panel {
     padding: 12px 14px !important;
     border-radius: 14px;
     min-width: 0;
     overflow: hidden;
   }
 
-  .club-app .sc-finance-layout > .sc-finance-collapse {
-    padding: 0 !important;
+  .sc-finance-fab-nav {
+    max-width: calc(100vw - 1.25rem);
+    padding: 0.35rem;
+  }
+
+  .sc-finance-fab-nav__btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  .sc-finance-fab-filters {
+    top: 0;
+    margin-bottom: 0.75rem;
   }
 
   .sc-finance-hero {

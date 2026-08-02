@@ -4388,7 +4388,6 @@
     const tbody = $('finance-inventory-adjust-tbody');
     const emptyEl = $('finance-inventory-adjust-empty');
     const summaryEl = $('finance-inventory-adjust-summary');
-    const section = $('finance-inventory-adjust-section');
     if (!tbody || !ctx) return;
 
     const rangeLabel = financeDateRangeLabel(
@@ -4433,19 +4432,21 @@
         error.code === '42P01' ||
         (error.message && error.message.includes('inventory_stock_adjustments'))
       ) {
-        if (section) section.hidden = true;
+        tbody.innerHTML =
+          '<tr><td colspan="5">La tabla de ajustes no está disponible en este club.</td></tr>';
+        setFinanceEmptyVisible(emptyEl, false);
+        setStatText('finance-adjust-stat-count', '—');
+        setStatText('finance-adjust-stat-in', '—');
+        setStatText('finance-adjust-stat-out', '—');
         return;
       }
       tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
       setFinanceEmptyVisible(emptyEl, false);
-      if (section) section.hidden = false;
       setStatText('finance-adjust-stat-count', '—');
       setStatText('finance-adjust-stat-in', '—');
       setStatText('finance-adjust-stat-out', '—');
       return;
     }
-
-    if (section) section.hidden = false;
 
     const list = rows || [];
     const pids = [...new Set(list.map((r) => r.product_id).filter(Boolean))];
@@ -4670,8 +4671,55 @@
     if (retailVal && showRetailKpi) retailVal.textContent = formatMoney(totalRetail);
   }
 
+  let financeActivePanel = 'resumen';
+  let financePanelNavBound = false;
+
+  const FINANCE_PANELS = ['resumen', 'cierres', 'ajustes', 'monedero', 'ventas'];
+
+  function setFinancePanel(panelId) {
+    const id = FINANCE_PANELS.includes(panelId) ? panelId : 'resumen';
+    financeActivePanel = id;
+    document.querySelectorAll('.sc-finance-panel[data-finance-panel]').forEach((panel) => {
+      const on = panel.getAttribute('data-finance-panel') === id;
+      panel.classList.toggle('is-active', on);
+      panel.hidden = !on;
+    });
+    document.querySelectorAll('[data-finance-panel-go]').forEach((btn) => {
+      const on = btn.getAttribute('data-finance-panel-go') === id;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    try {
+      const hash = `#finance-${id}`;
+      if (location.hash !== hash) {
+        history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    const main = document.querySelector('.app-main');
+    if (main) main.scrollTop = 0;
+  }
+
+  function bindFinancePanelNavOnce() {
+    if (financePanelNavBound) return;
+    financePanelNavBound = true;
+    document.querySelectorAll('[data-finance-panel-go]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-finance-panel-go') || 'resumen';
+        setFinancePanel(id);
+      });
+    });
+    const fromHash = String(location.hash || '')
+      .replace(/^#finance-/, '')
+      .trim();
+    if (FINANCE_PANELS.includes(fromHash)) setFinancePanel(fromHash);
+    else setFinancePanel(financeActivePanel);
+  }
+
   async function refreshFinance() {
     if (!ctx) return;
+    bindFinancePanelNavOnce();
     bindFinanceSectionFiltersOnce();
     setFinanceMsg('Cargando…', false);
 
@@ -5560,30 +5608,11 @@
   }
 
   function syncFinanceCollapsesForViewport() {
-    const desktop = window.matchMedia('(min-width: 901px)').matches;
-    document.querySelectorAll('.sc-finance-collapse').forEach((el) => {
-      if (desktop) el.open = true;
-      else el.open = false;
-    });
+    /* paneles flotantes: ya no usamos details/summary */
   }
 
   function bindFinanceCollapsesOnce() {
-    if (bindFinanceCollapsesOnce._bound) return;
-    bindFinanceCollapsesOnce._bound = true;
-    syncFinanceCollapsesForViewport();
-    const mq = window.matchMedia('(min-width: 901px)');
-    const onChange = () => syncFinanceCollapsesForViewport();
-    if (typeof mq.addEventListener === 'function') mq.addEventListener('change', onChange);
-    else if (typeof mq.addListener === 'function') mq.addListener(onChange);
-
-    document.querySelectorAll('.sc-finance-collapse').forEach((el) => {
-      el.addEventListener('toggle', (ev) => {
-        if (window.matchMedia('(min-width: 901px)').matches && !el.open) {
-          el.open = true;
-          ev.preventDefault?.();
-        }
-      });
-    });
+    bindFinancePanelNavOnce();
   }
 
   window.scInitClubSociosFinance = async function (c) {
