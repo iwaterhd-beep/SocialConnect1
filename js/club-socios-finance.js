@@ -3703,6 +3703,13 @@
     renderFinanceVentasRangeChips();
   }
 
+  function normalizeFinancePaymentMethod(raw) {
+    const v = String(raw || 'cash').toLowerCase().trim();
+    if (v === 'wallet' || v === 'monedero') return 'wallet';
+    if (v === 'card' || v === 'tarjeta') return 'card';
+    return 'cash';
+  }
+
   async function refreshFinanceKpis() {
     if (!ctx) return;
     const clubId = ctx.club.id;
@@ -3713,13 +3720,17 @@
     const d30 = startOfDay(now);
     d30.setDate(d30.getDate() - 30);
 
+    const setDash = (id) => {
+      if ($(id)) $(id).textContent = '—';
+    };
+
     let { data: rows, error } = await sb()
       .from('tpv_dispenses')
       .select('price_charged_eur, created_at, payment_method')
       .eq('club_id', clubId)
       .gte('created_at', d30.toISOString())
       .order('created_at', { ascending: false })
-      .limit(500);
+      .limit(5000);
 
     if (
       error &&
@@ -3734,7 +3745,7 @@
         .eq('club_id', clubId)
         .gte('created_at', d30.toISOString())
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(5000);
       rows = retry.data;
       error = retry.error;
     }
@@ -3758,18 +3769,155 @@
     let sumToday = 0;
     let sum7 = 0;
     let sum30 = 0;
+    let nToday = 0;
+    let n7 = 0;
+    let n30 = 0;
+    let payCash = 0;
+    let payCard = 0;
+    let payWallet = 0;
 
     list.forEach((r) => {
       const t = new Date(r.created_at).getTime();
       const p = Number(r.price_charged_eur) || 0;
-      if (t >= d0.getTime()) sumToday += p;
-      if (t >= d7.getTime()) sum7 += p;
+      if (t >= d0.getTime()) {
+        sumToday += p;
+        nToday += 1;
+        const method = normalizeFinancePaymentMethod(r.payment_method);
+        if (method === 'card') payCard += p;
+        else if (method === 'wallet') payWallet += p;
+        else payCash += p;
+      }
+      if (t >= d7.getTime()) {
+        sum7 += p;
+        n7 += 1;
+      }
       sum30 += p;
+      n30 += 1;
     });
 
     if ($('finance-kpi-today')) $('finance-kpi-today').textContent = formatMoney(sumToday);
     if ($('finance-kpi-7d')) $('finance-kpi-7d').textContent = formatMoney(sum7);
     if ($('finance-kpi-30d')) $('finance-kpi-30d').textContent = formatMoney(sum30);
+    if ($('finance-kpi-today-hint')) {
+      $('finance-kpi-today-hint').textContent = `${nToday} línea${nToday === 1 ? '' : 's'}`;
+    }
+    if ($('finance-kpi-7d-hint')) {
+      $('finance-kpi-7d-hint').textContent = `${n7} línea${n7 === 1 ? '' : 's'}`;
+    }
+    if ($('finance-kpi-30d-hint')) {
+      $('finance-kpi-30d-hint').textContent = `${n30} línea${n30 === 1 ? '' : 's'}`;
+    }
+    if ($('finance-kpi-pay-cash')) $('finance-kpi-pay-cash').textContent = formatMoney(payCash);
+    if ($('finance-kpi-pay-card')) $('finance-kpi-pay-card').textContent = formatMoney(payCard);
+    if ($('finance-kpi-pay-wallet')) $('finance-kpi-pay-wallet').textContent = formatMoney(payWallet);
+
+    // Snapshot: socios, alertas, saldos monedero (en paralelo)
+    try {
+      const [membersRes, productsRes, walletRes] = await Promise.all([
+        (async () => {
+          let q = sb()
+            .from('club_members')
+            .select('id', { count: 'exact', head: true })
+            .eq('club_id', clubId)
+            .eq('is_active', true);
+          if (hasArchivedMemberColumn) q = q.eq('is_archived', false);
+          let res = await q;
+          if (
+            res.error &&
+            (res.error.code === '42703' ||
+              String(res.error.message || '').toLowerCase().includes('is_archived'))
+          ) {
+            hasArchivedMemberColumn = false;
+            res = await sb()
+              .from('club_members')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', clubId)
+              .eq('is_active', true);
+          }
+          return res;
+        })(),
+        sb()
+          .from('inventory_products')
+          .select('stock_grams, stock_alert_grams, is_archived')
+          .eq('club_id', clubId),
+        sb()
+          .from('club_members')
+          .select('wallet_balance_eur, is_active, is_archived')
+          .eq('club_id', clubId)
+          .eq('is_active', true),
+      ]);
+
+      if ($('finance-kpi-members')) {
+        $('finance-kpi-members').textContent = membersRes.error
+          ? '—'
+          : String(membersRes.count ?? 0);
+      }
+
+      let alerts = 0;
+      if (!productsRes.error) {
+        (productsRes.data || []).forEach((p) => {
+          if (p.is_archived) return;
+          const min = Number(p.stock_alert_grams) || 0;
+          if (min <= 0) return;
+          if ((Number(p.stock_grams) || 0) <= min) alerts += 1;
+        });
+        if ($('finance-kpi-stock-alerts')) {
+          $('finance-kpi-stock-alerts').textContent = String(alerts);
+          $('finance-kpi-stock-alerts').classList.toggle('is-alert', alerts > 0);
+        }
+      } else if (
+        productsRes.error.code === '42703' ||
+        String(productsRes.error.message || '').toLowerCase().includes('is_archived')
+      ) {
+        const retry = await sb()
+          .from('inventory_products')
+          .select('stock_grams, stock_alert_grams')
+          .eq('club_id', clubId);
+        if (!retry.error) {
+          (retry.data || []).forEach((p) => {
+            const min = Number(p.stock_alert_grams) || 0;
+            if (min <= 0) return;
+            if ((Number(p.stock_grams) || 0) <= min) alerts += 1;
+          });
+        }
+        if ($('finance-kpi-stock-alerts')) {
+          $('finance-kpi-stock-alerts').textContent = retry.error ? '—' : String(alerts);
+          $('finance-kpi-stock-alerts').classList.toggle('is-alert', !retry.error && alerts > 0);
+        }
+      } else {
+        setDash('finance-kpi-stock-alerts');
+      }
+
+      let pos = 0;
+      let neg = 0;
+      if (!walletRes.error) {
+        (walletRes.data || []).forEach((m) => {
+          if (m.is_archived) return;
+          const bal = Number(m.wallet_balance_eur);
+          if (Number.isNaN(bal)) return;
+          if (bal > 0) pos += bal;
+          else if (bal < 0) neg += Math.abs(bal);
+        });
+        if ($('finance-kpi-wallet-pos')) $('finance-kpi-wallet-pos').textContent = formatMoney(pos);
+        if ($('finance-kpi-wallet-neg')) $('finance-kpi-wallet-neg').textContent = formatMoney(neg);
+      } else if (
+        walletRes.error.code === '42703' ||
+        String(walletRes.error.message || '').toLowerCase().includes('wallet') ||
+        String(walletRes.error.message || '').toLowerCase().includes('is_archived')
+      ) {
+        setDash('finance-kpi-wallet-pos');
+        setDash('finance-kpi-wallet-neg');
+      } else {
+        setDash('finance-kpi-wallet-pos');
+        setDash('finance-kpi-wallet-neg');
+      }
+    } catch (_) {
+      setDash('finance-kpi-members');
+      setDash('finance-kpi-stock-alerts');
+      setDash('finance-kpi-wallet-pos');
+      setDash('finance-kpi-wallet-neg');
+    }
+
     return true;
   }
 

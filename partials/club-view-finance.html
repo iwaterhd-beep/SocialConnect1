@@ -24,26 +24,100 @@
   >
     <div class="sc-finance-hero">
       <div class="sc-finance-hero__copy">
-        <p class="sc-finance-hero__eyebrow">Club · cifras</p>
-        <h2 id="finance-title">Resumen</h2>
-        <p class="hint sc-finance-hero__meta">Ventas y valoraciones del periodo.</p>
+        <p class="sc-finance-hero__eyebrow">Finanzas</p>
+        <h2 id="finance-title">Resumen del club</h2>
+        <p class="hint sc-finance-hero__meta">
+          Vista rápida de ventas, cobros de hoy y estado del club. Usa la barra inferior para el detalle.
+        </p>
       </div>
       <button type="button" class="btn btn--ghost btn--small" id="finance-refresh">Actualizar</button>
     </div>
-    <div class="finance-kpis" id="finance-kpis">
-      <div class="finance-kpi sc-kpi" style="--kpi-i: 0">
-        <span class="finance-kpi__label">Hoy</span>
-        <span class="finance-kpi__value" id="finance-kpi-today">—</span>
+
+    <div class="sc-finance-resumo">
+      <div class="sc-finance-resumo__block">
+        <h3 class="sc-finance-resumo__label">Ventas POS</h3>
+        <div class="finance-kpis finance-kpis--period" id="finance-kpis">
+          <div class="finance-kpi sc-kpi finance-kpi--accent" style="--kpi-i: 0">
+            <span class="finance-kpi__label">Hoy</span>
+            <span class="finance-kpi__value" id="finance-kpi-today">—</span>
+            <span class="finance-kpi__hint" id="finance-kpi-today-hint">— líneas</span>
+          </div>
+          <div class="finance-kpi sc-kpi" style="--kpi-i: 1">
+            <span class="finance-kpi__label">7 días</span>
+            <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
+            <span class="finance-kpi__hint" id="finance-kpi-7d-hint">— líneas</span>
+          </div>
+          <div class="finance-kpi sc-kpi" style="--kpi-i: 2">
+            <span class="finance-kpi__label">30 días</span>
+            <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
+            <span class="finance-kpi__hint" id="finance-kpi-30d-hint">— líneas</span>
+          </div>
+        </div>
       </div>
-      <div class="finance-kpi sc-kpi" style="--kpi-i: 1">
-        <span class="finance-kpi__label">7 días</span>
-        <span class="finance-kpi__value" id="finance-kpi-7d">—</span>
+
+      <div class="sc-finance-resumo__block">
+        <h3 class="sc-finance-resumo__label">Cobros de hoy</h3>
+        <div class="finance-kpis finance-kpis--pay" id="finance-pay-kpis">
+          <div class="finance-kpi sc-kpi finance-kpi--pay-cash">
+            <span class="finance-kpi__label">Efectivo</span>
+            <span class="finance-kpi__value" id="finance-kpi-pay-cash">—</span>
+          </div>
+          <div class="finance-kpi sc-kpi finance-kpi--pay-card">
+            <span class="finance-kpi__label">Tarjeta</span>
+            <span class="finance-kpi__value" id="finance-kpi-pay-card">—</span>
+          </div>
+          <div class="finance-kpi sc-kpi finance-kpi--pay-wallet">
+            <span class="finance-kpi__label">Monedero</span>
+            <span class="finance-kpi__value" id="finance-kpi-pay-wallet">—</span>
+          </div>
+        </div>
       </div>
-      <div class="finance-kpi sc-kpi" style="--kpi-i: 2">
-        <span class="finance-kpi__label">30 días</span>
-        <span class="finance-kpi__value" id="finance-kpi-30d">—</span>
+
+      <div class="sc-finance-resumo__block">
+        <h3 class="sc-finance-resumo__label">Estado del club</h3>
+        <div class="finance-kpis finance-kpis--snap" id="finance-snap-kpis">
+          <div class="finance-kpi sc-kpi">
+            <span class="finance-kpi__label">Socios activos</span>
+            <span class="finance-kpi__value" id="finance-kpi-members">—</span>
+          </div>
+          <div class="finance-kpi sc-kpi">
+            <span class="finance-kpi__label">Alertas stock</span>
+            <span class="finance-kpi__value" id="finance-kpi-stock-alerts">—</span>
+          </div>
+          <div class="finance-kpi sc-kpi">
+            <span class="finance-kpi__label">Saldo monederos +</span>
+            <span class="finance-kpi__value" id="finance-kpi-wallet-pos">—</span>
+          </div>
+          <div class="finance-kpi sc-kpi">
+            <span class="finance-kpi__label">Saldo monederos −</span>
+            <span class="finance-kpi__value" id="finance-kpi-wallet-neg">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-finance-resumo__block">
+        <h3 class="sc-finance-resumo__label">Ir a</h3>
+        <div class="sc-finance-resumo-jumps" role="group" aria-label="Accesos rápidos finanzas">
+          <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="ventas">
+            <span class="sc-finance-resumo-jump__title">Ventas POS</span>
+            <span class="sc-finance-resumo-jump__meta">Detalle y filtros</span>
+          </button>
+          <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="cierres">
+            <span class="sc-finance-resumo-jump__title">Cierres</span>
+            <span class="sc-finance-resumo-jump__meta">Historial de turnos</span>
+          </button>
+          <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="monedero">
+            <span class="sc-finance-resumo-jump__title">Monedero</span>
+            <span class="sc-finance-resumo-jump__meta">Movimientos y saldos</span>
+          </button>
+          <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="ajustes">
+            <span class="sc-finance-resumo-jump__title">Ajustes +/-</span>
+            <span class="sc-finance-resumo-jump__meta">Entradas y salidas</span>
+          </button>
+        </div>
       </div>
     </div>
+
     <section
       id="finance-admin-inventory-cost"
       class="finance-admin-inventory-cost is-hidden"

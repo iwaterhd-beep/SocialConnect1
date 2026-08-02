@@ -3059,11 +3059,35 @@ body.club-dark.club-app .sc-finance-fab-filters {
   align-self: flex-start;
 }
 
+.sc-finance-resumo {
+  display: grid;
+  gap: 1.15rem;
+  margin-top: 0.35rem;
+}
+
+.sc-finance-resumo__block {
+  min-width: 0;
+}
+
+.sc-finance-resumo__label {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+}
+
 .club-app .sc-finance-layout .finance-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
-  margin-top: 0.85rem;
+  margin-top: 0;
+}
+
+.club-app .sc-finance-layout .finance-kpis--pay,
+.club-app .sc-finance-layout .finance-kpis--snap {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
 .club-app .sc-finance-layout .finance-kpi {
@@ -3102,6 +3126,27 @@ body.club-dark.club-app .sc-finance-fab-filters {
   background: linear-gradient(180deg, #2563eb, #d97706);
 }
 
+.club-app .sc-finance-layout .finance-kpi:nth-child(4)::before {
+  background: linear-gradient(180deg, #7c3aed, #db2777);
+}
+
+.club-app .sc-finance-layout .finance-kpi--accent {
+  background: linear-gradient(160deg, #f0fdf4 0%, rgba(255, 255, 255, 0.95) 58%);
+  border-color: rgba(22, 163, 74, 0.28);
+}
+
+.club-app .sc-finance-layout .finance-kpi--pay-cash::before {
+  background: linear-gradient(180deg, #16a34a, #15803d);
+}
+
+.club-app .sc-finance-layout .finance-kpi--pay-card::before {
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+}
+
+.club-app .sc-finance-layout .finance-kpi--pay-wallet::before {
+  background: linear-gradient(180deg, #d97706, #b45309);
+}
+
 .club-app .sc-finance-layout .finance-kpi:hover {
   transform: translateY(-2px);
   border-color: rgba(22, 163, 74, 0.28);
@@ -3120,12 +3165,107 @@ body.club-dark.club-app .sc-finance-fab-filters {
 }
 
 .club-app .sc-finance-layout .finance-kpi__label {
+  display: block;
   font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: 0.3rem;
 }
 
 .club-app .sc-finance-layout .finance-kpi__value {
+  display: block;
   font-size: 1.35rem;
+  font-weight: 750;
   letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.club-app .sc-finance-layout .finance-kpi__hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.club-app .sc-finance-layout .finance-kpi__value.is-alert {
+  color: #b45309;
+}
+
+.sc-finance-resumo-jumps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.sc-finance-resumo-jump {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.sc-finance-resumo-jump:hover {
+  border-color: rgba(22, 163, 74, 0.4);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.sc-finance-resumo-jump__title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.sc-finance-resumo-jump__meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.finance-admin-inventory-cost {
+  margin-top: 1.15rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(100, 116, 139, 0.35);
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.finance-admin-inventory-cost__title {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+}
+
+.finance-admin-inventory-cost__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+body.club-dark.club-app .sc-finance-resumo-jump {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.club-dark.club-app .sc-finance-layout .finance-kpi--accent {
+  background: linear-gradient(160deg, rgba(22, 163, 74, 0.16) 0%, rgba(15, 23, 42, 0.55) 60%);
+}
+
+body.club-dark.club-app .finance-admin-inventory-cost {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(148, 163, 184, 0.25);
 }
 
 .club-app .sc-finance-block .sc-finance-sales__head,
