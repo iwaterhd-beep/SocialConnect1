@@ -4215,6 +4215,10 @@ body.club-dark.club-app .tpv-card {
   z-index: 570;
 }
 
+.club-app #inv-emoji-modal {
+  z-index: 560;
+}
+
 .club-app .shift-modal:not(.is-hidden) {
   position: fixed;
   inset: 0;

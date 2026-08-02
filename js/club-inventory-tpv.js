@@ -59,6 +59,7 @@
     staffById: {},
     emojiPickerReady: false,
     emojiPickerLoading: false,
+    emojiOpenBlockedUntil: 0,
     hasPurchaseCostColumn: true,
     hasRetailPriceColumn: true,
     /** Listados activos: false si la BD no tiene columna is_archived (migración 024). */
@@ -437,11 +438,17 @@
   }
 
   function openInvProductModal() {
+    closeInvEmojiModal();
     applyAdminInventoryPriceRows();
+    state.emojiOpenBlockedUntil = Date.now() + 450;
     window.scOpenShiftModal($('inv-product-modal'));
+    requestAnimationFrame(() => {
+      $('inv-product-name')?.focus();
+    });
   }
 
   function closeInvProductModal() {
+    closeInvEmojiModal();
     const modal = $('inv-product-modal');
     if (!modal) return;
     modal.classList.add('is-hidden');
@@ -469,8 +476,10 @@
   }
 
   async function openInvEmojiModal() {
+    if (Date.now() < (state.emojiOpenBlockedUntil || 0)) return;
     const ok = await ensureEmojiPickerLoaded();
     if (!ok) return;
+    if (Date.now() < (state.emojiOpenBlockedUntil || 0)) return;
     renderRecentEmojis();
     window.scOpenShiftModal($('inv-emoji-modal'));
   }
@@ -3869,12 +3878,17 @@
     });
     $('inv-cat-add')?.addEventListener('click', () => addCategory());
     $('inv-product-save')?.addEventListener('click', () => saveProduct());
-    $('inv-product-emoji-open')?.addEventListener('click', () => void openInvEmojiModal());
-    $('inv-product-emoji')?.addEventListener('click', () => void openInvEmojiModal());
-    $('inv-product-emoji')?.addEventListener('focus', () => void openInvEmojiModal());
+    $('inv-product-emoji-open')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      void openInvEmojiModal();
+    });
+    // Solo el botón 😀 abre el selector (el input no: evita ghost-click al crear producto).
     $('inv-open-menu-modal')?.addEventListener('click', () => openInvMenuModal());
     $('inv-open-cat-modal')?.addEventListener('click', () => openInvCatModal());
-    $('inv-open-product-modal')?.addEventListener('click', () => {
+    $('inv-open-product-modal')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       clearProductForm();
       openInvProductModal();
     });
@@ -3908,10 +3922,13 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
+      if ($('inv-emoji-modal') && !$('inv-emoji-modal').classList.contains('is-hidden')) {
+        closeInvEmojiModal();
+        return;
+      }
       if ($('inv-menu-modal') && !$('inv-menu-modal').classList.contains('is-hidden')) closeInvMenuModal();
       if ($('inv-cat-modal') && !$('inv-cat-modal').classList.contains('is-hidden')) closeInvCatModal();
       if ($('inv-product-modal') && !$('inv-product-modal').classList.contains('is-hidden')) closeInvProductModal();
-      if ($('inv-emoji-modal') && !$('inv-emoji-modal').classList.contains('is-hidden')) closeInvEmojiModal();
       if ($('inv-adjust-modal') && !$('inv-adjust-modal').classList.contains('is-hidden')) closeInvAdjustModal();
     });
     $('inv-product-new')?.addEventListener('click', () => {
