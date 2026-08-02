@@ -2104,6 +2104,63 @@
     renderTpvGrid();
   }
 
+  async function deleteInventoryProduct(p) {
+    if (!p?.id || !canManageInventoryEdits()) return;
+    if (
+      !confirm(
+        `¿Eliminar el producto «${p.name}»? Si tiene ventas POS o movimientos +/- de stock, se archivará y dejará de mostrarse; el histórico se conserva.`,
+      )
+    ) {
+      return;
+    }
+    setMsg('inv-status', 'Eliminando…', false);
+    const { error } = await sb().from('inventory_products').delete().eq('id', p.id);
+    if (!error) {
+      setMsg('inv-status', 'Producto eliminado.', false);
+      clearProductForm();
+      await loadProducts();
+      await refreshStockUi();
+      if (typeof window.scClubRefreshFinance === 'function') {
+        await window.scClubRefreshFinance();
+      }
+      return;
+    }
+    const msg = String(error.message || '').toLowerCase();
+    const fk =
+      error.code === '23503' ||
+      msg.includes('foreign key') ||
+      msg.includes('tpv_dispenses') ||
+      msg.includes('inventory_stock_adjustments');
+    if (fk && state.hasArchivedColumn) {
+      const { error: uerr } = await sb()
+        .from('inventory_products')
+        .update({ is_archived: true, stock_grams: 0 })
+        .eq('id', p.id);
+      if (uerr) {
+        setMsg('inv-status', uerr.message || 'No se pudo archivar.', true);
+        return;
+      }
+      setMsg(
+        'inv-status',
+        'Producto archivado (tenía ventas o ajustes; ya no aparece en inventario ni POS).',
+        false,
+      );
+      clearProductForm();
+      await loadProducts();
+      await refreshStockUi();
+      if (typeof window.scClubRefreshFinance === 'function') {
+        await window.scClubRefreshFinance();
+      }
+      return;
+    }
+    setMsg(
+      'inv-status',
+      error.message ||
+        'No se pudo borrar. Si hay ventas o ajustes, ejecuta en Supabase la migración 024_inventory_product_archived.sql y vuelve a intentar.',
+      true,
+    );
+  }
+
   function renderProductsTable() {
     const tbody = $('inv-products-tbody');
     if (!tbody) return;
@@ -2119,7 +2176,7 @@
       const canEdit = canManageInventoryEdits();
       const editBtns = canEdit
         ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
-          <button type="button" class="btn btn--ghost btn--small" data-del="${p.id}">Borrar</button>`
+          <button type="button" class="btn btn--ghost btn--small btn--danger" data-del="${p.id}">Eliminar</button>`
         : '';
       tr.innerHTML = `
         <td class="inv-emoji-cell">${escapeHtml(em || '—')}</td>
@@ -2136,63 +2193,10 @@
       if (lvl === 'out') tr.style.background = 'rgba(254, 226, 226, 0.35)';
       else if (lvl === 'low') tr.style.background = 'rgba(254, 243, 199, 0.35)';
       if (canEdit) {
-        tr.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
-        tr.querySelector('[data-del]').addEventListener('click', async () => {
-          if (
-            !confirm(
-              `¿Eliminar el producto «${p.name}»? Si tiene ventas POS o movimientos +/- de stock, se archivará y dejará de mostrarse; el histórico se conserva.`,
-            )
-          )
-            return;
-          setMsg('inv-status', 'Eliminando…', false);
-          const { error } = await sb().from('inventory_products').delete().eq('id', p.id);
-          if (!error) {
-            setMsg('inv-status', 'Producto eliminado.', false);
-            clearProductForm();
-            await loadProducts();
-            await refreshStockUi();
-            if (typeof window.scClubRefreshFinance === 'function') {
-              await window.scClubRefreshFinance();
-            }
-            return;
-          }
-          const msg = String(error.message || '').toLowerCase();
-          const fk =
-            error.code === '23503' ||
-            msg.includes('foreign key') ||
-            msg.includes('tpv_dispenses') ||
-            msg.includes('inventory_stock_adjustments');
-          if (fk && state.hasArchivedColumn) {
-            const { error: uerr } = await sb()
-              .from('inventory_products')
-              .update({ is_archived: true, stock_grams: 0 })
-              .eq('id', p.id);
-            if (uerr) {
-              setMsg('inv-status', uerr.message || 'No se pudo archivar.', true);
-              return;
-            }
-            setMsg(
-              'inv-status',
-              'Producto archivado (tenía ventas o ajustes; ya no aparece en inventario ni POS).',
-              false,
-            );
-            clearProductForm();
-            await loadProducts();
-            await refreshStockUi();
-            if (typeof window.scClubRefreshFinance === 'function') {
-              await window.scClubRefreshFinance();
-            }
-            return;
-          }
-          setMsg(
-            'inv-status',
-            error.message ||
-              'No se pudo borrar. Si hay ventas o ajustes, ejecuta en Supabase la migración 024_inventory_product_archived.sql y vuelve a intentar.',
-            true,
-          );
-        });
+        tr.querySelector('[data-edit]')?.addEventListener('click', () => editProduct(p));
+        tr.querySelector('[data-del]')?.addEventListener('click', () => void deleteInventoryProduct(p));
       }
-      tr.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
+      tr.querySelector('[data-adjust]')?.addEventListener('click', () => openInvAdjustModal(p));
       tbody.appendChild(tr);
     });
   }
@@ -2222,8 +2226,9 @@
             ? '<span class="badge-stock badge-stock--low">Stock bajo</span>'
             : '<span class="badge-stock badge-stock--ok">OK</span>';
       const canEdit = canManageInventoryEdits();
-      const editBtn = canEdit
-        ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>`
+      const editBtns = canEdit
+        ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
+           <button type="button" class="btn btn--ghost btn--small btn--danger" data-del="${p.id}" title="Eliminar producto">Eliminar</button>`
         : '';
       card.innerHTML = `
         <div class="inv-card__visual">
@@ -2237,15 +2242,16 @@
           <div class="inv-card__name">${escapeHtml(p.name)}</div>
           <div class="inv-card__stock">${escapeHtml(formatNum(p.stock_grams))} ${escapeHtml(unitShort(p))}</div>
           <div class="inv-card__actions">
-            ${editBtn}
+            ${editBtns}
             <button type="button" class="btn btn--ghost btn--small btn--adjust" data-adjust="${p.id}" title="Añadir o retirar stock">+/-</button>
           </div>
         </div>
       `;
       if (canEdit) {
-        card.querySelector('[data-edit]').addEventListener('click', () => editProduct(p));
+        card.querySelector('[data-edit]')?.addEventListener('click', () => editProduct(p));
+        card.querySelector('[data-del]')?.addEventListener('click', () => void deleteInventoryProduct(p));
       }
-      card.querySelector('[data-adjust]').addEventListener('click', () => openInvAdjustModal(p));
+      card.querySelector('[data-adjust]')?.addEventListener('click', () => openInvAdjustModal(p));
       wrap.appendChild(card);
     });
   }

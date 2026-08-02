@@ -4219,6 +4219,7 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
 
 .club-app .inv-card__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-top: 4px;
   padding-top: 6px;
@@ -4226,11 +4227,21 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
 }
 
 .club-app .inv-card__actions .btn {
-  flex: 1;
+  flex: 1 1 auto;
   justify-content: center;
   min-height: 28px;
   padding: 4px 8px;
   font-size: 0.6875rem;
+}
+
+.club-app .inv-card__actions .btn--danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.28);
+}
+
+.club-app .inv-card__actions .btn--danger:hover {
+  background: rgba(254, 226, 226, 0.7);
+  border-color: rgba(185, 28, 28, 0.45);
 }
 
 .club-app .inv-card__actions .btn--adjust {
