@@ -132,7 +132,7 @@
     return { ...gate, club };
   }
 
-  const homeShiftsFilter = { range: '7d', from: '', to: '' };
+  const homeShiftsFilter = { range: 'today', from: '', to: '' };
   let homeShiftsFilterBound = false;
   let homeShiftsCtxRef = null;
 
@@ -195,26 +195,178 @@
     return 'el rango elegido';
   }
 
-  async function fetchRecentShifts(clubId) {
+  function homePaymentMethodLabel(method) {
+    const m = String(method || 'cash').toLowerCase();
+    if (m === 'wallet') return 'Monedero';
+    if (m === 'card') return 'Tarjeta';
+    return 'Efectivo';
+  }
+
+  function homeFormatQty(n) {
+    const x = Number(n);
+    if (Number.isNaN(x)) return '—';
+    return x.toLocaleString('es-ES', { maximumFractionDigits: 3 });
+  }
+
+  async function fetchHomeDispenses(clubId) {
     const bounds = getHomeShiftsDateBounds(
       homeShiftsFilter.range,
       homeShiftsFilter.from,
       homeShiftsFilter.to,
     );
+    const limit = homeShiftsFilter.range === 'all' ? 200 : 120;
+    const fieldsFull =
+      'id, created_at, product_id, member_id, payment_method, price_charged_eur, grams_charged, grams_dispensed, notes';
+    const fieldsBasic =
+      'id, created_at, product_id, member_id, payment_method, price_charged_eur';
 
     let query = sb()
-      .from('shifts')
-      .select('*')
+      .from('tpv_dispenses')
+      .select(fieldsFull)
       .eq('club_id', clubId)
-      .order('opened_at', { ascending: false })
-      .limit(homeShiftsFilter.range === 'all' ? 100 : 50);
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (bounds.from) query = query.gte('created_at', bounds.from.toISOString());
+    if (bounds.to) query = query.lte('created_at', bounds.to.toISOString());
 
-    if (bounds.from) query = query.gte('opened_at', bounds.from.toISOString());
-    if (bounds.to) query = query.lte('opened_at', bounds.to.toISOString());
-
-    const { data, error } = await query;
+    let { data, error } = await query;
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('grams_charged') ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('notes'))
+    ) {
+      let q2 = sb()
+        .from('tpv_dispenses')
+        .select(fieldsBasic)
+        .eq('club_id', clubId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (bounds.from) q2 = q2.gte('created_at', bounds.from.toISOString());
+      if (bounds.to) q2 = q2.lte('created_at', bounds.to.toISOString());
+      ({ data, error } = await q2);
+    }
+    if (
+      error &&
+      (error.code === '42703' ||
+        String(error.message || '')
+          .toLowerCase()
+          .includes('payment_method'))
+    ) {
+      let q3 = sb()
+        .from('tpv_dispenses')
+        .select('id, created_at, product_id, member_id, price_charged_eur')
+        .eq('club_id', clubId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (bounds.from) q3 = q3.gte('created_at', bounds.from.toISOString());
+      if (bounds.to) q3 = q3.lte('created_at', bounds.to.toISOString());
+      ({ data, error } = await q3);
+    }
     if (error) throw error;
     return data || [];
+  }
+
+  async function renderHomeDispensesTable(clubId) {
+    const tbody = $('home-dispenses-tbody');
+    const emptyEl = $('home-shifts-empty');
+    const summaryEl = $('home-dispenses-summary');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    if (summaryEl) summaryEl.textContent = 'Cargando dispensaciones…';
+
+    let rows = [];
+    try {
+      rows = await fetchHomeDispenses(clubId);
+    } catch (e) {
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = e?.message || 'No se pudieron cargar las dispensaciones.';
+      }
+      if (summaryEl) summaryEl.textContent = '';
+      return;
+    }
+
+    if (!rows.length) {
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        emptyEl.textContent = `No hay dispensaciones en ${homeShiftsRangeLabel(
+          homeShiftsFilter.range,
+          homeShiftsFilter.from,
+          homeShiftsFilter.to,
+        )}.`;
+      }
+      if (summaryEl) summaryEl.textContent = '';
+      return;
+    }
+    if (emptyEl) emptyEl.hidden = true;
+
+    const productIds = [...new Set(rows.map((r) => r.product_id).filter(Boolean))];
+    const memberIds = [...new Set(rows.map((r) => r.member_id).filter(Boolean))];
+    const prodMap = {};
+    const memMap = {};
+
+    if (productIds.length) {
+      let { data: products } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji, sale_unit')
+        .in('id', productIds);
+      if (!products) {
+        const retry = await sb().from('inventory_products').select('id, name, emoji').in('id', productIds);
+        products = retry.data;
+      }
+      (products || []).forEach((p) => {
+        prodMap[p.id] = p;
+      });
+    }
+    if (memberIds.length) {
+      const { data: members } = await sb()
+        .from('club_members')
+        .select('id, display_name')
+        .in('id', memberIds);
+      (members || []).forEach((m) => {
+        memMap[m.id] = m;
+      });
+    }
+
+    let total = 0;
+    rows.forEach((r) => {
+      total += Number(r.price_charged_eur) || 0;
+      const pr = prodMap[r.product_id] || {};
+      const em = (pr.emoji || '').trim();
+      const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
+      const socio = r.member_id && memMap[r.member_id] ? memMap[r.member_id].display_name : '—';
+      const notes = String(r.notes || '').toLowerCase();
+      const isGift = notes.includes('regalo') || notes.includes('gift') || Number(r.price_charged_eur) === 0;
+      const unit = pr.sale_unit === 'unit' ? 'ud' : 'g';
+      const qtyRaw = r.grams_charged != null ? r.grams_charged : r.grams_dispensed;
+      const qtyText =
+        qtyRaw != null && qtyRaw !== '' ? `${homeFormatQty(qtyRaw)} ${unit}` : '—';
+      const tr = document.createElement('tr');
+      if (isGift) tr.classList.add('is-gift');
+      tr.innerHTML = `
+        <td>${escapeHtml(formatTs(r.created_at))}</td>
+        <td>${escapeHtml(prodLabel)}${isGift ? ' <span class="sc-home-dispenses__gift">Regalo</span>' : ''}</td>
+        <td>${escapeHtml(qtyText)}</td>
+        <td>${escapeHtml(socio || '—')}</td>
+        <td>${escapeHtml(isGift ? 'Regalo' : homePaymentMethodLabel(r.payment_method))}</td>
+        <td>${escapeHtml(formatMoneyEUR(r.price_charged_eur))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (summaryEl) {
+      summaryEl.textContent = `${rows.length.toLocaleString('es-ES')} dispensación(es) · total ${formatMoneyEUR(total)} · ${homeShiftsRangeLabel(
+        homeShiftsFilter.range,
+        homeShiftsFilter.from,
+        homeShiftsFilter.to,
+      )}`;
+    }
   }
 
   function bindHomeShiftsFilter(ctx) {
@@ -308,19 +460,9 @@
   async function refreshShiftsUI(ctx) {
     bindHomeShiftsFilter(ctx);
     const open = await getOpenShift(ctx.club.id);
-    let recent = await fetchRecentShifts(ctx.club.id);
-    // Mantener el turno abierto visible aunque quede fuera del filtro de fechas
-    if (open && !recent.some((r) => r.id === open.id)) {
-      recent = [open, ...recent];
-    }
     let staffMap = {};
     try {
-      const ids = [];
-      if (open) ids.push(open.opened_by);
-      (recent || []).forEach((row) => {
-        ids.push(row.opened_by, row.closed_by);
-      });
-      staffMap = await loadStaffEmailMap(ctx.club.id, ids);
+      staffMap = await loadStaffEmailMap(ctx.club.id, open ? [open.opened_by] : []);
     } catch (e) {
       /* ignore */
     }
@@ -355,37 +497,7 @@
 
     updateShellShiftIndicators(!!open);
 
-    const tbody = $('shifts-tbody');
-    const emptyEl = $('home-shifts-empty');
-    if (tbody) {
-      tbody.innerHTML = '';
-      if (!recent.length) {
-        if (emptyEl) {
-          emptyEl.hidden = false;
-          emptyEl.textContent = `No hay turnos en ${homeShiftsRangeLabel(
-            homeShiftsFilter.range,
-            homeShiftsFilter.from,
-            homeShiftsFilter.to,
-          )}.`;
-        }
-      } else {
-        if (emptyEl) emptyEl.hidden = true;
-        recent.forEach((row) => {
-          const tr = document.createElement('tr');
-          const state = row.closed_at ? 'Cerrado' : 'Abierto';
-          const openedBy = staffEmailLabel(staffMap, row.opened_by);
-          const closedBy = row.closed_at ? staffEmailLabel(staffMap, row.closed_by) : '—';
-          tr.innerHTML = `
-          <td>${escapeHtml(formatTs(row.opened_at))}</td>
-          <td>${escapeHtml(formatTs(row.closed_at))}</td>
-          <td>${escapeHtml(openedBy)}</td>
-          <td>${escapeHtml(closedBy)}</td>
-          <td>${escapeHtml(state)}</td>
-        `;
-          tbody.appendChild(tr);
-        });
-      }
-    }
+    await renderHomeDispensesTable(ctx.club.id);
 
     if (typeof window.scClubRefreshStockUi === 'function') {
       try {

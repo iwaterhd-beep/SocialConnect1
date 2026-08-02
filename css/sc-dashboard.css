@@ -1421,6 +1421,25 @@ body.club-app.has-club-topnav {
   color: #166534;
 }
 
+.sc-home-dispenses__summary {
+  margin: 0 0 0.65rem !important;
+}
+
+.sc-home-dispenses__gift {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.sc-home-dispenses tr.is-gift td {
+  background: rgba(124, 58, 237, 0.04);
+}
+
 @keyframes sc-home-pop {
   from {
     opacity: 0;

@@ -116,23 +116,23 @@
   </div>
 </section>
 
-<section class="card-section sc-home-shift" aria-labelledby="shift-title">
+<section class="card-section sc-home-shift sc-home-dispenses" aria-labelledby="home-dispenses-title">
   <div class="sc-home-shift__hero">
     <div class="sc-section-head" style="margin:0">
       <div>
-        <p class="sc-home-eyebrow">Caja en vivo</p>
-        <h2 id="shift-title">Turno de caja</h2>
+        <p class="sc-home-eyebrow">POS en vivo</p>
+        <h2 id="home-dispenses-title">Dispensaciones POS</h2>
       </div>
       <p id="shift-state" class="hint sc-section-head__meta sc-home-shift__state">Cargando…</p>
     </div>
   </div>
   <p class="hint sc-home-shift__lede" style="margin:0 0 0.85rem">
-    Usa <strong>Abrir turno</strong> / <strong>Cerrar turno</strong> arriba para gestionar la caja. Aquí tienes el historial.
+    Ventas y regalos del POS. El turno se gestiona con <strong>Abrir turno</strong> / <strong>Cerrar turno</strong> arriba.
   </p>
   <div class="sc-finance-toolbar sc-home-shifts-toolbar">
-    <div class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo historial de turnos">
-      <button type="button" class="chip" data-home-shifts-range="today">Hoy</button>
-      <button type="button" class="chip is-active" data-home-shifts-range="7d">7 días</button>
+    <div class="chip-row sc-chip-row-compact" role="group" aria-label="Periodo dispensaciones POS">
+      <button type="button" class="chip is-active" data-home-shifts-range="today">Hoy</button>
+      <button type="button" class="chip" data-home-shifts-range="7d">7 días</button>
       <button type="button" class="chip" data-home-shifts-range="30d">30 días</button>
       <button type="button" class="chip" data-home-shifts-range="all">Todas</button>
       <button type="button" class="chip" data-home-shifts-range="custom">Fechas</button>
@@ -149,19 +149,21 @@
       <button type="button" class="btn btn--ghost btn--small" id="home-shifts-apply">Aplicar</button>
     </div>
   </div>
-  <p id="home-shifts-empty" class="hint" hidden>No hay turnos en este periodo.</p>
+  <p id="home-dispenses-summary" class="hint sc-home-dispenses__summary"></p>
+  <p id="home-shifts-empty" class="hint" hidden>No hay dispensaciones en este periodo.</p>
   <div class="table-wrap">
     <table class="table-compact">
       <thead>
         <tr>
-          <th>Apertura</th>
-          <th>Cierre</th>
-          <th>Abierto por</th>
-          <th>Cerrado por</th>
-          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Cant.</th>
+          <th>Socio</th>
+          <th>Cobro</th>
+          <th>Importe</th>
         </tr>
       </thead>
-      <tbody id="shifts-tbody"></tbody>
+      <tbody id="home-dispenses-tbody"></tbody>
     </table>
   </div>
 </section>
