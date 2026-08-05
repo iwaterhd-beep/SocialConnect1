@@ -3544,6 +3544,10 @@
     const memberRaw = ($('tpv-selected-member')?.value || '').trim();
     const payMethod = getTpvPaymentMethod();
     const payFlags = getClubPayMethods();
+    if (!memberRaw) {
+      setMsg('tpv-status', 'Para dispensar debes seleccionar un perfil de socio.', true);
+      return;
+    }
     if (payMethod === 'cash' && !payFlags.cash) {
       setMsg('tpv-status', 'El cobro en efectivo está desactivado en Ajustes.', true);
       return;
