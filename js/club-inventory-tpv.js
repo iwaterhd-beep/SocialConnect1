@@ -264,7 +264,8 @@
       };
     }
     const ext = mediaExtFromFile(file);
-    const objectPath = `${state.ctx.club.id}/${productId}.${ext}`;
+    const unique = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const objectPath = `${state.ctx.club.id}/${productId}-${unique}.${ext}`;
     const defaultType = isProductVideoFile(file) ? 'video/mp4' : 'image/jpeg';
     const { error: upErr } = await sb().storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
       contentType: file.type || defaultType,
