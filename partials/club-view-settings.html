@@ -1,8 +1,30 @@
-<div class="club-view-stage sc-settings-grid">
+<div class="club-view-stage sc-finance-layout sc-finance-layout--panels sc-settings-layout">
+  <nav id="settings-fab-nav" class="sc-finance-fab-nav" aria-label="Secciones de ajustes">
+    <button type="button" class="sc-finance-fab-nav__btn is-active" data-settings-panel-go="legal" aria-pressed="true">
+      Datos legales
+    </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-settings-panel-go="currency" aria-pressed="false">
+      Moneda
+    </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-settings-panel-go="pay" aria-pressed="false">
+      Cobro
+    </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-settings-panel-go="dues" aria-pressed="false">
+      Cuota
+    </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-settings-panel-go="team" aria-pressed="false">
+      Equipo
+    </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-settings-panel-go="password" aria-pressed="false">
+      Contraseña
+    </button>
+  </nav>
+
 <section
-  class="card-section sc-settings-legal"
+  class="card-section sc-settings-legal sc-finance-panel"
   id="club-legal-section"
   hidden
+  data-settings-panel="legal"
   aria-labelledby="club-legal-title"
 >
   <div class="sc-settings-head">
@@ -38,9 +60,10 @@
 </section>
 
 <section
-  class="card-section sc-settings-currency"
+  class="card-section sc-settings-currency sc-finance-panel"
   id="club-currency-section"
   hidden
+  data-settings-panel="currency"
   aria-labelledby="club-currency-title"
 >
   <div class="sc-settings-head">
@@ -80,9 +103,10 @@
 </section>
 
 <section
-  class="card-section sc-settings-pay"
+  class="card-section sc-settings-pay sc-finance-panel"
   id="club-pay-methods-section"
   hidden
+  data-settings-panel="pay"
   aria-labelledby="club-pay-methods-title"
 >
   <div class="sc-settings-head">
@@ -119,9 +143,10 @@
 </section>
 
 <section
-  class="card-section sc-settings-dues"
+  class="card-section sc-settings-dues sc-finance-panel"
   id="club-dues-section"
   hidden
+  data-settings-panel="dues"
   aria-labelledby="club-dues-title"
 >
   <div class="sc-settings-head">
@@ -182,9 +207,10 @@
 </section>
 
 <section
-  class="card-section sc-settings-team"
+  class="card-section sc-settings-team sc-finance-panel"
   id="club-team-section"
   hidden
+  data-settings-panel="team"
   aria-labelledby="club-team-title"
 >
   <div class="sc-settings-head">
@@ -229,7 +255,11 @@
   </div>
 </section>
 
-<section class="card-section sc-settings-password" aria-labelledby="password-settings-title">
+<section
+  class="card-section sc-settings-password sc-finance-panel"
+  data-settings-panel="password"
+  aria-labelledby="password-settings-title"
+>
   <div class="sc-settings-head">
     <h2 id="password-settings-title">Contraseña</h2>
     <p class="hint sc-settings-head__meta">Tu usuario.</p>

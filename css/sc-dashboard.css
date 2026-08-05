@@ -1747,6 +1747,33 @@ body.club-dark.club-app .sc-home-shift__state.shift-state--open {
   font-size: 0.75rem;
 }
 
+.club-app .sc-settings-layout label {
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.club-app .sc-settings-layout .row-actions {
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.club-app .sc-settings-layout .msg:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+.club-app .sc-settings-layout .msg:not(:empty) {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+}
+
+.club-app .sc-settings-layout > .sc-settings-team.sc-finance-panel {
+  display: flex;
+  flex-direction: column;
+}
+
 .sc-settings-currency__body {
   display: flex;
   flex-direction: column;

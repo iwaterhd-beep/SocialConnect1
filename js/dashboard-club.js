@@ -2313,6 +2313,59 @@
     show(viewFromHash());
   }
 
+  const SETTINGS_PANEL_ORDER = ['legal', 'currency', 'pay', 'dues', 'team', 'password'];
+  let settingsAvailableSet = new Set();
+
+  function settingsPanelById(id) {
+    return document.querySelector(`[data-settings-panel="${id}"]`);
+  }
+
+  function settingsPanelAvailable(id) {
+    return settingsAvailableSet.has(id);
+  }
+
+  function setSettingsPanel(panelId) {
+    const available = SETTINGS_PANEL_ORDER.filter(settingsPanelAvailable);
+    const id = available.includes(panelId) ? panelId : available[0] || 'password';
+    document.querySelectorAll('[data-settings-panel]').forEach((panel) => {
+      const on = panel.getAttribute('data-settings-panel') === id;
+      panel.classList.toggle('is-active', on);
+      panel.hidden = !on;
+    });
+    document.querySelectorAll('[data-settings-panel-go]').forEach((btn) => {
+      const on = btn.getAttribute('data-settings-panel-go') === id;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    const main = document.querySelector('.app-main');
+    if (main) main.scrollTop = 0;
+  }
+
+  function initSettingsPanels() {
+    const navRoot = document.getElementById('settings-fab-nav');
+    if (navRoot && navRoot.dataset.settingsNavBound === '1') return;
+    if (navRoot) navRoot.dataset.settingsNavBound = '1';
+
+    settingsAvailableSet = new Set(
+      SETTINGS_PANEL_ORDER.filter((id) => {
+        const el = settingsPanelById(id);
+        return !!(el && !el.hasAttribute('hidden'));
+      }),
+    );
+
+    document.querySelectorAll('[data-settings-panel-go]').forEach((btn) => {
+      btn.hidden = !settingsPanelAvailable(btn.getAttribute('data-settings-panel-go'));
+      btn.addEventListener('click', () => {
+        setSettingsPanel(btn.getAttribute('data-settings-panel-go') || 'legal');
+      });
+    });
+
+    const active = document.querySelector('[data-settings-panel].is-active');
+    if (!active) {
+      setSettingsPanel(SETTINGS_PANEL_ORDER.find(settingsPanelAvailable) || 'password');
+    }
+  }
+
   async function init() {
     let ctx;
     try {
@@ -2369,6 +2422,7 @@
       initClubDuesSection(ctx);
       initClubTeamSection(ctx);
     }
+    initSettingsPanels();
 
     if (typeof window.scInitClubInventoryTpv === 'function') {
       try {
