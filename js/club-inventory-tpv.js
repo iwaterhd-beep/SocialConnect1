@@ -1970,13 +1970,20 @@
           : '';
       const catLabel = categoryName(p.category_id);
       const mediaUrl = productImagePublicUrl(p.image_path);
-      const visualHtml = mediaUrl
-        ? `<span class="tpv-card__visual tpv-card__visual--photo">
-             <img class="tpv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
-           </span>`
-        : `<span class="tpv-card__visual">
+      let visualHtml = `<span class="tpv-card__visual">
              <span class="tpv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
            </span>`;
+      if (mediaUrl) {
+        if (isProductVideoPath(p.image_path)) {
+          visualHtml = `<span class="tpv-card__visual tpv-card__visual--photo tpv-card__visual--video">
+               <video class="tpv-card__video" src="${escapeHtml(mediaUrl)}" muted playsinline preload="metadata" aria-label="${escapeHtml(p.name)}"></video>
+             </span>`;
+        } else {
+          visualHtml = `<span class="tpv-card__visual tpv-card__visual--photo">
+               <img class="tpv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
+             </span>`;
+        }
+      }
       card.style.setProperty('--cat-accent', categoryAccentColor(catLabel));
       card.innerHTML = `
         ${visualHtml}
@@ -2237,13 +2244,20 @@
            <button type="button" class="btn btn--ghost btn--small btn--danger" data-del="${p.id}" title="Eliminar producto">Eliminar</button>`
         : '';
       const mediaUrl = productImagePublicUrl(p.image_path);
-      const visualHtml = mediaUrl
-        ? `<div class="inv-card__visual inv-card__visual--photo">
-             <img class="inv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
-           </div>`
-        : `<div class="inv-card__visual">
+      let visualHtml = `<div class="inv-card__visual">
              <span class="inv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
            </div>`;
+      if (mediaUrl) {
+        if (isProductVideoPath(p.image_path)) {
+          visualHtml = `<div class="inv-card__visual inv-card__visual--photo inv-card__visual--video">
+               <video class="inv-card__video" src="${escapeHtml(mediaUrl)}" muted playsinline preload="metadata" aria-label="${escapeHtml(p.name)}"></video>
+             </div>`;
+        } else {
+          visualHtml = `<div class="inv-card__visual inv-card__visual--photo">
+               <img class="inv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
+             </div>`;
+        }
+      }
       card.innerHTML = `
         ${visualHtml}
         <div class="inv-card__body">
