@@ -428,6 +428,17 @@
   align-items: center;
 }
 
+.sc-admin-app .btn--danger {
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+}
+
+.sc-admin-app .btn--danger:hover {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: #b91c1c !important;
+  color: #b91c1c !important;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Tables — scroll interno                                                    */
 /* -------------------------------------------------------------------------- */

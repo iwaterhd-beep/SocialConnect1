@@ -169,6 +169,11 @@
         <td>${escapeHtml(row.email)}</td>
         <td>${escapeHtml(row.role)}</td>
         <td>${escapeHtml(String(row.auth_user_id || '—'))}</td>
+        <td class="actions">
+          <button type="button" class="btn btn--ghost btn--small btn--danger" data-access-remove="${escapeHtml(row.id)}" data-access-email="${escapeHtml(row.email)}">
+            Eliminar
+          </button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
@@ -222,6 +227,41 @@
         await refreshAccessTable();
       } catch (err) {
         setStatus(err.message, true);
+      }
+    });
+
+    $('access-tbody')?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-access-remove]');
+      if (!btn) return;
+      const accessId = btn.getAttribute('data-access-remove');
+      const email = btn.getAttribute('data-access-email') || 'este perfil';
+      if (!accessId) return;
+      if (
+        !confirm(
+          `¿Eliminar el perfil de ${email}?\n\nSe borrará su acceso al club, su perfil y su cuenta de Auth. Esta acción no se puede deshacer.`,
+        )
+      ) {
+        return;
+      }
+      btn.disabled = true;
+      try {
+        const { error } = await sb().rpc('superadmin_remove_user', {
+          p_access_id: accessId,
+        });
+        if (error) {
+          btn.disabled = false;
+          const msg =
+            error.code === 'PGRST202' || /superadmin_remove_user/i.test(error.message || '')
+              ? 'Ejecuta en Supabase la migración 061_reinstall_auth_trigger_superadmin_remove.sql.'
+              : error.message || 'No se pudo eliminar el perfil.';
+          setStatus(msg, true);
+          return;
+        }
+        await refreshAccessTable();
+        setStatus('Perfil eliminado.', false);
+      } catch (err) {
+        btn.disabled = false;
+        setStatus(err.message || 'No se pudo eliminar el perfil.', true);
       }
     });
 
