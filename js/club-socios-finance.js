@@ -1850,6 +1850,27 @@
       sel.appendChild(orphan);
       sel.value = keep;
     }
+    updateAvalistaRequiredUi();
+  }
+
+  function updateAvalistaRequiredUi() {
+    const hasMembers = countActiveMembersForAvalista() > 0;
+    const title = $('member-avalista-title');
+    if (title) {
+      const req = title.querySelector('.member-form-sc__required');
+      if (req) req.style.display = hasMembers ? '' : 'none';
+    }
+    const lede = $('member-avalista-title')?.closest('.member-form-sc__avalista-section')
+      ?.querySelector('.member-form-sc__avalista-lede');
+    if (lede) {
+      lede.textContent = hasMembers
+        ? 'Elige un socio ya dado de alta en este club. La base de datos no acepta solo un nombre escrito.'
+        : 'No hay otros socios todavía: ya puedes crear este como el primer socio sin avalista.';
+    }
+    const sel = $('member-avalista-select');
+    if (sel) {
+      sel.setAttribute('aria-required', hasMembers ? 'true' : 'false');
+    }
   }
 
   function syncAvalistaFromSelect() {
@@ -1981,6 +2002,7 @@
     $('member-dni').value = '';
     clearAvalistaForm();
     fillAvalistaSelectOptions(null);
+    updateAvalistaRequiredUi();
     setMemberBirthIso('');
     $('member-phone').value = '';
     $('member-email').value = '';
@@ -2732,7 +2754,7 @@
           'Debes elegir un socio avalista existente en el desplegable «Socio avalista (garante)».',
       };
     }
-    if (!avalistaInfo.name && !avalistaInfo.memberId) {
+    if (countActiveMembersForAvalista() > 0 && !avalistaInfo.name && !avalistaInfo.memberId) {
       return {
         ok: false,
         message: 'Debes indicar un socio avalista (garante) existente.',
