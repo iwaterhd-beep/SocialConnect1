@@ -31,6 +31,7 @@
   function strainLabel(strain) {
     if (strain === 'sativa') return 'Sativa';
     if (strain === 'indica') return 'Indica';
+    if (strain === 'hibrida') return 'Híbrida';
     return '';
   }
 

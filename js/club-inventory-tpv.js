@@ -2313,8 +2313,9 @@
       }
     }
     if ($('inv-product-strain')) {
+      const strain = (p.cannabis_strain || '').trim();
       $('inv-product-strain').value =
-        p.cannabis_strain === 'indica' ? 'indica' : p.cannabis_strain === 'sativa' ? 'sativa' : '';
+        strain === 'indica' || strain === 'sativa' || strain === 'hibrida' ? strain : '';
     }
     state.editingOriginalStock = Number(p.stock_grams) || 0;
     resetProductImageUiState();
@@ -2420,7 +2421,8 @@
     if (state.hasCannabisStrainColumn) {
       if (categoryShowsStrain(categoryId)) {
         const s = ($('inv-product-strain')?.value || '').trim();
-        row.cannabis_strain = s === 'sativa' || s === 'indica' ? s : null;
+        row.cannabis_strain =
+          s === 'sativa' || s === 'indica' || s === 'hibrida' ? s : null;
       } else {
         row.cannabis_strain = null;
       }
