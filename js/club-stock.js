@@ -367,7 +367,7 @@
         ? `<span class="hint">${escapeHtml(descPreview)}</span>`
         : escapeHtml(descSaved);
       tr.innerHTML = `
-        <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}${tareLine}</td>
+        <td>${scAppleEmoji.html(em ? em + ' ' : '')}${escapeHtml(p.name)}${tareLine}</td>
         <td>${escapeHtml(formatNum(p.stock_grams))}</td>
         <td>
           <input type="text" class="input stk-net-input" inputmode="decimal" data-product-id="${p.id}" placeholder="${escapeHtml(placeholder)}" style="max-width: 9rem" autocomplete="off"${pendingValue} />
@@ -474,7 +474,7 @@
       tr.innerHTML = `
         <td>${escapeHtml(new Date(ev.created_at).toLocaleString())}</td>
         <td>${escapeHtml(turnoLabel)}</td>
-        <td>${escapeHtml(label)}</td>
+        <td>${scAppleEmoji.html(label)}</td>
         <td>${escapeHtml(prevTxt)}</td>
         <td>${escapeHtml(formatNum(ev.stock_net_grams))}</td>
         <td>${escapeHtml(deltaTxt)}</td>

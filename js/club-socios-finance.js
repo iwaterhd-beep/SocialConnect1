@@ -1691,7 +1691,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-        <td>${escapeHtml(label)}</td>
+        <td>${scAppleEmoji.html(label)}</td>
         <td>${escapeHtml(formatQty(r.grams_charged))} / ${escapeHtml(formatQty(r.grams_dispensed))}</td>
         <td>${escapeHtml(formatMoney(r.price_charged_eur))}</td>
         <td>${escapeHtml((r.notes || '').slice(0, 40))}</td>
@@ -2472,7 +2472,7 @@
         <td class="member-wallet-ledger-amt${amtClass}">${escapeHtml(formatWalletLedgerAmount(amt))}</td>
         <td>${escapeHtml(cashTxt)}</td>
         <td class="member-wallet-ledger-bal${balClass}">${escapeHtml(formatMoney(Number.isNaN(bal) ? 0 : bal))}</td>
-        <td>${escapeHtml(walletLedgerNoteLabel(r).slice(0, 120))}</td>
+        <td>${scAppleEmoji.html(walletLedgerNoteLabel(r).slice(0, 120))}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -4322,7 +4322,7 @@
       if (isGift) tr.classList.add('is-gift');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-        <td>${escapeHtml(prodLabel)}${giftBadge}</td>
+        <td>${scAppleEmoji.html(prodLabel)}${giftBadge}</td>
         <td>${escapeHtml(qtyText)}</td>
         <td>${escapeHtml(socio)}</td>
         <td>${escapeHtml(isGift ? 'Regalo' : paymentMethodLabel(r.payment_method))}</td>
@@ -4647,7 +4647,7 @@
       else if (delta < 0) tr.classList.add('is-out');
       tr.innerHTML = `
         <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-        <td>${escapeHtml(prodLabel)}</td>
+        <td>${scAppleEmoji.html(prodLabel)}</td>
         <td>${escapeHtml(who)}</td>
         <td>${escapeHtml(mov)}</td>
         <td>${escapeHtml(note)}</td>

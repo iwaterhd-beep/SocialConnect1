@@ -606,7 +606,7 @@
     const dirAdd = $('inv-adjust-dir-add');
     const dirRemove = $('inv-adjust-dir-remove');
     const em = (product.emoji || '').trim();
-    if (title) title.textContent = `${em ? em + ' ' : ''}${product.name || '—'}`;
+    if (title) title.innerHTML = scAppleEmoji.html(`${em ? em + ' ' : ''}${product.name || '—'}`);
     if (unit) unit.textContent = unitShort(product);
     if (stock) stock.textContent = formatNum(product.stock_grams);
     if (qty) qty.value = '';
@@ -1972,7 +1972,7 @@
       card.style.setProperty('--cat-accent', categoryAccentColor(catLabel));
       card.innerHTML = `
         <span class="tpv-card__visual">
-          <span class="tpv-card__emoji">${escapeHtml(em || '📦')}</span>
+          <span class="tpv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
         </span>
         <span class="tpv-card__content">
           <span class="tpv-card__cat">${escapeHtml(catLabel)}</span>
@@ -2040,7 +2040,7 @@
     const em = (p.emoji || '').trim();
     const selectedLabel = $('tpv-selected-label');
     if (selectedLabel) {
-      selectedLabel.textContent = `${em ? em + ' ' : ''}${p.name}`;
+      selectedLabel.innerHTML = scAppleEmoji.html(`${em ? em + ' ' : ''}${p.name}`);
       selectedLabel.classList.remove('tpv-receipt__product--placeholder');
     }
 
@@ -2179,7 +2179,7 @@
           <button type="button" class="btn btn--ghost btn--small btn--danger" data-del="${p.id}">Eliminar</button>`
         : '';
       tr.innerHTML = `
-        <td class="inv-emoji-cell">${escapeHtml(em || '—')}</td>
+        <td class="inv-emoji-cell">${scAppleEmoji.html(em || '—')}</td>
         <td>${escapeHtml(p.name)}</td>
         <td>${escapeHtml(categoryName(p.category_id))}</td>
         <td>${escapeHtml(formatNum(p.bottle_weight_grams))}</td>
@@ -2232,7 +2232,7 @@
         : '';
       card.innerHTML = `
         <div class="inv-card__visual">
-          <span class="inv-card__emoji">${escapeHtml(em || '📦')}</span>
+          <span class="inv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
         </div>
         <div class="inv-card__body">
           <div class="inv-card__top">
@@ -3425,7 +3425,7 @@
         : '';
       row.innerHTML = `
         <div class="tpv-cart-line__main">
-          <div class="tpv-cart-line__title">${escapeHtml(line.product_emoji ? line.product_emoji + ' ' : '')}${escapeHtml(line.product_name)}</div>
+          <div class="tpv-cart-line__title">${scAppleEmoji.html(line.product_emoji ? line.product_emoji + ' ' : '')}${escapeHtml(line.product_name)}</div>
           <div class="tpv-cart-line__meta">Ticket ${escapeHtml(formatNum(line.grams_charged))} ${escapeHtml(us)} · Real ${escapeHtml(formatNum(line.grams_dispensed))} ${escapeHtml(us)}</div>
           ${giftTag}
         </div>
@@ -3848,7 +3848,7 @@
       tr.innerHTML = `
         <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
         <td>${escapeHtml(dispenser)}</td>
-        <td>${escapeHtml(label)}</td>
+        <td>${scAppleEmoji.html(label)}</td>
         <td>${escapeHtml(socio)}</td>
         <td>${escapeHtml(formatNum(row.grams_charged))} / ${escapeHtml(formatNum(row.grams_dispensed))}</td>
         <td>${escapeHtml(pay)}</td>

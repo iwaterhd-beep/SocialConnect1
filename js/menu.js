@@ -219,7 +219,7 @@
         } else {
           const em = document.createElement('span');
           em.className = 'menu-card__emoji';
-          em.textContent = (p.emoji || '').trim() || '🌿';
+          em.innerHTML = scAppleEmoji.html((p.emoji || '').trim() || '🌿');
           emojiWrap.appendChild(em);
         }
         card.appendChild(emojiWrap);

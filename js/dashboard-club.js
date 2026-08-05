@@ -351,7 +351,7 @@
       if (isGift) tr.classList.add('is-gift');
       tr.innerHTML = `
         <td>${escapeHtml(formatTs(r.created_at))}</td>
-        <td>${escapeHtml(prodLabel)}${isGift ? ' <span class="sc-home-dispenses__gift">Regalo</span>' : ''}</td>
+        <td>${scAppleEmoji.html(prodLabel)}${isGift ? ' <span class="sc-home-dispenses__gift">Regalo</span>' : ''}</td>
         <td>${escapeHtml(qtyText)}</td>
         <td>${escapeHtml(socio || '—')}</td>
         <td>${escapeHtml(isGift ? 'Regalo' : homePaymentMethodLabel(r.payment_method))}</td>
@@ -1605,7 +1605,7 @@
             ? Number(ev.previous_stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 })
             : '—';
         return `<tr>
-          <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(pr.name || '—')}</td>
+          <td>${scAppleEmoji.html(em ? em + ' ' : '')}${escapeHtml(pr.name || '—')}</td>
           <td>${escapeHtml(ev.source === 'scale' ? 'Báscula' : 'Manual')}</td>
           <td>${escapeHtml(prevTxt)}</td>
           <td>${escapeHtml(Number(ev.stock_net_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
@@ -1652,7 +1652,7 @@
         const delta = countEv ? getShiftStockDelta(countEv) : null;
         const descTxt = delta !== null ? formatStockDiscrepancy(p, delta) : '—';
         return `<tr>
-        <td>${escapeHtml(em ? em + ' ' : '')}${escapeHtml(p.name)}</td>
+        <td>${scAppleEmoji.html(em ? em + ' ' : '')}${escapeHtml(p.name)}</td>
         <td>${escapeHtml(Number(p.stock_grams).toLocaleString('es-ES', { maximumFractionDigits: 3 }))}</td>
         <td>${escapeHtml(descTxt)}</td>
       </tr>`;
@@ -1714,7 +1714,7 @@
             ? `<ol style="margin:0;padding-left:1.2rem">${topList
                 .map(
                   (x) =>
-                    `<li>${escapeHtml(x.emoji ? x.emoji + ' ' : '')}${escapeHtml(x.name)} — ${escapeHtml(x.g.toLocaleString('es-ES', { maximumFractionDigits: 3 }))} g</li>`,
+                    `<li>${scAppleEmoji.html(x.emoji ? x.emoji + ' ' : '')}${escapeHtml(x.name)} — ${escapeHtml(x.g.toLocaleString('es-ES', { maximumFractionDigits: 3 }))} g</li>`,
                 )
                 .join('')}</ol>`
             : '<p class="hint" style="margin:0">Sin dispensaciones en este turno.</p>'
