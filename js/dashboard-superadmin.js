@@ -70,6 +70,9 @@
           <button type="button" class="btn btn--small btn--ghost btn--toggle" data-active="${club.is_active}">
             ${club.is_active ? 'Desactivar' : 'Activar'}
           </button>
+          <button type="button" class="btn btn--small btn--ghost btn--danger btn--remove-club" data-club-id="${escapeHtml(club.id)}" data-club-name="${escapeHtml(club.name)}">
+            Eliminar
+          </button>
         </div>
       </td>
     `;
@@ -100,6 +103,41 @@
         setStatus(next ? 'Club activado.' : 'Club desactivado.', false);
       } catch (e) {
         setStatus(e.message || 'Error al actualizar.', true);
+      }
+    });
+
+    tr.querySelector('.btn--remove-club')?.addEventListener('click', async () => {
+      const name = club.name;
+      if (
+        !confirm(
+          `¿ELIMINAR el club "${name}"?\n\nSe borrarán TODOS sus datos: socios, inventario, dispensaciones, finanzas, turnos, categorías, proveedores y cuentas de usuario vinculadas.\n\nEsta acción es IRREVERSIBLE. Escribe "BORRAR" para confirmar.`,
+        )
+      ) {
+        return;
+      }
+      const typed = prompt('Confirma escribiendo BORRAR para eliminar el club para siempre:');
+      if (typed !== 'BORRAR') {
+        setStatus('Borrado cancelado.', false);
+        return;
+      }
+      try {
+        setStatus('Eliminando club…', false);
+        const { error } = await sb().rpc('superadmin_remove_club', {
+          p_club_id: club.id,
+        });
+        if (error) {
+          const msg =
+            error.code === 'PGRST202' || /superadmin_remove_club/i.test(error.message || '')
+              ? 'Ejecuta en Supabase la migración 062_superadmin_remove_club.sql.'
+              : error.message || 'No se pudo eliminar el club.';
+          setStatus(msg, true);
+          return;
+        }
+        await refreshTable();
+        await refreshAccessTable();
+        setStatus('Club eliminado.', false);
+      } catch (e) {
+        setStatus(e.message || 'No se pudo eliminar el club.', true);
       }
     });
 
