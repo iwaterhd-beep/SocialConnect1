@@ -3319,8 +3319,36 @@
     if (idx >= 0) {
       state.tpvCart[idx] = { ...built.line, cart_row_id: pendingId };
     } else {
-      state.tpvPendingCartRowId = built.line.cart_row_id;
-      state.tpvCart.push(built.line);
+      const sameIdx = !forceNew
+        ? state.tpvCart.findIndex(
+            (x) => x.product_id === built.line.product_id && !x.is_membership_gift,
+          )
+        : -1;
+      if (sameIdx >= 0) {
+        // Clic repetido sobre un producto ya en el ticket: acumular cantidad y precio
+        const prev = state.tpvCart[sameIdx];
+        const merged = {
+          ...prev,
+          grams_charged:
+            (Number(prev.grams_charged) || 0) + (Number(built.line.grams_charged) || 0),
+          grams_dispensed:
+            (Number(prev.grams_dispensed) || 0) + (Number(built.line.grams_dispensed) || 0),
+          price_charged_eur:
+            (Number(prev.price_charged_eur) || 0) + (Number(built.line.price_charged_eur) || 0),
+        };
+        state.tpvCart[sameIdx] = merged;
+        state.tpvPendingCartRowId = prev.cart_row_id;
+        const fmt = (n) => String(n).replace('.', ',');
+        const gc = $('tpv-grams-charged');
+        const gd = $('tpv-grams-dispensed');
+        const pe = $('tpv-price');
+        if (gc) gc.value = fmt(merged.grams_charged);
+        if (gd) gd.value = fmt(merged.grams_dispensed);
+        if (pe && merged.price_charged_eur != null) pe.value = fmt(merged.price_charged_eur);
+      } else {
+        state.tpvPendingCartRowId = built.line.cart_row_id;
+        state.tpvCart.push(built.line);
+      }
       pulseTpvTicket();
     }
     renderTpvCart();
