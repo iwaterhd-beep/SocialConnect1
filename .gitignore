@@ -10,3 +10,6 @@ Thumbs.db
 
 # Dependencies (si añades Node en el futuro)
 node_modules/
+
+# Supabase CLI local state (linked project, no versiones)
+supabase/.temp/

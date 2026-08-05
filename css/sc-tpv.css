@@ -421,12 +421,7 @@
   flex-shrink: 0;
   aspect-ratio: 1;
   min-height: 72px;
-  background:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--cat-accent) 14%, #fff) 0%,
-      color-mix(in srgb, var(--cat-accent) 4%, #f8fafc) 100%
-    );
+  background: #fff;
   border-bottom: 1px solid rgba(15, 23, 42, 0.05);
 }
 
@@ -438,9 +433,13 @@
 }
 
 .club-app .tpv-pos .tpv-card__visual--photo {
-  background: #0f172a;
+  background: #fff;
   overflow: hidden;
   padding: 0;
+}
+
+.club-app .tpv-pos .tpv-card__visual--photo.is-png {
+  background: #fff;
 }
 
 .club-app .tpv-pos .tpv-card__photo {
@@ -448,8 +447,9 @@
   height: 100%;
   min-height: 72px;
   max-height: 120px;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  background: #fff;
   transition: transform 0.25s ease;
 }
 

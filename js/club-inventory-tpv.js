@@ -92,6 +92,10 @@
     return /\.(mp4|webm|mov|m4v)$/i.test((path || '').trim());
   }
 
+  function isProductPngPath(path) {
+    return /\.png$/i.test((path || '').trim());
+  }
+
   function isAllowedProductMediaFile(f) {
     if (!f) return false;
     if (/^image\/(jpeg|png|webp)$/i.test(f.type || '')) return true;
@@ -1979,7 +1983,9 @@
                <video class="tpv-card__video" src="${escapeHtml(mediaUrl)}" muted playsinline preload="metadata" aria-label="${escapeHtml(p.name)}"></video>
              </span>`;
         } else {
-          visualHtml = `<span class="tpv-card__visual tpv-card__visual--photo">
+          const visualClass =
+            'tpv-card__visual tpv-card__visual--photo' + (isProductPngPath(p.image_path) ? ' is-png' : '');
+          visualHtml = `<span class="${visualClass}">
                <img class="tpv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
              </span>`;
         }
@@ -2253,7 +2259,9 @@
                <video class="inv-card__video" src="${escapeHtml(mediaUrl)}" muted playsinline preload="metadata" aria-label="${escapeHtml(p.name)}"></video>
              </div>`;
         } else {
-          visualHtml = `<div class="inv-card__visual inv-card__visual--photo">
+          const visualClass =
+            'inv-card__visual inv-card__visual--photo' + (isProductPngPath(p.image_path) ? ' is-png' : '');
+          visualHtml = `<div class="${visualClass}">
                <img class="inv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
              </div>`;
         }

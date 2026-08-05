@@ -4198,11 +4198,7 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   justify-content: center;
   min-height: 64px;
   flex-shrink: 0;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--cat-accent) 14%, #fff) 0%,
-    color-mix(in srgb, var(--cat-accent) 4%, #f8fafc) 100%
-  );
+  background: #fff;
   border-bottom: 1px solid rgba(15, 23, 42, 0.05);
 }
 
@@ -4214,9 +4210,13 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
 }
 
 .club-app .inv-card__visual--photo {
-  background: #0f172a;
+  background: #fff;
   overflow: hidden;
   padding: 0;
+}
+
+.club-app .inv-card__visual--photo.is-png {
+  background: #fff;
 }
 
 .club-app .inv-card__photo {
@@ -4224,8 +4224,9 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   height: 100%;
   min-height: 64px;
   max-height: 110px;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  background: #fff;
   transition: transform 0.25s ease;
 }
 
