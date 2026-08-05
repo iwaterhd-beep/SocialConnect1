@@ -1969,11 +1969,17 @@
             : `<span class="tpv-card__price">${escapeHtml(formatMoney(rate))}/${escapeHtml(rateLabel)}</span>`
           : '';
       const catLabel = categoryName(p.category_id);
+      const mediaUrl = productImagePublicUrl(p.image_path);
+      const visualHtml = mediaUrl
+        ? `<span class="tpv-card__visual tpv-card__visual--photo">
+             <img class="tpv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
+           </span>`
+        : `<span class="tpv-card__visual">
+             <span class="tpv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
+           </span>`;
       card.style.setProperty('--cat-accent', categoryAccentColor(catLabel));
       card.innerHTML = `
-        <span class="tpv-card__visual">
-          <span class="tpv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
-        </span>
+        ${visualHtml}
         <span class="tpv-card__content">
           <span class="tpv-card__cat">${escapeHtml(catLabel)}</span>
           <span class="tpv-card__name">${escapeHtml(p.name)}</span>
@@ -2230,10 +2236,16 @@
         ? `<button type="button" class="btn btn--ghost btn--small" data-edit="${p.id}">Editar</button>
            <button type="button" class="btn btn--ghost btn--small btn--danger" data-del="${p.id}" title="Eliminar producto">Eliminar</button>`
         : '';
+      const mediaUrl = productImagePublicUrl(p.image_path);
+      const visualHtml = mediaUrl
+        ? `<div class="inv-card__visual inv-card__visual--photo">
+             <img class="inv-card__photo" src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" />
+           </div>`
+        : `<div class="inv-card__visual">
+             <span class="inv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
+           </div>`;
       card.innerHTML = `
-        <div class="inv-card__visual">
-          <span class="inv-card__emoji">${scAppleEmoji.html(em || '📦')}</span>
-        </div>
+        ${visualHtml}
         <div class="inv-card__body">
           <div class="inv-card__top">
             <span class="inv-card__cat">${escapeHtml(catLabel)}</span>

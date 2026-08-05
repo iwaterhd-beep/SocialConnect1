@@ -4213,6 +4213,26 @@ body.club-dark.club-app .sc-inv-products .inv-stock-chips .chip.is-active {
   transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.club-app .inv-card__visual--photo {
+  background: #0f172a;
+  overflow: hidden;
+  padding: 0;
+}
+
+.club-app .inv-card__photo {
+  width: 100%;
+  height: 100%;
+  min-height: 64px;
+  max-height: 110px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.club-app .inv-card:hover .inv-card__photo {
+  transform: scale(1.05);
+}
+
 .club-app .inv-card:hover .inv-card__emoji {
   transform: scale(1.06);
 }
