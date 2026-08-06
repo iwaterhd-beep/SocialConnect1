@@ -28,6 +28,7 @@
   let financeVentasUiBound = false;
   const financeShiftsFilter = { range: 'all', from: '', to: '' };
   const financeAdjustFilter = { range: 'all', from: '', to: '' };
+  const financeContajeFilter = { range: 'all', from: '', to: '' };
   const financeWalletFilter = { range: 'all', from: '', to: '', search: '' };
   let financeSectionFiltersBound = false;
 
@@ -3646,6 +3647,7 @@
     financeSectionFiltersBound = true;
     bindFinanceDateFilter('shifts', financeShiftsFilter, refreshFinanceShiftClosures);
     bindFinanceDateFilter('adjust', financeAdjustFilter, refreshFinanceStockAdjustments);
+    bindFinanceDateFilter('contaje', financeContajeFilter, refreshFinanceStockCounts);
     bindFinanceDateFilter('wallet', financeWalletFilter, refreshFinanceWalletMovements);
 
     $('finance-shifts-empty-all')?.addEventListener('click', () => {
@@ -3657,6 +3659,11 @@
       financeAdjustFilter.range = 'all';
       renderFinanceDateFilterUi('adjust', 'all');
       void refreshFinanceStockAdjustments();
+    });
+    $('finance-contaje-empty-all')?.addEventListener('click', () => {
+      financeContajeFilter.range = 'all';
+      renderFinanceDateFilterUi('contaje', 'all');
+      void refreshFinanceStockCounts();
     });
     $('finance-wallet-empty-all')?.addEventListener('click', () => {
       financeWalletFilter.range = 'all';
@@ -4686,6 +4693,170 @@
     }
   }
 
+  async function refreshFinanceStockCounts() {
+    const tbody = $('finance-contaje-tbody');
+    const emptyEl = $('finance-contaje-empty');
+    const summaryEl = $('finance-contaje-summary');
+    if (!tbody || !ctx) return;
+
+    const rangeLabel = financeDateRangeLabel(
+      financeContajeFilter.range,
+      financeContajeFilter.from,
+      financeContajeFilter.to,
+    );
+    const bounds = getFinanceDateBounds(
+      financeContajeFilter.range,
+      financeContajeFilter.from,
+      financeContajeFilter.to,
+    );
+
+    if (summaryEl && financeContajeFilter.range === 'all') {
+      summaryEl.textContent = 'Cargando todos los contajes…';
+    }
+
+    const pageResult = await fetchAllSupabasePages(
+      (from, to) => {
+        let q = sb()
+          .from('shift_stock_events')
+          .select(
+            'id, created_at, product_id, shift_id, previous_stock_grams, stock_net_grams, delta_grams, source, created_by',
+          )
+          .eq('club_id', ctx.club.id)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (bounds.from) q = q.gte('created_at', bounds.from.toISOString());
+        if (bounds.to) q = q.lte('created_at', bounds.to.toISOString());
+        return q;
+      },
+      {
+        pageSize: 1000,
+        maxRows: financeContajeFilter.range === 'all' ? 100000 : 5000,
+      },
+    );
+
+    const { data: rows, error, truncated } = pageResult;
+
+    if (error) {
+      if (
+        error.code === '42P01' ||
+        (error.message && error.message.includes('shift_stock_events'))
+      ) {
+        tbody.innerHTML =
+          '<tr><td colspan="7">La tabla de contajes no está disponible en este club.</td></tr>';
+        setFinanceEmptyVisible(emptyEl, false);
+        setStatText('finance-contaje-stat-count', '—');
+        setStatText('finance-contaje-stat-up', '—');
+        setStatText('finance-contaje-stat-down', '—');
+        return;
+      }
+      tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+      setFinanceEmptyVisible(emptyEl, false);
+      setStatText('finance-contaje-stat-count', '—');
+      setStatText('finance-contaje-stat-up', '—');
+      setStatText('finance-contaje-stat-down', '—');
+      return;
+    }
+
+    const list = rows || [];
+    const pids = [...new Set(list.map((r) => r.product_id).filter(Boolean))];
+    let prodMap = {};
+    if (pids.length) {
+      const { data: pr } = await sb()
+        .from('inventory_products')
+        .select('id, name, emoji, sale_unit')
+        .in('id', pids);
+      if (pr) prodMap = Object.fromEntries(pr.map((x) => [x.id, x]));
+    }
+    const sids = [...new Set(list.map((r) => r.shift_id).filter(Boolean))];
+    let shiftMap = {};
+    if (sids.length) {
+      const { data: sh } = await sb()
+        .from('shifts')
+        .select('id, opened_at, closed_at')
+        .in('id', sids);
+      if (sh) shiftMap = Object.fromEntries(sh.map((x) => [x.id, x]));
+    }
+
+    let staffMap = {};
+    try {
+      const ids = list.map((r) => r.created_by);
+      if (typeof window.SCAuth?.loadClubStaffEmailMap === 'function') {
+        staffMap = await window.SCAuth.loadClubStaffEmailMap(ctx.club.id, ids);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    tbody.innerHTML = '';
+    if (!list.length) {
+      setFinanceEmptyVisible(emptyEl, true);
+      setStatText('finance-contaje-stat-count', '0');
+      setStatText('finance-contaje-stat-up', '0');
+      setStatText('finance-contaje-stat-down', '0');
+      if (summaryEl) summaryEl.textContent = `0 contajes en ${rangeLabel}.`;
+      return;
+    }
+    setFinanceEmptyVisible(emptyEl, false);
+
+    let upCount = 0;
+    let downCount = 0;
+    list.forEach((r) => {
+      const pr = prodMap[r.product_id] || {};
+      const em = (pr.emoji || '').trim();
+      const prodLabel = `${em ? em + ' ' : ''}${pr.name || '—'}`;
+      const u = pr.sale_unit === 'unit' ? 'ud' : 'g';
+      const prev =
+        r.previous_stock_grams != null && r.previous_stock_grams !== ''
+          ? Number(r.previous_stock_grams)
+          : null;
+      const net =
+        r.stock_net_grams != null && r.stock_net_grams !== ''
+          ? Number(r.stock_net_grams)
+          : null;
+      const delta =
+        r.delta_grams != null && r.delta_grams !== ''
+          ? Number(r.delta_grams)
+          : prev !== null && net !== null
+            ? net - prev
+            : null;
+      if (delta !== null && delta > 0) upCount += 1;
+      else if (delta !== null && delta < 0) downCount += 1;
+      const shift = shiftMap[r.shift_id] || null;
+      const shiftLabel = shift
+        ? new Date(shift.opened_at).toLocaleString()
+        : '—';
+      const origin = r.source === 'scale' ? 'Báscula' : 'Manual';
+      const who =
+        r.created_by && staffMap[r.created_by] ? staffMap[r.created_by] : '—';
+      const prevTxt = prev !== null ? `${formatQty(prev)} ${u}` : '—';
+      const netTxt = net !== null ? `${formatQty(net)} ${u}` : '—';
+      const sign = delta !== null && delta > 0 ? '+' : '';
+      const descTxt =
+        delta !== null ? `${sign}${formatQty(Math.abs(delta))} ${u}` : '—';
+      const tr = document.createElement('tr');
+      if (delta !== null && delta > 0) tr.classList.add('is-in');
+      else if (delta !== null && delta < 0) tr.classList.add('is-out');
+      tr.innerHTML = `
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
+        <td>${escapeHtml(shiftLabel)}</td>
+        <td>${scAppleEmoji.html(prodLabel)}</td>
+        <td>${escapeHtml(prevTxt)}</td>
+        <td>${escapeHtml(netTxt)}</td>
+        <td>${escapeHtml(descTxt)}</td>
+        <td>${escapeHtml(`${origin} · ${who}`)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    setStatText('finance-contaje-stat-count', String(list.length));
+    setStatText('finance-contaje-stat-up', String(upCount));
+    setStatText('finance-contaje-stat-down', String(downCount));
+    if (summaryEl) {
+      const truncNote = truncated ? ' · límite de carga alcanzado' : '';
+      summaryEl.textContent = `${list.length.toLocaleString('es-ES')} contaje(s) en ${rangeLabel}.${truncNote}`;
+    }
+  }
+
   function financeInventoryColFail(e) {
     return (
       e &&
@@ -4844,7 +5015,7 @@
   let financeActivePanel = 'resumen';
   let financePanelNavBound = false;
 
-  const FINANCE_PANELS = ['resumen', 'cierres', 'ajustes', 'monedero', 'ventas'];
+  const FINANCE_PANELS = ['resumen', 'cierres', 'ajustes', 'contaje', 'monedero', 'ventas'];
 
   function setFinancePanel(panelId) {
     const id = FINANCE_PANELS.includes(panelId) ? panelId : 'resumen';
@@ -4901,6 +5072,7 @@
     await refreshFinanceVentasTpv();
     await refreshFinanceShiftClosures();
     await refreshFinanceStockAdjustments();
+    await refreshFinanceStockCounts();
 
     setFinanceMsg('', false);
   }

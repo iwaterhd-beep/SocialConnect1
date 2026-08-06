@@ -1460,6 +1460,7 @@
     const { error } = await sb().rpc('club_update_public_menu_settings', {
       p_enabled: enabled,
       p_slug: slug,
+      p_club_id: state.ctx.club.id,
     });
     if (error) {
       const needsMigration =

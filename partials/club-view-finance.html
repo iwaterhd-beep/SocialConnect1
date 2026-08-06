@@ -9,6 +9,9 @@
     <button type="button" class="sc-finance-fab-nav__btn" data-finance-panel-go="ajustes" aria-pressed="false">
       Ajustes
     </button>
+    <button type="button" class="sc-finance-fab-nav__btn" data-finance-panel-go="contaje" aria-pressed="false">
+      Contaje
+    </button>
     <button type="button" class="sc-finance-fab-nav__btn" data-finance-panel-go="monedero" aria-pressed="false">
       Monedero
     </button>
@@ -113,6 +116,10 @@
           <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="ajustes">
             <span class="sc-finance-resumo-jump__title">Ajustes +/-</span>
             <span class="sc-finance-resumo-jump__meta">Entradas y salidas</span>
+          </button>
+          <button type="button" class="sc-finance-resumo-jump" data-finance-panel-go="contaje">
+            <span class="sc-finance-resumo-jump__title">Contaje</span>
+            <span class="sc-finance-resumo-jump__meta">Recuento de stock por turno</span>
           </button>
         </div>
       </div>
@@ -284,6 +291,86 @@
           </tr>
         </thead>
         <tbody id="finance-inventory-adjust-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section
+    class="card-section sc-finance-block sc-finance-panel"
+    data-finance-panel="contaje"
+    aria-labelledby="finance-contaje-title"
+    hidden
+  >
+    <div class="sc-finance-sales__head">
+      <div>
+        <h2 id="finance-contaje-title" class="sc-finance-sales__title">Contaje de stock</h2>
+        <p class="hint sc-finance-sales__meta">
+          Recuento de inventario por turno (Manual o Báscula), separado de los ajustes +/-.
+        </p>
+      </div>
+    </div>
+
+    <div class="sc-finance-fab-filters sc-finance-toolbar sc-finance-sales__filters" aria-label="Filtros contaje">
+      <div class="sc-finance-sales__filter-block">
+        <span class="sc-finance-sales__filter-label">Periodo</span>
+        <div class="chip-row sc-chip-row-compact sc-finance-fab-chips" role="group" aria-label="Periodo contaje">
+          <button type="button" class="chip" data-finance-contaje-range="today">Hoy</button>
+          <button type="button" class="chip" data-finance-contaje-range="week">Semana</button>
+          <button type="button" class="chip" data-finance-contaje-range="30d">30 días</button>
+          <button type="button" class="chip is-active" data-finance-contaje-range="all">Todas</button>
+          <button type="button" class="chip" data-finance-contaje-range="custom">Fechas</button>
+        </div>
+        <div id="finance-contaje-custom" class="sc-finance-toolbar__custom finance-ventas-custom is-hidden" hidden>
+          <div class="form__row" style="margin-bottom: 0">
+            <label for="finance-contaje-from">Desde</label>
+            <input class="input" id="finance-contaje-from" type="date" />
+          </div>
+          <div class="form__row" style="margin-bottom: 0">
+            <label for="finance-contaje-to">Hasta</label>
+            <input class="input" id="finance-contaje-to" type="date" />
+          </div>
+          <button type="button" class="btn btn--ghost btn--small" id="finance-contaje-apply">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc-finance-sales__stats sc-finance-sales__stats--3" id="finance-contaje-stats" aria-live="polite">
+      <div class="sc-finance-sales__stat">
+        <span class="sc-finance-sales__stat-label">Contajes</span>
+        <span class="sc-finance-sales__stat-value" id="finance-contaje-stat-count">—</span>
+      </div>
+      <div class="sc-finance-sales__stat">
+        <span class="sc-finance-sales__stat-label">Subidas</span>
+        <span class="sc-finance-sales__stat-value" id="finance-contaje-stat-up">—</span>
+      </div>
+      <div class="sc-finance-sales__stat">
+        <span class="sc-finance-sales__stat-label">Bajadas</span>
+        <span class="sc-finance-sales__stat-value" id="finance-contaje-stat-down">—</span>
+      </div>
+    </div>
+
+    <p id="finance-contaje-summary" class="hint sc-finance-sales__summary"></p>
+
+    <div id="finance-contaje-empty" class="sc-finance-sales__empty is-hidden" hidden>
+      <p class="sc-finance-sales__empty-title">Sin contajes en este periodo</p>
+      <p class="hint">Prueba «Todas» o amplía las fechas.</p>
+      <button type="button" class="btn btn--ghost btn--small" id="finance-contaje-empty-all">Ver todo el historial</button>
+    </div>
+
+    <div class="table-wrap sc-table-compact">
+      <table class="table-compact">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Producto</th>
+            <th>Antes</th>
+            <th>Después</th>
+            <th>Descuadre</th>
+            <th>Origen / Usuario</th>
+          </tr>
+        </thead>
+        <tbody id="finance-contaje-tbody"></tbody>
       </table>
     </div>
   </section>
